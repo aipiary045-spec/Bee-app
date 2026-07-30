@@ -1,0 +1,89 @@
+@import "tailwindcss";
+
+@theme inline {
+  --color-honey-50: #fef9ee;
+  --color-honey-100: #fdf0d4;
+  --color-honey-200: #fae0a8;
+  --color-honey-300: #f5c86b;
+  --color-honey-400: #efad32;
+  --color-honey-500: #e09518;
+  --color-honey-600: #c4730f;
+  --color-honey-700: #a35510;
+  --color-honey-800: #854314;
+  --color-honey-900: #6d3814;
+
+  --color-wax-50: #fdfbf5;
+  --color-wax-100: #f9f3e3;
+  --color-wax-200: #f2e6c8;
+  --color-wax-300: #e8d4a4;
+  --color-wax-400: #d9bc78;
+
+  --color-hive-500: #6b5c4c;
+  --color-hive-600: #5a4d40;
+  --color-hive-700: #4a3f35;
+  --color-hive-800: #3a322b;
+  --color-hive-900: #2a241f;
+
+  --color-meadow-100: #e8f0e4;
+  --color-meadow-400: #7aab6a;
+  --color-meadow-600: #4a7a3a;
+  --color-meadow-800: #2d4a24;
+
+  --color-crimson-100: #fce8e6;
+  --color-crimson-400: #e07060;
+  --color-crimson-500: #c94a3a;
+  --color-crimson-600: #a8382a;
+  --color-crimson-800: #7a2820;
+
+  --font-display: var(--font-fraunces);
+  --font-body: var(--font-source-serif);
+}
+
+@layer base {
+  * {
+    @apply border-wax-300;
+  }
+
+  body {
+    @apply bg-wax-100 text-hive-800 antialiased;
+    font-family: var(--font-body), Georgia, serif;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-display), Georgia, serif;
+  }
+}
+
+@layer utilities {
+  .honeycomb-bg {
+    background-color: var(--color-wax-100);
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='49' viewBox='0 0 28 49'%3E%3Cg fill-rule='evenodd'%3E%3Cg fill='%23e8d4a4' fill-opacity='0.25'%3E%3Cpath d='M13.99 9.25l13 7.5v15l-13 7.5L1 31.75v-15l12.99-7.5zM3 17.9v12.7l10.99 6.34 11-6.35V17.9l-11-6.34L3 17.9zM0 15l12.98-7.5V0h-2v6.35L0 12.69v2.3zm0 18.5L12.98 41v8h-2v-6.85L0 35.81v-2.3zM15 0v7.5L27.99 15H28v-2.31h-.01L17 6.35V0h-2zm0 49v-8l12.99-7.5H28v2.31h-.01L17 42.15V49h-2z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+  }
+
+  .fade-up {
+    animation: fadeUp 0.6s ease-out both;
+  }
+
+  .fade-up-delay-1 {
+    animation: fadeUp 0.6s ease-out 0.1s both;
+  }
+
+  .fade-up-delay-2 {
+    animation: fadeUp 0.6s ease-out 0.2s both;
+  }
+
+  .fade-up-delay-3 {
+    animation: fadeUp 0.6s ease-out 0.3s both;
+  }
+}
+
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
