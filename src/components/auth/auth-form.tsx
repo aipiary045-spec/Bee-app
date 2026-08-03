@@ -73,7 +73,14 @@ export function AuthForm({ mode }: AuthFormProps) {
         router.refresh();
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Authentication failed.");
+      const raw = err instanceof Error ? err.message : "Authentication failed.";
+      if (/failed to fetch|networkerror|load failed/i.test(raw)) {
+        setError(
+          "Could not reach Supabase. Check NEXT_PUBLIC_SUPABASE_URL in .env.local (must be https://YOUR_REF.supabase.co with no quotes), save, restart npm run dev, and confirm the project is not paused."
+        );
+      } else {
+        setError(raw);
+      }
     } finally {
       setLoading(false);
     }

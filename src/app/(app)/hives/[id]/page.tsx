@@ -1,9 +1,11 @@
 import Link from "next/link";
+import { notFound } from "next/navigation";
 import { ArrowLeft, Crown, Hexagon, LineChart } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { getHiveById } from "@/lib/hives";
 
 interface HiveDetailPageProps {
   params: Promise<{ id: string }>;
@@ -11,16 +13,27 @@ interface HiveDetailPageProps {
 
 export default async function HiveDetailPage({ params }: HiveDetailPageProps) {
   const { id } = await params;
-  const displayName = id
-    .split("-")
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(" ");
+  let hive;
+  try {
+    hive = await getHiveById(id);
+  } catch {
+    hive = null;
+  }
+
+  if (!hive) notFound();
 
   const tabs = [
     { label: "Inspections", icon: Hexagon },
     { label: "Health Trends", icon: LineChart },
     { label: "Honey Yields", icon: Crown },
   ];
+
+  const statusVariant =
+    hive.status === "active"
+      ? ("success" as const)
+      : hive.status === "deadout"
+        ? ("danger" as const)
+        : ("muted" as const);
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
@@ -32,20 +45,22 @@ export default async function HiveDetailPage({ params }: HiveDetailPageProps) {
       </Button>
 
       <PageHeader
-        eyebrow="Colony Detail"
-        title={displayName}
-        description="Inspection history, varroa trends, honey production, and hive-specific expenses — coming once Supabase is connected."
+        eyebrow={hive.apiary?.name ?? "Colony Detail"}
+        title={hive.name}
+        description={`Located in ${hive.apiary?.location ?? "your apiary"}. Inspection charts and mite trends will appear here as you log field data.`}
       />
 
-      <div className="fade-up-delay-1 mb-8 flex flex-wrap gap-2">
-        <Badge variant="success">Active</Badge>
-        <Badge variant="default">10 frames</Badge>
-        <Badge variant="warning">Preview data</Badge>
+      <div className="fade-up-delay-1 mb-8 flex flex-wrap items-center gap-2">
+        <Badge variant={statusVariant}>{hive.status}</Badge>
+        <Badge variant="default">{hive.frame_count} frames</Badge>
+        <Button variant="outline" size="sm" asChild>
+          <Link href={`/inspect?hive=${hive.id}`}>Quick Log</Link>
+        </Button>
       </div>
 
       <div className="fade-up-delay-2 grid gap-4 sm:grid-cols-3">
         {tabs.map(({ label, icon: Icon }) => (
-          <Card key={label} className="opacity-80">
+          <Card key={label}>
             <CardHeader className="pb-2">
               <CardTitle className="flex items-center gap-2 text-base">
                 <Icon className="h-4 w-4 text-honey-700" />
@@ -54,7 +69,7 @@ export default async function HiveDetailPage({ params }: HiveDetailPageProps) {
             </CardHeader>
             <CardContent>
               <p className="text-sm text-hive-500">
-                Charts and logs will appear here after database connection.
+                No records yet — use Quick Log to start tracking this colony.
               </p>
             </CardContent>
           </Card>

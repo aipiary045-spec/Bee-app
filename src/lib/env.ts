@@ -1,9 +1,5 @@
-function getEnv(name: string, fallback?: string): string {
-  const value = process.env[name];
-  if (value) return value;
-  if (fallback !== undefined) return fallback;
-  throw new Error(`Missing required environment variable: ${name}`);
-}
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
 function looksLikePlaceholder(value: string | undefined): boolean {
   if (!value) return true;
@@ -16,23 +12,26 @@ function looksLikePlaceholder(value: string | undefined): boolean {
 }
 
 export const env = {
+  // IMPORTANT: NEXT_PUBLIC_* must be referenced as static property accesses
+  // so Next.js can inline them into the browser bundle.
   supabaseUrl: () =>
-    getEnv("NEXT_PUBLIC_SUPABASE_URL", "https://placeholder.supabase.co"),
+    supabaseUrl && !looksLikePlaceholder(supabaseUrl)
+      ? supabaseUrl
+      : "https://placeholder.supabase.co",
   supabaseAnonKey: () =>
-    getEnv("NEXT_PUBLIC_SUPABASE_ANON_KEY", "placeholder-anon-key"),
+    supabaseAnonKey && !looksLikePlaceholder(supabaseAnonKey)
+      ? supabaseAnonKey
+      : "placeholder-anon-key",
   defaultLocation:
     process.env.NEXT_PUBLIC_DEFAULT_LOCATION ?? "Agra, OK",
   defaultLat: Number(process.env.NEXT_PUBLIC_DEFAULT_LAT ?? 35.8942),
   defaultLon: Number(process.env.NEXT_PUBLIC_DEFAULT_LON ?? -96.8714),
-  isSupabaseConfigured: () => {
-    const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-    return Boolean(
-      url &&
-        key &&
-        !looksLikePlaceholder(url) &&
-        !looksLikePlaceholder(key) &&
-        url.startsWith("http")
-    );
-  },
+  isSupabaseConfigured: () =>
+    Boolean(
+      supabaseUrl &&
+        supabaseAnonKey &&
+        !looksLikePlaceholder(supabaseUrl) &&
+        !looksLikePlaceholder(supabaseAnonKey) &&
+        supabaseUrl.startsWith("http")
+    ),
 } as const;

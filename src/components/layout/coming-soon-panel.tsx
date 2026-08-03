@@ -1,6 +1,7 @@
 import type { LucideIcon } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { env } from "@/lib/env";
 
 interface FeaturePreview {
   title: string;
@@ -20,6 +21,8 @@ export function ComingSoonPanel({
   description,
   features,
 }: ComingSoonPanelProps) {
+  const connected = env.isSupabaseConfigured();
+
   return (
     <div className="grid gap-6 lg:grid-cols-5">
       <Card className="relative overflow-hidden lg:col-span-2">
@@ -32,7 +35,9 @@ export function ComingSoonPanel({
           <p className="text-sm leading-relaxed text-hive-600">{description}</p>
         </CardHeader>
         <CardContent>
-          <Badge variant="muted">Connect Supabase to enable</Badge>
+          <Badge variant={connected ? "success" : "muted"}>
+            {connected ? "Supabase connected — live data coming next" : "Connect Supabase to enable"}
+          </Badge>
         </CardContent>
       </Card>
 

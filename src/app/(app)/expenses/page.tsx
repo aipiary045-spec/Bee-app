@@ -33,7 +33,7 @@ export default function ExpensesPage() {
             {formatCurrency(total)}
           </p>
           <p className="mt-1 text-sm text-hive-600">
-            Preview data — connect Supabase for live totals
+            Preview totals — live expense queries coming next
           </p>
         </CardContent>
       </Card>
