@@ -20,9 +20,11 @@ export function formatDate(date: string | Date): string {
   }).format(typeof date === "string" ? new Date(date) : date);
 }
 
-export const DEFAULT_LOCATION = process.env.NEXT_PUBLIC_DEFAULT_LOCATION ?? "Agra, OK";
-export const DEFAULT_LAT = Number(process.env.NEXT_PUBLIC_DEFAULT_LAT ?? 35.8942);
-export const DEFAULT_LON = Number(process.env.NEXT_PUBLIC_DEFAULT_LON ?? -96.8714);
+import { env } from "@/lib/env";
+
+export const DEFAULT_LOCATION = env.defaultLocation;
+export const DEFAULT_LAT = env.defaultLat;
+export const DEFAULT_LON = env.defaultLon;
 
 export function getSeasonalForagingAdvice(month: number): string {
   const advice: Record<number, string> = {
