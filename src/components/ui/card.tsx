@@ -7,7 +7,7 @@ export function Card({
   return (
     <div
       className={cn(
-        "rounded-xl border border-wax-300/60 bg-wax-50/80 backdrop-blur-sm shadow-sm",
+        "surface-panel rounded-2xl backdrop-blur-sm transition-all duration-300",
         className
       )}
       {...props}
@@ -44,7 +44,7 @@ export function CardDescription({
   ...props
 }: React.HTMLAttributes<HTMLParagraphElement>) {
   return (
-    <p className={cn("text-sm text-hive-600", className)} {...props} />
+    <p className={cn("text-sm leading-relaxed text-hive-600", className)} {...props} />
   );
 }
 

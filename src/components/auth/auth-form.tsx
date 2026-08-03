@@ -87,15 +87,18 @@ export function AuthForm({ mode }: AuthFormProps) {
   }
 
   return (
-    <div className="w-full max-w-md">
+    <div className="fade-up w-full max-w-md">
       <div className="mb-8 text-center">
-        <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-honey-500 shadow-md">
-          <Hexagon className="h-7 w-7 text-wax-950" strokeWidth={2.5} />
+        <div className="brand-mark float-slow mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-3xl">
+          <Hexagon className="h-8 w-8 text-wax-50" strokeWidth={2.5} />
         </div>
-        <h1 className="font-display text-3xl font-bold text-hive-900">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-honey-700">
+          Apiary
+        </p>
+        <h1 className="font-display mt-2 text-4xl font-bold text-hive-900">
           {mode === "login" ? "Welcome back" : "Join the yard"}
         </h1>
-        <p className="mt-2 text-hive-600">
+        <p className="mt-3 text-hive-600">
           {mode === "login"
             ? "Sign in to manage your apiary."
             : "Create an account to track hives, inspections, and harvests."}
@@ -104,10 +107,11 @@ export function AuthForm({ mode }: AuthFormProps) {
 
       <form
         onSubmit={onSubmit}
-        className="space-y-4 rounded-2xl border border-wax-300/60 bg-wax-50/90 p-6 shadow-sm backdrop-blur-sm"
+        className="surface-panel relative space-y-4 overflow-hidden rounded-3xl p-7"
       >
+        <div className="pointer-events-none absolute inset-x-0 top-0 h-px shimmer-line" />
         {!configured && (
-          <div className="rounded-lg border border-amber-300/50 bg-amber-50 px-3 py-2 text-sm text-amber-900">
+          <div className="rounded-xl border border-amber-300/50 bg-amber-50 px-3 py-2 text-sm text-amber-900">
             Supabase keys missing in <code className="text-xs">.env.local</code>
           </div>
         )}
@@ -122,6 +126,7 @@ export function AuthForm({ mode }: AuthFormProps) {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="beekeeper@example.com"
+            className="min-h-12 rounded-xl"
           />
         </div>
 
@@ -136,21 +141,22 @@ export function AuthForm({ mode }: AuthFormProps) {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             placeholder="At least 6 characters"
+            className="min-h-12 rounded-xl"
           />
         </div>
 
         {error && (
-          <p className="rounded-lg border border-crimson-300/40 bg-crimson-50 px-3 py-2 text-sm text-crimson-800">
+          <p className="rounded-xl border border-crimson-300/40 bg-crimson-50 px-3 py-2 text-sm text-crimson-800">
             {error}
           </p>
         )}
         {message && (
-          <p className="rounded-lg border border-meadow-400/30 bg-meadow-100 px-3 py-2 text-sm text-meadow-800">
+          <p className="rounded-xl border border-meadow-400/30 bg-meadow-100 px-3 py-2 text-sm text-meadow-800">
             {message}
           </p>
         )}
 
-        <Button type="submit" className="w-full" disabled={loading}>
+        <Button type="submit" size="lg" className="mt-2 w-full" disabled={loading}>
           {loading && <Loader2 className="h-4 w-4 animate-spin" />}
           {mode === "login" ? "Sign in" : "Create account"}
         </Button>
@@ -160,14 +166,14 @@ export function AuthForm({ mode }: AuthFormProps) {
         {mode === "login" ? (
           <>
             New beekeeper?{" "}
-            <Link href="/signup" className="font-medium text-honey-700 hover:text-honey-600">
+            <Link href="/signup" className="font-semibold text-honey-700 hover:text-honey-600">
               Create an account
             </Link>
           </>
         ) : (
           <>
             Already have an account?{" "}
-            <Link href="/login" className="font-medium text-honey-700 hover:text-honey-600">
+            <Link href="/login" className="font-semibold text-honey-700 hover:text-honey-600">
               Sign in
             </Link>
           </>

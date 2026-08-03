@@ -89,6 +89,20 @@ export type Database = {
           created_by: string;
           created_at: string;
           updated_at: string;
+          inspection_time: string | null;
+          weather: string | null;
+          temperature_f: number | null;
+          queen_sighted: Database["public"]["Enums"]["queen_sighted"] | null;
+          queen_mark_color: Database["public"]["Enums"]["queen_mark_color"] | null;
+          eggs_larvae: Database["public"]["Enums"]["eggs_larvae_status"] | null;
+          honey_stores: Database["public"]["Enums"]["store_level"] | null;
+          pollen_stores: Database["public"]["Enums"]["store_level"] | null;
+          mite_count_per_100: number | null;
+          pests_diseases: Database["public"]["Enums"]["pest_disease"] | null;
+          action_fed: boolean;
+          action_super: boolean;
+          action_split: boolean;
+          action_treatment: boolean;
         };
         Insert: {
           id?: string;
@@ -101,6 +115,20 @@ export type Database = {
           created_by: string;
           created_at?: string;
           updated_at?: string;
+          inspection_time?: string | null;
+          weather?: string | null;
+          temperature_f?: number | null;
+          queen_sighted?: Database["public"]["Enums"]["queen_sighted"] | null;
+          queen_mark_color?: Database["public"]["Enums"]["queen_mark_color"] | null;
+          eggs_larvae?: Database["public"]["Enums"]["eggs_larvae_status"] | null;
+          honey_stores?: Database["public"]["Enums"]["store_level"] | null;
+          pollen_stores?: Database["public"]["Enums"]["store_level"] | null;
+          mite_count_per_100?: number | null;
+          pests_diseases?: Database["public"]["Enums"]["pest_disease"] | null;
+          action_fed?: boolean;
+          action_super?: boolean;
+          action_split?: boolean;
+          action_treatment?: boolean;
         };
         Update: {
           id?: string;
@@ -113,6 +141,20 @@ export type Database = {
           created_by?: string;
           created_at?: string;
           updated_at?: string;
+          inspection_time?: string | null;
+          weather?: string | null;
+          temperature_f?: number | null;
+          queen_sighted?: Database["public"]["Enums"]["queen_sighted"] | null;
+          queen_mark_color?: Database["public"]["Enums"]["queen_mark_color"] | null;
+          eggs_larvae?: Database["public"]["Enums"]["eggs_larvae_status"] | null;
+          honey_stores?: Database["public"]["Enums"]["store_level"] | null;
+          pollen_stores?: Database["public"]["Enums"]["store_level"] | null;
+          mite_count_per_100?: number | null;
+          pests_diseases?: Database["public"]["Enums"]["pest_disease"] | null;
+          action_fed?: boolean;
+          action_super?: boolean;
+          action_split?: boolean;
+          action_treatment?: boolean;
         };
         Relationships: [
           {
@@ -368,6 +410,17 @@ export type Database = {
       mite_method: "alcohol_wash" | "sugar_roll" | "sticky_board";
       treatment_status: "planned" | "in_progress" | "completed";
       expense_category: "equipment" | "treatments" | "feed" | "administrative" | "other";
+      queen_sighted: "yes" | "no" | "uncertain";
+      eggs_larvae_status: "eggs_and_larvae" | "eggs_only" | "larvae_only" | "none_observed";
+      store_level: "empty" | "low" | "moderate" | "good" | "full";
+      pest_disease:
+        | "none"
+        | "varroa"
+        | "chalkbrood"
+        | "foulbrood_suspect"
+        | "wax_moth"
+        | "ants"
+        | "other";
     };
     CompositeTypes: Record<string, never>;
   };

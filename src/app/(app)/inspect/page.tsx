@@ -2,6 +2,7 @@ import { PageHeader } from "@/components/layout/page-header";
 import { QuickLogForm } from "@/components/inspect/quick-log-form";
 import { createClient } from "@/lib/supabase/server";
 import { listHivesForUser } from "@/lib/hives";
+import { fetchLocalWeather } from "@/lib/weather";
 import type { Hive } from "@/lib/hives";
 
 interface InspectPageProps {
@@ -17,6 +18,8 @@ export default async function InspectPage({ searchParams }: InspectPageProps) {
 
   let hives: Pick<Hive, "id" | "name" | "status">[] = [];
   let loadError: string | null = null;
+
+  const [weather] = await Promise.all([fetchLocalWeather()]);
 
   if (user) {
     try {
@@ -36,8 +39,9 @@ export default async function InspectPage({ searchParams }: InspectPageProps) {
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
       <PageHeader
         eyebrow="Field Work"
-        title="Quick Log"
-        description="Mobile-first inspection logging for the bee yard — queen, brood, temperament, and mite counts in one save."
+        title="Quick Inspection Log"
+        description="Weather and temperature auto-fill from Agra, OK. Complete queen, health, and actions below."
+        className="mb-6 py-5 sm:py-6"
       />
 
       {loadError && (
@@ -48,7 +52,11 @@ export default async function InspectPage({ searchParams }: InspectPageProps) {
 
       {!loadError && (
         <div className="fade-up-delay-1">
-          <QuickLogForm hives={hives} initialHiveId={initialHiveId} />
+          <QuickLogForm
+            hives={hives}
+            initialHiveId={initialHiveId}
+            initialWeather={weather}
+          />
         </div>
       )}
     </div>

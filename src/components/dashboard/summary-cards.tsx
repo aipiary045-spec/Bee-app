@@ -8,21 +8,24 @@ const stats = [
     value: "24",
     subtext: "of 26 total",
     icon: Hexagon,
-    accent: "text-honey-600 bg-honey-100",
+    accent: "text-honey-800 bg-honey-200/70",
+    wash: "from-honey-100/80 to-transparent",
   },
   {
     label: "Needs Attention",
     value: "3",
     subtext: "urgent flags",
     icon: AlertCircle,
-    accent: "text-crimson-600 bg-crimson-100",
+    accent: "text-crimson-700 bg-crimson-100",
+    wash: "from-crimson-100/70 to-transparent",
   },
   {
     label: "Apiary Health",
     value: "Good",
     subtext: "82% colonies thriving",
     icon: HeartPulse,
-    accent: "text-meadow-600 bg-meadow-100",
+    accent: "text-meadow-800 bg-meadow-100",
+    wash: "from-meadow-100/80 to-transparent",
   },
 ];
 
@@ -32,28 +35,31 @@ export function SummaryCards() {
       {stats.map((stat) => (
         <Card
           key={stat.label}
-          className="group transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md"
+          className="group relative overflow-hidden hover:-translate-y-1 hover:shadow-[0_18px_40px_-24px_rgba(61,42,20,0.45)]"
         >
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
+          <div
+            className={`pointer-events-none absolute inset-0 bg-gradient-to-br ${stat.wash}`}
+          />
+          <CardHeader className="relative flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium text-hive-600">
               {stat.label}
             </CardTitle>
             <div
-              className={`flex h-9 w-9 items-center justify-center rounded-lg ${stat.accent}`}
+              className={`flex h-10 w-10 items-center justify-center rounded-xl ${stat.accent}`}
             >
               <stat.icon className="h-4 w-4" />
             </div>
           </CardHeader>
-          <CardContent>
+          <CardContent className="relative">
             <div className="flex items-baseline gap-2">
-              <span className="font-display text-3xl font-bold text-hive-900">
+              <span className="font-display text-3xl font-bold tracking-tight text-hive-900">
                 {stat.value}
               </span>
               {stat.label === "Apiary Health" && (
                 <Badge variant="success">Stable</Badge>
               )}
             </div>
-            <p className="mt-1 text-xs text-hive-500">{stat.subtext}</p>
+            <p className="mt-1.5 text-xs text-hive-500">{stat.subtext}</p>
           </CardContent>
         </Card>
       ))}
