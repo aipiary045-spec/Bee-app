@@ -5,6 +5,16 @@ function getEnv(name: string, fallback?: string): string {
   throw new Error(`Missing required environment variable: ${name}`);
 }
 
+function looksLikePlaceholder(value: string | undefined): boolean {
+  if (!value) return true;
+  const v = value.toLowerCase();
+  return (
+    v.includes("your-") ||
+    v.includes("placeholder") ||
+    v === "changeme"
+  );
+}
+
 export const env = {
   supabaseUrl: () =>
     getEnv("NEXT_PUBLIC_SUPABASE_URL", "https://placeholder.supabase.co"),
@@ -14,9 +24,15 @@ export const env = {
     process.env.NEXT_PUBLIC_DEFAULT_LOCATION ?? "Agra, OK",
   defaultLat: Number(process.env.NEXT_PUBLIC_DEFAULT_LAT ?? 35.8942),
   defaultLon: Number(process.env.NEXT_PUBLIC_DEFAULT_LON ?? -96.8714),
-  isSupabaseConfigured: () =>
-    Boolean(
-      process.env.NEXT_PUBLIC_SUPABASE_URL &&
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-    ),
+  isSupabaseConfigured: () => {
+    const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+    return Boolean(
+      url &&
+        key &&
+        !looksLikePlaceholder(url) &&
+        !looksLikePlaceholder(key) &&
+        url.startsWith("http")
+    );
+  },
 } as const;

@@ -1,20 +1,54 @@
-import { MapPin, Settings } from "lucide-react";
+import { MapPin, Settings, User } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { SignOutButton } from "@/components/auth/sign-out-button";
+import { createClient } from "@/lib/supabase/server";
 import { env } from "@/lib/env";
 import { DEFAULT_LOCATION, DEFAULT_LAT, DEFAULT_LON } from "@/lib/utils";
 
-export default function SettingsPage() {
+export default async function SettingsPage() {
+  let userEmail: string | null = null;
+
+  if (env.isSupabaseConfigured()) {
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    userEmail = user?.email ?? null;
+  }
+
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
       <PageHeader
         eyebrow="Configuration"
         title="Settings"
         description="Apiary defaults, location context for weather and seasonal advice, and account preferences."
+        actions={<SignOutButton />}
       />
 
       <div className="grid gap-6 lg:grid-cols-2">
+        <Card className="fade-up-delay-1">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <User className="h-5 w-5 text-honey-600" />
+              Account
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="flex items-center justify-between rounded-lg border border-wax-300/60 bg-wax-50/80 px-4 py-3">
+              <span className="text-sm text-hive-600">Email</span>
+              <span className="font-medium text-hive-900">
+                {userEmail ?? "Not signed in"}
+              </span>
+            </div>
+            <p className="text-sm leading-relaxed text-hive-600">
+              Your apiary data is scoped to this account via Supabase Row Level
+              Security.
+            </p>
+          </CardContent>
+        </Card>
+
         <Card className="fade-up-delay-1">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -44,7 +78,7 @@ export default function SettingsPage() {
           </CardContent>
         </Card>
 
-        <Card className="fade-up-delay-2">
+        <Card className="fade-up-delay-2 lg:col-span-2">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Settings className="h-5 w-5 text-hive-600" />
@@ -57,13 +91,37 @@ export default function SettingsPage() {
                 {env.isSupabaseConfigured() ? "Connected" : "Not configured"}
               </Badge>
               <span className="text-sm text-hive-600">
-                Add credentials to <code className="text-xs">.env.local</code>
+                Credentials live in <code className="text-xs">.env.local</code>
               </span>
             </div>
             <ol className="list-inside list-decimal space-y-2 text-sm leading-relaxed text-hive-600">
-              <li>Copy <code className="text-xs">.env.local.example</code> to <code className="text-xs">.env.local</code></li>
-              <li>Add your Supabase project URL and anon key</li>
-              <li>Run the migration in <code className="text-xs">supabase/migrations/</code></li>
+              <li>
+                Create a project at{" "}
+                <a
+                  href="https://supabase.com/dashboard"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="font-medium text-honey-700 hover:text-honey-600"
+                >
+                  supabase.com/dashboard
+                </a>
+              </li>
+              <li>
+                Copy Project URL + anon key into{" "}
+                <code className="text-xs">.env.local</code>
+              </li>
+              <li>
+                Run{" "}
+                <code className="text-xs">
+                  supabase/migrations/20260729000000_initial_schema.sql
+                </code>{" "}
+                in the SQL Editor
+              </li>
+              <li>
+                Under Authentication → Providers, keep Email enabled. Optionally
+                turn off “Confirm email” for faster local testing.
+              </li>
+              <li>Restart <code className="text-xs">npm run dev</code>, then sign up at /signup</li>
             </ol>
           </CardContent>
         </Card>

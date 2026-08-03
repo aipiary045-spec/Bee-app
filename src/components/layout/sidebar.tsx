@@ -10,6 +10,7 @@ import {
   Settings,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { SignOutButton } from "@/components/auth/sign-out-button";
 
 const navItems = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
@@ -60,7 +61,7 @@ export function Sidebar() {
         })}
       </nav>
 
-      <div className="border-t border-wax-300/50 p-4">
+      <div className="space-y-3 border-t border-wax-300/50 p-4">
         <div className="rounded-lg bg-gradient-to-br from-honey-100 to-wax-200 p-4">
           <p className="font-display text-sm font-semibold text-hive-800">
             Field Season
@@ -69,6 +70,7 @@ export function Sidebar() {
             Log inspections on-site with Quick Log — works great on mobile.
           </p>
         </div>
+        <SignOutButton className="w-full" />
       </div>
     </aside>
   );

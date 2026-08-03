@@ -73,10 +73,12 @@ supabase/
 
 All tables have Row Level Security policies scoped to the authenticated user.
 
-## Regenerate Types
+## Auth
 
-After schema changes:
+Sign up at `/signup`, sign in at `/login`. Protected routes redirect to login when you are signed out.
 
-```bash
-npm run db:types
-```
+1. Put your Supabase URL + anon key in `.env.local`
+2. Run the SQL migration in the Supabase SQL Editor
+3. Authentication → Providers → Email (optionally disable Confirm email for local testing)
+4. Restart `npm run dev` and create an account
+
