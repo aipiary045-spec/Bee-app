@@ -2,7 +2,13 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
-import type { Enums } from "@/types/database";
+import { getExpenseCatalogItem } from "@/lib/expense-catalog";
+import type { Enums, TablesInsert } from "@/types/database";
+
+export type QuickLogExpenseInput = {
+  catalogId: string;
+  amount: string;
+};
 
 export type QuickLogInput = {
   hiveId: string;
@@ -24,6 +30,8 @@ export type QuickLogInput = {
   actionSplit: boolean;
   actionTreatment: boolean;
   notes: string;
+  logExpenses: boolean;
+  expenses: QuickLogExpenseInput[];
 };
 
 export type ActionResult =
@@ -54,6 +62,35 @@ export async function createInspectionAction(
     return { ok: false, error: "Enter a valid mite count (0 or greater)." };
   }
 
+  const parsedExpenses: {
+    catalogId: string;
+    label: string;
+    category: Enums<"expense_category">;
+    amount: number;
+  }[] = [];
+
+  if (input.logExpenses && input.expenses.length > 0) {
+    for (const row of input.expenses) {
+      const item = getExpenseCatalogItem(row.catalogId);
+      if (!item) {
+        return { ok: false, error: `Unknown expense item: ${row.catalogId}` };
+      }
+      const amount = Number(row.amount);
+      if (Number.isNaN(amount) || amount < 0) {
+        return {
+          ok: false,
+          error: `Enter a valid price for ${item.label}.`,
+        };
+      }
+      parsedExpenses.push({
+        catalogId: item.id,
+        label: item.label,
+        category: item.category,
+        amount,
+      });
+    }
+  }
+
   const supabase = await createClient();
   const {
     data: { user },
@@ -64,6 +101,16 @@ export async function createInspectionAction(
   }
 
   try {
+    const { data: hive, error: hiveError } = await supabase
+      .from("hives")
+      .select("id, apiary_id")
+      .eq("id", input.hiveId)
+      .maybeSingle();
+
+    if (hiveError || !hive) {
+      return { ok: false, error: hiveError?.message ?? "Hive not found." };
+    }
+
     const { data: inspection, error: inspectionError } = await supabase
       .from("inspections")
       .insert({
@@ -116,10 +163,32 @@ export async function createInspectionAction(
       });
     }
 
+    if (parsedExpenses.length > 0) {
+      const expenseRows: TablesInsert<"expenses">[] = parsedExpenses.map(
+        (expense) => ({
+          apiary_id: hive.apiary_id,
+          hive_id: input.hiveId,
+          category: expense.category,
+          amount: expense.amount,
+          date: input.date,
+          description: `${expense.label} (Quick Log)`,
+        })
+      );
+
+      const { error: expenseError } = await supabase
+        .from("expenses")
+        .insert(expenseRows);
+
+      if (expenseError) {
+        return { ok: false, error: expenseError.message };
+      }
+    }
+
     revalidatePath("/");
     revalidatePath("/inspect");
     revalidatePath("/hives");
     revalidatePath(`/hives/${input.hiveId}`);
+    revalidatePath("/expenses");
 
     return { ok: true, inspectionId: inspection.id };
   } catch (err) {
@@ -129,7 +198,7 @@ export async function createInspectionAction(
       return {
         ok: false,
         error:
-          "Database is missing the latest inspection columns. Run supabase/migrations/20260804000000_extend_inspection_log.sql in the Supabase SQL Editor, then try again.",
+          "Database is missing required tables/columns. Run the SQL migrations in the Supabase SQL Editor, then try again.",
       };
     }
     return { ok: false, error: message };

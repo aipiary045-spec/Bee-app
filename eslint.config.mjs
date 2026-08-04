@@ -1,11 +1,11 @@
-import { type Config } from "eslint/config";
 import { FlatCompat } from "@eslint/eslintrc";
 
 const compat = new FlatCompat({
   baseDirectory: import.meta.dirname,
 });
 
-const eslintConfig: Config = [
+/** @type {import("eslint").Linter.Config[]} */
+const eslintConfig = [
   ...compat.extends("next/core-web-vitals", "next/typescript"),
 ];
 

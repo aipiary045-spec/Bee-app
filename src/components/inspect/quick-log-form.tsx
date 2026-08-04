@@ -6,6 +6,7 @@ import {
   CheckCircle2,
   ClipboardList,
   Crown,
+  DollarSign,
   HeartPulse,
   Loader2,
   Wrench,
@@ -15,7 +16,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { cn, DEFAULT_LOCATION } from "@/lib/utils";
+import { cn, DEFAULT_LOCATION, formatCurrency } from "@/lib/utils";
+import { EXPENSE_CATALOG } from "@/lib/expense-catalog";
 import type { Hive } from "@/lib/hives";
 import type { Enums } from "@/types/database";
 import type { LocalWeather } from "@/lib/weather";
@@ -223,6 +225,35 @@ export function QuickLogForm({
   const [actionTreatment, setActionTreatment] = useState(false);
   const [notes, setNotes] = useState("");
 
+  const [logExpenses, setLogExpenses] = useState(false);
+  const [selectedExpenseIds, setSelectedExpenseIds] = useState<string[]>([]);
+  const [expenseAmounts, setExpenseAmounts] = useState<Record<string, string>>(
+    {}
+  );
+
+  const expenseTotal = useMemo(() => {
+    if (!logExpenses) return 0;
+    return selectedExpenseIds.reduce((sum, id) => {
+      const amount = Number(expenseAmounts[id] ?? "");
+      return sum + (Number.isNaN(amount) ? 0 : amount);
+    }, 0);
+  }, [logExpenses, selectedExpenseIds, expenseAmounts]);
+
+  function toggleExpense(id: string) {
+    setSelectedExpenseIds((current) => {
+      if (current.includes(id)) {
+        setExpenseAmounts((amounts) => {
+          const next = { ...amounts };
+          delete next[id];
+          return next;
+        });
+        return current.filter((item) => item !== id);
+      }
+      setExpenseAmounts((amounts) => ({ ...amounts, [id]: amounts[id] ?? "" }));
+      return [...current, id];
+    });
+  }
+
   const actionState = {
     actionFed,
     actionSuper,
@@ -262,6 +293,11 @@ export function QuickLogForm({
         actionSplit,
         actionTreatment,
         notes,
+        logExpenses,
+        expenses: selectedExpenseIds.map((catalogId) => ({
+          catalogId,
+          amount: expenseAmounts[catalogId] ?? "",
+        })),
       });
 
       if (!result.ok) {
@@ -269,13 +305,20 @@ export function QuickLogForm({
         return;
       }
 
-      setSuccess("Inspection saved.");
+      setSuccess(
+        logExpenses && selectedExpenseIds.length > 0
+          ? `Inspection saved with ${selectedExpenseIds.length} expense${selectedExpenseIds.length === 1 ? "" : "s"}.`
+          : "Inspection saved."
+      );
       setNotes("");
       setActionFed(false);
       setActionSuper(false);
       setActionSplit(false);
       setActionTreatment(false);
       setMiteCountPer100("0");
+      setLogExpenses(false);
+      setSelectedExpenseIds([]);
+      setExpenseAmounts({});
       router.refresh();
     });
   }
@@ -593,6 +636,133 @@ export function QuickLogForm({
           </div>
         </SectionCard>
       </div>
+
+      <SectionCard icon={DollarSign} title="Expenses (optional)">
+        <label className="flex items-center gap-2 text-sm text-hive-700">
+          <input
+            type="checkbox"
+            checked={logExpenses}
+            onChange={(e) => setLogExpenses(e.target.checked)}
+            className="h-3.5 w-3.5 accent-honey-600"
+          />
+          Log purchases with this inspection
+        </label>
+
+        {logExpenses && (
+          <div className="space-y-3">
+            <div className="space-y-1.5">
+              <Label htmlFor="expense-catalog" className="text-xs">
+                Common purchases (hold Ctrl/Cmd to select multiple)
+              </Label>
+              <select
+                id="expense-catalog"
+                multiple
+                size={8}
+                value={selectedExpenseIds}
+                onChange={(e) => {
+                  const next = Array.from(
+                    e.target.selectedOptions,
+                    (option) => option.value
+                  );
+                  setSelectedExpenseIds(next);
+                  setExpenseAmounts((amounts) => {
+                    const updated: Record<string, string> = {};
+                    for (const id of next) {
+                      updated[id] = amounts[id] ?? "";
+                    }
+                    return updated;
+                  });
+                }}
+                className="w-full rounded-lg border border-wax-300/80 bg-wax-50/95 px-2 py-2 text-sm text-hive-900 shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-honey-500/40"
+              >
+                {(["equipment", "treatments", "feed", "administrative", "other"] as const).map(
+                  (category) => (
+                    <optgroup
+                      key={category}
+                      label={category.charAt(0).toUpperCase() + category.slice(1)}
+                    >
+                      {EXPENSE_CATALOG.filter((item) => item.category === category).map(
+                        (item) => (
+                          <option key={item.id} value={item.id}>
+                            {item.label}
+                          </option>
+                        )
+                      )}
+                    </optgroup>
+                  )
+                )}
+              </select>
+              <p className="text-[11px] text-hive-500">
+                Tip: on mobile, tap items to toggle — or use the checklist below.
+              </p>
+            </div>
+
+            <div className="max-h-40 space-y-1.5 overflow-y-auto rounded-lg border border-wax-300/50 bg-wax-50/70 p-2 sm:hidden">
+              {EXPENSE_CATALOG.map((item) => (
+                <label
+                  key={item.id}
+                  className="flex items-center gap-2 rounded-md px-1.5 py-1 text-sm text-hive-700 hover:bg-honey-50/60"
+                >
+                  <input
+                    type="checkbox"
+                    checked={selectedExpenseIds.includes(item.id)}
+                    onChange={() => toggleExpense(item.id)}
+                    className="h-3.5 w-3.5 accent-honey-600"
+                  />
+                  <span className="min-w-0 flex-1 truncate">{item.label}</span>
+                </label>
+              ))}
+            </div>
+
+            {selectedExpenseIds.length > 0 ? (
+              <div className="space-y-2">
+                <Label className="text-xs">Prices</Label>
+                {selectedExpenseIds.map((id) => {
+                  const item = EXPENSE_CATALOG.find((entry) => entry.id === id);
+                  if (!item) return null;
+                  return (
+                    <div
+                      key={id}
+                      className="grid grid-cols-[1fr_7rem] items-center gap-2"
+                    >
+                      <span className="truncate text-sm text-hive-700">
+                        {item.label}
+                      </span>
+                      <div className="relative">
+                        <span className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-xs text-hive-500">
+                          $
+                        </span>
+                        <Input
+                          type="number"
+                          min={0}
+                          step="0.01"
+                          required={logExpenses}
+                          value={expenseAmounts[id] ?? ""}
+                          onChange={(e) =>
+                            setExpenseAmounts((amounts) => ({
+                              ...amounts,
+                              [id]: e.target.value,
+                            }))
+                          }
+                          placeholder="0.00"
+                          className="h-9 pl-6"
+                        />
+                      </div>
+                    </div>
+                  );
+                })}
+                <p className="text-right text-sm font-medium text-hive-800">
+                  Total: {formatCurrency(expenseTotal)}
+                </p>
+              </div>
+            ) : (
+              <p className="text-sm text-hive-500">
+                Select one or more items to enter prices.
+              </p>
+            )}
+          </div>
+        )}
+      </SectionCard>
 
       {error && (
         <p className="rounded-lg border border-crimson-300/40 bg-crimson-50 px-3 py-2 text-sm text-crimson-800">

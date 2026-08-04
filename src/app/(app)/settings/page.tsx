@@ -1,4 +1,4 @@
-import { MapPin, Settings, User } from "lucide-react";
+import { MapPin, QrCode, Settings, User } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -9,6 +9,7 @@ import { DEFAULT_LOCATION, DEFAULT_LAT, DEFAULT_LON } from "@/lib/utils";
 
 export default async function SettingsPage() {
   let userEmail: string | null = null;
+  const yardUrl = env.appUrl();
 
   if (env.isSupabaseConfigured()) {
     const supabase = await createClient();
@@ -74,6 +75,33 @@ export default async function SettingsPage() {
                 NEXT_PUBLIC_DEFAULT_*
               </code>{" "}
               env vars.
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card className="fade-up-delay-2">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <QrCode className="h-5 w-5 text-honey-600" />
+              Yard QR access
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="flex items-center gap-2">
+              <Badge variant={yardUrl ? "success" : "warning"}>
+                {yardUrl ? "Configured" : "Not set"}
+              </Badge>
+            </div>
+            <div className="rounded-lg border border-wax-300/60 bg-wax-50/80 px-4 py-3">
+              <p className="text-xs text-hive-500">NEXT_PUBLIC_APP_URL</p>
+              <p className="mt-1 break-all font-mono text-sm text-hive-900">
+                {yardUrl ?? "Not configured"}
+              </p>
+            </div>
+            <p className="text-sm leading-relaxed text-hive-600">
+              Hive QR codes use this LAN URL so phones on your Wi‑Fi can open
+              Quick Log while the app is running. Keep the computer and phone on
+              the same network.
             </p>
           </CardContent>
         </Card>

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, Crown, Hexagon, LineChart } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
+import { HiveQrCard } from "@/components/hives/hive-qr-card";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -58,22 +59,25 @@ export default async function HiveDetailPage({ params }: HiveDetailPageProps) {
         </Button>
       </div>
 
-      <div className="fade-up-delay-2 grid gap-4 sm:grid-cols-3">
-        {tabs.map(({ label, icon: Icon }) => (
-          <Card key={label}>
-            <CardHeader className="pb-2">
-              <CardTitle className="flex items-center gap-2 text-base">
-                <Icon className="h-4 w-4 text-honey-700" />
-                {label}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-hive-500">
-                No records yet — use Quick Log to start tracking this colony.
-              </p>
-            </CardContent>
-          </Card>
-        ))}
+      <div className="fade-up-delay-2 mb-8 grid gap-4 lg:grid-cols-3">
+        <div className="lg:col-span-2 grid gap-4 sm:grid-cols-3">
+          {tabs.map(({ label, icon: Icon }) => (
+            <Card key={label}>
+              <CardHeader className="pb-2">
+                <CardTitle className="flex items-center gap-2 text-base">
+                  <Icon className="h-4 w-4 text-honey-700" />
+                  {label}
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-hive-500">
+                  No records yet — use Quick Log to start tracking this colony.
+                </p>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+        <HiveQrCard hiveId={hive.id} hiveName={hive.name} />
       </div>
     </div>
   );

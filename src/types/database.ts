@@ -390,7 +390,9 @@ export type Database = {
         ];
       };
     };
-    Views: Record<string, never>;
+    Views: {
+      [_ in never]: never;
+    };
     Functions: {
       user_owns_hive: {
         Args: { hive_uuid: string };
@@ -422,7 +424,9 @@ export type Database = {
         | "ants"
         | "other";
     };
-    CompositeTypes: Record<string, never>;
+    CompositeTypes: {
+      [_ in never]: never;
+    };
   };
 };
 
