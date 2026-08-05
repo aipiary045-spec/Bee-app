@@ -19,6 +19,10 @@ export const metadata: Metadata = {
   title: "Apiary App — Beekeeping Management",
   description:
     "Modern apiary management for Agra, Oklahoma beekeepers. Track hives, inspections, mite counts, honey yields, and expenses.",
+  icons: {
+    icon: [{ url: "/favicon.png", type: "image/png" }],
+    apple: [{ url: "/brand/apiary-logo.png" }],
+  },
 };
 
 export default function RootLayout({

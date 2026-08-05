@@ -9,6 +9,7 @@ import {
   Settings,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { BrandLogo } from "@/components/brand/brand-logo";
 import { SignOutButton } from "@/components/auth/sign-out-button";
 
 const navItems = [
@@ -26,8 +27,8 @@ export function Sidebar() {
       <div className="relative overflow-hidden border-b border-wax-300/40 px-6 py-5">
         <div className="pointer-events-none absolute inset-x-0 top-0 h-px shimmer-line" />
         <div className="flex items-center gap-3">
-          <div className="brand-mark float-slow flex h-11 w-11 items-center justify-center rounded-2xl">
-            <Hexagon className="h-6 w-6 text-wax-50" strokeWidth={2.5} />
+          <div className="float-slow flex h-12 w-12 items-center justify-center overflow-hidden rounded-2xl bg-wax-50/80 ring-1 ring-honey-400/35 shadow-sm">
+            <BrandLogo size={44} className="h-11 w-11" priority />
           </div>
           <div>
             <p className="font-display text-xl font-bold leading-tight text-hive-900">
@@ -73,6 +74,9 @@ export function Sidebar() {
 
       <div className="space-y-3 border-t border-wax-300/40 p-4">
         <div className="relative overflow-hidden rounded-2xl border border-honey-300/40 bg-gradient-to-br from-honey-100 via-wax-100 to-meadow-100/40 p-4">
+          <div className="pointer-events-none absolute -right-4 -top-3 opacity-20">
+            <BrandLogo size={72} className="h-16 w-16" alt="" />
+          </div>
           <div className="pointer-events-none absolute -right-6 -top-6 h-20 w-20 rounded-full bg-honey-400/25 blur-2xl" />
           <p className="font-display relative text-sm font-semibold text-hive-800">
             Field Season

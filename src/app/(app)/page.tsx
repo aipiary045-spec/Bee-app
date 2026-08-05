@@ -1,11 +1,12 @@
 import Link from "next/link";
-import { Hexagon, Plus, ClipboardList } from "lucide-react";
+import { Plus, ClipboardList } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/layout/page-header";
 import { SummaryCards } from "@/components/dashboard/summary-cards";
 import { WeatherWidget } from "@/components/dashboard/weather-widget";
 import { PriorityAlertsBar } from "@/components/dashboard/priority-alerts";
 import { Badge } from "@/components/ui/badge";
+import { BrandLogo } from "@/components/brand/brand-logo";
 import { createClient } from "@/lib/supabase/server";
 import { listHivesForUser } from "@/lib/hives";
 import type { Hive } from "@/lib/hives";
@@ -81,8 +82,8 @@ export default async function DashboardPage() {
 
         {hives.length === 0 ? (
           <div className="surface-panel rounded-2xl border-dashed px-6 py-12 text-center">
-            <div className="brand-mark mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-2xl">
-              <Hexagon className="h-6 w-6 text-wax-50" />
+            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center overflow-hidden rounded-2xl bg-wax-50/90 ring-1 ring-honey-400/35">
+              <BrandLogo size={52} className="h-12 w-12" />
             </div>
             <p className="font-display text-lg font-semibold text-hive-900">
               No colonies yet

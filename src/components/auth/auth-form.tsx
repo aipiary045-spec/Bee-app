@@ -3,8 +3,9 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Hexagon, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import { BrandLogo } from "@/components/brand/brand-logo";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -20,6 +21,7 @@ export function AuthForm({ mode }: AuthFormProps) {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -40,6 +42,11 @@ export function AuthForm({ mode }: AuthFormProps) {
 
     if (password.length < 6) {
       setError("Password must be at least 6 characters.");
+      return;
+    }
+
+    if (mode === "signup" && password !== confirmPassword) {
+      setError("Passwords do not match.");
       return;
     }
 
@@ -89,8 +96,8 @@ export function AuthForm({ mode }: AuthFormProps) {
   return (
     <div className="fade-up w-full max-w-md">
       <div className="mb-8 text-center">
-        <div className="brand-mark float-slow mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-3xl">
-          <Hexagon className="h-8 w-8 text-wax-50" strokeWidth={2.5} />
+        <div className="float-slow mx-auto mb-5 flex h-20 w-20 items-center justify-center overflow-hidden rounded-[1.6rem] bg-wax-50/85 ring-1 ring-honey-400/40 shadow-[0_12px_28px_-16px_rgba(164,85,16,0.55)]">
+          <BrandLogo size={72} className="h-[4.5rem] w-[4.5rem]" priority />
         </div>
         <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-honey-700">
           Apiary
@@ -112,7 +119,12 @@ export function AuthForm({ mode }: AuthFormProps) {
         <div className="pointer-events-none absolute inset-x-0 top-0 h-px shimmer-line" />
         {!configured && (
           <div className="rounded-xl border border-amber-300/50 bg-amber-50 px-3 py-2 text-sm text-amber-900">
-            Supabase keys missing in <code className="text-xs">.env.local</code>
+            Supabase is not configured for this site. On Vercel, add{" "}
+            <code className="text-xs">NEXT_PUBLIC_SUPABASE_URL</code> and{" "}
+            <code className="text-xs">NEXT_PUBLIC_SUPABASE_ANON_KEY</code> under
+            Settings → Environment Variables (Production), then Redeploy. Locally,
+            put them in <code className="text-xs">.env.local</code> and restart
+            the dev server.
           </div>
         )}
 
@@ -144,6 +156,23 @@ export function AuthForm({ mode }: AuthFormProps) {
             className="min-h-12 rounded-xl"
           />
         </div>
+
+        {mode === "signup" && (
+          <div className="space-y-2">
+            <Label htmlFor="confirm-password">Confirm password</Label>
+            <Input
+              id="confirm-password"
+              type="password"
+              autoComplete="new-password"
+              required
+              minLength={6}
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              placeholder="Re-enter your password"
+              className="min-h-12 rounded-xl"
+            />
+          </div>
+        )}
 
         {error && (
           <p className="rounded-xl border border-crimson-300/40 bg-crimson-50 px-3 py-2 text-sm text-crimson-800">
@@ -178,6 +207,11 @@ export function AuthForm({ mode }: AuthFormProps) {
             </Link>
           </>
         )}
+      </p>
+      <p className="mt-3 text-center text-sm text-hive-500">
+        <Link href="/welcome" className="hover:text-honey-700">
+          ← Back to welcome
+        </Link>
       </p>
     </div>
   );

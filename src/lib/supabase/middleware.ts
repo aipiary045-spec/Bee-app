@@ -3,7 +3,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import type { Database } from "@/types/database";
 import { env } from "@/lib/env";
 
-const PUBLIC_PATHS = ["/login", "/signup"];
+const PUBLIC_PATHS = ["/login", "/signup", "/welcome"];
 
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request });
@@ -15,7 +15,7 @@ export async function updateSession(request: NextRequest) {
   if (!env.isSupabaseConfigured()) {
     if (!isPublicPath) {
       const url = request.nextUrl.clone();
-      url.pathname = "/login";
+      url.pathname = "/welcome";
       return NextResponse.redirect(url);
     }
     return supabaseResponse;
@@ -48,12 +48,14 @@ export async function updateSession(request: NextRequest) {
 
   if (!user && !isPublicPath) {
     const url = request.nextUrl.clone();
-    url.pathname = "/login";
-    url.searchParams.set("next", pathname);
+    url.pathname = "/welcome";
+    if (pathname !== "/") {
+      url.searchParams.set("next", pathname);
+    }
     return NextResponse.redirect(url);
   }
 
-  if (user && isPublicPath) {
+  if (user && (isPublicPath || pathname === "/welcome")) {
     const url = request.nextUrl.clone();
     url.pathname = "/";
     return NextResponse.redirect(url);
