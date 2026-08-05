@@ -27,9 +27,7 @@ export function Sidebar() {
       <div className="relative overflow-hidden border-b border-wax-300/40 px-6 py-5">
         <div className="pointer-events-none absolute inset-x-0 top-0 h-px shimmer-line" />
         <div className="flex items-center gap-3">
-          <div className="float-slow flex h-12 w-12 items-center justify-center overflow-hidden rounded-2xl bg-wax-50/80 ring-1 ring-honey-400/35 shadow-sm">
-            <BrandLogo size={44} className="h-11 w-11" priority />
-          </div>
+          <BrandLogo size={48} className="h-12 w-12" priority />
           <div>
             <p className="font-display text-xl font-bold leading-tight text-hive-900">
               Apiary

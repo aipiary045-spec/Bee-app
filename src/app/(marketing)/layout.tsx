@@ -11,9 +11,7 @@ export default function MarketingLayout({
     <div className="relative min-h-screen overflow-x-hidden">
       <header className="relative z-20 mx-auto flex w-full max-w-6xl items-center justify-between px-4 py-5 sm:px-6 lg:px-8">
         <Link href="/welcome" className="flex items-center gap-3">
-          <div className="flex h-11 w-11 items-center justify-center overflow-hidden rounded-2xl bg-wax-50/85 ring-1 ring-honey-400/35 shadow-sm">
-            <BrandLogo size={40} className="h-10 w-10" priority />
-          </div>
+          <BrandLogo size={42} className="h-11 w-11" priority />
           <div>
             <p className="font-display text-xl font-bold leading-none text-hive-900">
               Apiary

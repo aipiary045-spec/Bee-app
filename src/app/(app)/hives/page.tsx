@@ -64,8 +64,8 @@ export default async function HivesPage() {
       {!loadError && hives.length === 0 && (
         <Card className="fade-up-delay-1 mb-8 border-dashed border-honey-400/40 bg-honey-50/50">
           <CardContent className="flex flex-col items-center gap-3 py-12 text-center">
-            <div className="flex h-14 w-14 items-center justify-center overflow-hidden rounded-xl bg-wax-50/90 ring-1 ring-honey-400/35">
-              <BrandLogo size={52} className="h-12 w-12" />
+            <div className="flex justify-center">
+              <BrandLogo size={64} className="h-14 w-14" />
             </div>
             <p className="font-display text-lg font-semibold text-hive-900">
               No hives yet

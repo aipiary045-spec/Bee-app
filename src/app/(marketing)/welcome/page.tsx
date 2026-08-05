@@ -84,8 +84,8 @@ export default function WelcomePage() {
 
         <div className="relative z-10 max-w-2xl fade-up">
           <div className="mb-8 flex items-center gap-4">
-            <div className="float-slow flex h-20 w-20 items-center justify-center overflow-hidden rounded-[1.6rem] bg-wax-50/90 ring-1 ring-honey-400/40 shadow-[0_16px_36px_-18px_rgba(164,85,16,0.55)] sm:h-24 sm:w-24">
-              <BrandLogo size={88} className="h-20 w-20 sm:h-[5.5rem] sm:w-[5.5rem]" priority />
+            <div className="float-slow">
+              <BrandLogo size={110} className="h-24 w-24 sm:h-28 sm:w-28" priority />
             </div>
           </div>
 

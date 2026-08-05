@@ -82,8 +82,8 @@ export default async function DashboardPage() {
 
         {hives.length === 0 ? (
           <div className="surface-panel rounded-2xl border-dashed px-6 py-12 text-center">
-            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center overflow-hidden rounded-2xl bg-wax-50/90 ring-1 ring-honey-400/35">
-              <BrandLogo size={52} className="h-12 w-12" />
+            <div className="mx-auto mb-4 flex justify-center">
+              <BrandLogo size={64} className="h-14 w-14" />
             </div>
             <p className="font-display text-lg font-semibold text-hive-900">
               No colonies yet

@@ -96,8 +96,8 @@ export function AuthForm({ mode }: AuthFormProps) {
   return (
     <div className="fade-up w-full max-w-md">
       <div className="mb-8 text-center">
-        <div className="float-slow mx-auto mb-5 flex h-20 w-20 items-center justify-center overflow-hidden rounded-[1.6rem] bg-wax-50/85 ring-1 ring-honey-400/40 shadow-[0_12px_28px_-16px_rgba(164,85,16,0.55)]">
-          <BrandLogo size={72} className="h-[4.5rem] w-[4.5rem]" priority />
+        <div className="float-slow mx-auto mb-5 flex justify-center">
+          <BrandLogo size={88} className="h-[5.25rem] w-[5.25rem]" priority />
         </div>
         <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-honey-700">
           Apiary

@@ -83,8 +83,8 @@
   .brand-watermark {
     pointer-events: none;
     user-select: none;
-    opacity: 0.09;
-    filter: saturate(0.85);
+    opacity: 0.12;
+    filter: saturate(0.9) contrast(0.95);
   }
 
   .fade-up {
