@@ -20,6 +20,12 @@ export const queryKeys = {
   expenses: {
     byApiary: (apiaryId: string) => ["expenses", "apiary", apiaryId] as const,
   },
+  revenues: {
+    byApiary: (apiaryId: string) => ["revenues", "apiary", apiaryId] as const,
+  },
+  finances: {
+    summary: () => ["finances", "summary"] as const,
+  },
   dashboard: {
     summary: (apiaryId: string) => ["dashboard", "summary", apiaryId] as const,
     alerts: (apiaryId: string) => ["dashboard", "alerts", apiaryId] as const,

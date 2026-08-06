@@ -3,50 +3,47 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { getOrCreateDefaultApiary } from "@/lib/hives";
-import { getExpenseCatalogItem } from "@/lib/expense-catalog";
+import { getRevenueCatalogItem } from "@/lib/revenue-catalog";
 import type { Enums, TablesInsert } from "@/types/database";
 
-export type CreateExpenseInput = {
-  catalogId?: string;
-  description: string;
-  category: Enums<"expense_category">;
-  amount: string;
-  date: string;
-  hiveId?: string;
-};
-
-export type CreateExpensesBatchInput = {
+export type CreateRevenuesBatchInput = {
   date: string;
   hiveId?: string;
   items: {
     catalogId?: string;
     description?: string;
-    category?: Enums<"expense_category">;
+    category?: Enums<"revenue_category">;
     amount: string;
   }[];
 };
 
 export type ActionResult =
-  | { ok: true; expenseId: string }
+  | { ok: true; revenueId: string }
   | { ok: false; error: string };
 
 export type BatchActionResult =
   | { ok: true; count: number }
   | { ok: false; error: string };
 
-export async function createExpensesBatchAction(
-  input: CreateExpensesBatchInput
+function revalidateFinances() {
+  revalidatePath("/finances");
+  revalidatePath("/expenses");
+  revalidatePath("/");
+}
+
+export async function createRevenuesBatchAction(
+  input: CreateRevenuesBatchInput
 ): Promise<BatchActionResult> {
   if (!input.date) {
     return { ok: false, error: "Date is required." };
   }
   if (!input.items.length) {
-    return { ok: false, error: "Select at least one expense." };
+    return { ok: false, error: "Select at least one revenue item." };
   }
 
   const rows: {
     description: string;
-    category: Enums<"expense_category">;
+    category: Enums<"revenue_category">;
     amount: number;
   }[] = [];
 
@@ -55,23 +52,23 @@ export async function createExpensesBatchAction(
     let category = item.category ?? "other";
 
     if (item.catalogId) {
-      const catalogItem = getExpenseCatalogItem(item.catalogId);
+      const catalogItem = getRevenueCatalogItem(item.catalogId);
       if (!catalogItem) {
-        return { ok: false, error: `Unknown expense item: ${item.catalogId}` };
+        return { ok: false, error: `Unknown revenue item: ${item.catalogId}` };
       }
       if (!description) description = catalogItem.label;
       category = catalogItem.category;
     }
 
     if (!description) {
-      return { ok: false, error: "Each expense needs a description." };
+      return { ok: false, error: "Each revenue entry needs a description." };
     }
 
     const amount = Number(item.amount);
     if (Number.isNaN(amount) || amount < 0) {
       return {
         ok: false,
-        error: `Enter a valid price for ${description}.`,
+        error: `Enter a valid amount for ${description}.`,
       };
     }
 
@@ -84,7 +81,7 @@ export async function createExpensesBatchAction(
   } = await supabase.auth.getUser();
 
   if (!user) {
-    return { ok: false, error: "You must be signed in to add expenses." };
+    return { ok: false, error: "You must be signed in to add revenue." };
   }
 
   try {
@@ -104,7 +101,7 @@ export async function createExpensesBatchAction(
       }
     }
 
-    const payload: TablesInsert<"expenses">[] = rows.map((row) => ({
+    const payload: TablesInsert<"revenues">[] = rows.map((row) => ({
       apiary_id: apiary.id,
       hive_id: hiveId,
       category: row.category,
@@ -113,58 +110,33 @@ export async function createExpensesBatchAction(
       description: row.description,
     }));
 
-    const { error } = await supabase.from("expenses").insert(payload);
+    const { error } = await supabase.from("revenues").insert(payload);
 
     if (error) {
       return { ok: false, error: error.message };
     }
 
-    revalidatePath("/finances");
-    revalidatePath("/expenses");
-    revalidatePath("/");
+    revalidateFinances();
     return { ok: true, count: rows.length };
   } catch (err) {
     const message =
-      err instanceof Error ? err.message : "Failed to create expenses.";
+      err instanceof Error ? err.message : "Failed to create revenue.";
     if (/relation .* does not exist|Could not find the table/i.test(message)) {
       return {
         ok: false,
         error:
-          "Expenses table is missing. Run supabase/migrations/20260804010000_ensure_expenses.sql in the Supabase SQL Editor, then try again.",
+          "Revenues table is missing. Run supabase/migrations/20260805000000_revenues.sql in the Supabase SQL Editor, then try again.",
       };
     }
     return { ok: false, error: message };
   }
 }
 
-export async function createExpenseAction(
-  input: CreateExpenseInput
+export async function deleteRevenueAction(
+  revenueId: string
 ): Promise<ActionResult> {
-  const result = await createExpensesBatchAction({
-    date: input.date,
-    hiveId: input.hiveId,
-    items: [
-      {
-        catalogId: input.catalogId,
-        description: input.description,
-        category: input.category,
-        amount: input.amount,
-      },
-    ],
-  });
-
-  if (!result.ok) {
-    return result;
-  }
-
-  return { ok: true, expenseId: "" };
-}
-
-export async function deleteExpenseAction(
-  expenseId: string
-): Promise<ActionResult> {
-  if (!expenseId) {
-    return { ok: false, error: "Expense id is required." };
+  if (!revenueId) {
+    return { ok: false, error: "Revenue id is required." };
   }
 
   const supabase = await createClient();
@@ -173,26 +145,24 @@ export async function deleteExpenseAction(
   } = await supabase.auth.getUser();
 
   if (!user) {
-    return { ok: false, error: "You must be signed in to delete an expense." };
+    return { ok: false, error: "You must be signed in to delete revenue." };
   }
 
   try {
     const { error } = await supabase
-      .from("expenses")
+      .from("revenues")
       .delete()
-      .eq("id", expenseId);
+      .eq("id", revenueId);
 
     if (error) {
       return { ok: false, error: error.message };
     }
 
-    revalidatePath("/finances");
-    revalidatePath("/expenses");
-    revalidatePath("/");
-    return { ok: true, expenseId };
+    revalidateFinances();
+    return { ok: true, revenueId };
   } catch (err) {
     const message =
-      err instanceof Error ? err.message : "Failed to delete expense.";
+      err instanceof Error ? err.message : "Failed to delete revenue.";
     return { ok: false, error: message };
   }
 }

@@ -15,7 +15,7 @@ import { SignOutButton } from "@/components/auth/sign-out-button";
 const navItems = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
   { href: "/hives", label: "Hives", icon: Hexagon },
-  { href: "/expenses", label: "Expenses", icon: DollarSign },
+  { href: "/finances", label: "Finances", icon: DollarSign },
   { href: "/settings", label: "Settings", icon: Settings },
 ];
 

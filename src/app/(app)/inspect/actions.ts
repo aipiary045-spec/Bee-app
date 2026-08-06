@@ -188,6 +188,7 @@ export async function createInspectionAction(
     revalidatePath("/inspect");
     revalidatePath("/hives");
     revalidatePath(`/hives/${input.hiveId}`);
+    revalidatePath("/finances");
     revalidatePath("/expenses");
 
     return { ok: true, inspectionId: inspection.id };

@@ -389,6 +389,57 @@ export type Database = {
           },
         ];
       };
+      revenues: {
+        Row: {
+          id: string;
+          apiary_id: string;
+          hive_id: string | null;
+          category: Database["public"]["Enums"]["revenue_category"];
+          amount: number;
+          date: string;
+          description: string;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          apiary_id: string;
+          hive_id?: string | null;
+          category: Database["public"]["Enums"]["revenue_category"];
+          amount: number;
+          date?: string;
+          description: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          apiary_id?: string;
+          hive_id?: string | null;
+          category?: Database["public"]["Enums"]["revenue_category"];
+          amount?: number;
+          date?: string;
+          description?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "revenues_apiary_id_fkey";
+            columns: ["apiary_id"];
+            isOneToOne: false;
+            referencedRelation: "apiaries";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "revenues_hive_id_fkey";
+            columns: ["hive_id"];
+            isOneToOne: false;
+            referencedRelation: "hives";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
     };
     Views: {
       [_ in never]: never;
@@ -412,6 +463,13 @@ export type Database = {
       mite_method: "alcohol_wash" | "sugar_roll" | "sticky_board";
       treatment_status: "planned" | "in_progress" | "completed";
       expense_category: "equipment" | "treatments" | "feed" | "administrative" | "other";
+      revenue_category:
+        | "honey_sales"
+        | "nucs"
+        | "queens"
+        | "pollination"
+        | "wax"
+        | "other";
       queen_sighted: "yes" | "no" | "uncertain";
       eggs_larvae_status: "eggs_and_larvae" | "eggs_only" | "larvae_only" | "none_observed";
       store_level: "empty" | "low" | "moderate" | "good" | "full";

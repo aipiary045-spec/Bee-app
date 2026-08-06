@@ -25,9 +25,9 @@ const features = [
   },
   {
     icon: DollarSign,
-    title: "Expense tracking",
+    title: "Finances",
     description:
-      "Log equipment, treatments, and feed against the hive or the whole apiary. Know what the season really costs.",
+      "Log honey sales, nucs, and yard costs together — see season profit, not just what you spent.",
   },
   {
     icon: QrCode,
