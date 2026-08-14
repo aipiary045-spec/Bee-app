@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { getExpenseCatalogItem } from "@/lib/expense-catalog";
+import { applySuperChange, splitSuperDelta } from "@/lib/supers";
 import type { Enums, TablesInsert } from "@/types/database";
 
 export type QuickLogExpenseInput = {
@@ -26,7 +27,7 @@ export type QuickLogInput = {
   miteCountPer100: string;
   pestsDiseases: Enums<"pest_disease">;
   actionFed: boolean;
-  actionSuper: boolean;
+  superDelta: number;
   actionSplit: boolean;
   actionTreatment: boolean;
   notes: string;
@@ -35,7 +36,13 @@ export type QuickLogInput = {
 };
 
 export type ActionResult =
-  | { ok: true; inspectionId: string }
+  | {
+      ok: true;
+      inspectionId: string;
+      superCountAfter: number;
+      supersAdded: number;
+      supersRemoved: number;
+    }
   | { ok: false; error: string };
 
 export async function createInspectionAction(
@@ -103,12 +110,24 @@ export async function createInspectionAction(
   try {
     const { data: hive, error: hiveError } = await supabase
       .from("hives")
-      .select("id, apiary_id")
+      .select("id, apiary_id, super_count")
       .eq("id", input.hiveId)
       .maybeSingle();
 
     if (hiveError || !hive) {
       return { ok: false, error: hiveError?.message ?? "Hive not found." };
+    }
+
+    const { added: supersAdded, removed: supersRemoved } = splitSuperDelta(
+      input.superDelta
+    );
+    const superResult = applySuperChange(
+      hive.super_count ?? 0,
+      supersAdded,
+      supersRemoved
+    );
+    if (!superResult.ok) {
+      return { ok: false, error: superResult.error };
     }
 
     const { data: inspection, error: inspectionError } = await supabase
@@ -130,9 +149,12 @@ export async function createInspectionAction(
         mite_count_per_100: miteCount,
         pests_diseases: input.pestsDiseases,
         action_fed: input.actionFed,
-        action_super: input.actionSuper,
+        action_super: supersAdded > 0,
         action_split: input.actionSplit,
         action_treatment: input.actionTreatment,
+        supers_added: supersAdded,
+        supers_removed: supersRemoved,
+        super_count_after: superResult.next,
         notes: input.notes.trim() || null,
         created_by: user.id,
       })
@@ -141,6 +163,17 @@ export async function createInspectionAction(
 
     if (inspectionError) {
       return { ok: false, error: inspectionError.message };
+    }
+
+    if (supersAdded > 0 || supersRemoved > 0) {
+      const { error: hiveUpdateError } = await supabase
+        .from("hives")
+        .update({ super_count: superResult.next })
+        .eq("id", input.hiveId);
+
+      if (hiveUpdateError) {
+        return { ok: false, error: hiveUpdateError.message };
+      }
     }
 
     if (miteCount !== null) {
@@ -191,7 +224,13 @@ export async function createInspectionAction(
     revalidatePath("/finances");
     revalidatePath("/expenses");
 
-    return { ok: true, inspectionId: inspection.id };
+    return {
+      ok: true,
+      inspectionId: inspection.id,
+      superCountAfter: superResult.next,
+      supersAdded,
+      supersRemoved,
+    };
   } catch (err) {
     const message =
       err instanceof Error ? err.message : "Failed to save inspection.";

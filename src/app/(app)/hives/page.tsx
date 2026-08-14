@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { BrandLogo } from "@/components/brand/brand-logo";
 import { createClient } from "@/lib/supabase/server";
 import { listHivesForUser } from "@/lib/hives";
+import { formatSuperCount } from "@/lib/supers";
 import type { Hive } from "@/lib/hives";
 import Link from "next/link";
 
@@ -51,7 +52,7 @@ export default async function HivesPage() {
       <PageHeader
         eyebrow={apiaryName}
         title="Hives"
-        description="Track every colony in your apiary — status, frame counts, and drill-down health history."
+        description="Track every colony in your apiary — status, frames, honey supers, and drill-down health history."
         actions={<AddHiveDialog />}
       />
 
@@ -101,6 +102,9 @@ export default async function HivesPage() {
                       {hive.status}
                     </Badge>
                     <Badge variant="default">{hive.frame_count} frames</Badge>
+                    <Badge variant="default">
+                      {formatSuperCount(hive.super_count)}
+                    </Badge>
                   </div>
                   <p className="mt-2 text-xs text-hive-500">Tap for details</p>
                 </CardContent>

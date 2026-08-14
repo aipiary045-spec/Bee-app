@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { BrandLogo } from "@/components/brand/brand-logo";
 import { createClient } from "@/lib/supabase/server";
 import { listHivesForUser } from "@/lib/hives";
+import { formatSuperCount } from "@/lib/supers";
 import type { Hive } from "@/lib/hives";
 
 export default async function DashboardPage() {
@@ -131,6 +132,9 @@ export default async function DashboardPage() {
                     {hive.status}
                   </Badge>
                   <Badge variant="default">{hive.frame_count} frames</Badge>
+                  <Badge variant="default">
+                    {formatSuperCount(hive.super_count)}
+                  </Badge>
                 </div>
               </Link>
             ))}
@@ -157,7 +161,7 @@ export default async function DashboardPage() {
               </h2>
               <p className="mt-2 max-w-xl text-sm leading-relaxed text-hive-600">
                 Open the field inspection form to record queen status, brood,
-                temperament, and mite counts.
+                supers, temperament, and mite counts.
               </p>
             </div>
           </div>

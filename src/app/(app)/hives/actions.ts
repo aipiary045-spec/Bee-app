@@ -9,6 +9,7 @@ export type CreateHiveInput = {
   name: string;
   status?: Enums<"hive_status">;
   frameCount?: number;
+  superCount?: number;
 };
 
 export type ActionResult =
@@ -26,6 +27,11 @@ export async function createHiveAction(
   const frameCount = input.frameCount ?? 10;
   if (frameCount < 1 || frameCount > 20) {
     return { ok: false, error: "Frame count must be between 1 and 20." };
+  }
+
+  const superCount = input.superCount ?? 0;
+  if (superCount < 0 || superCount > 12) {
+    return { ok: false, error: "Honey supers must be between 0 and 12." };
   }
 
   const supabase = await createClient();
@@ -47,6 +53,7 @@ export async function createHiveAction(
         name,
         status: input.status ?? "active",
         frame_count: frameCount,
+        super_count: superCount,
       })
       .select("id")
       .single();

@@ -15,7 +15,7 @@ const features = [
     icon: ClipboardList,
     title: "Field-ready Quick Log",
     description:
-      "Record queen sightings, brood, stores, mites, and actions in one glove-friendly form — then get back to the yard.",
+      "Record queen sightings, brood, stores, mites, and add or pull supers in one glove-friendly form — then get back to the yard.",
   },
   {
     icon: Hexagon,

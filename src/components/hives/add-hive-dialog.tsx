@@ -22,6 +22,7 @@ export function AddHiveDialog() {
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
   const [frameCount, setFrameCount] = useState("10");
+  const [superCount, setSuperCount] = useState("0");
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
   const [created, setCreated] = useState<{
@@ -32,6 +33,7 @@ export function AddHiveDialog() {
   function reset() {
     setName("");
     setFrameCount("10");
+    setSuperCount("0");
     setError(null);
     setCreated(null);
   }
@@ -44,6 +46,7 @@ export function AddHiveDialog() {
       const result = await createHiveAction({
         name,
         frameCount: Number(frameCount) || 10,
+        superCount: Number(superCount) || 0,
         status: "active",
       });
 
@@ -95,17 +98,31 @@ export function AddHiveDialog() {
                 />
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="frame-count">Frame count</Label>
-                <Input
-                  id="frame-count"
-                  type="number"
-                  min={1}
-                  max={20}
-                  required
-                  value={frameCount}
-                  onChange={(e) => setFrameCount(e.target.value)}
-                />
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-2">
+                  <Label htmlFor="frame-count">Frame count</Label>
+                  <Input
+                    id="frame-count"
+                    type="number"
+                    min={1}
+                    max={20}
+                    required
+                    value={frameCount}
+                    onChange={(e) => setFrameCount(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="super-count">Honey supers</Label>
+                  <Input
+                    id="super-count"
+                    type="number"
+                    min={0}
+                    max={12}
+                    required
+                    value={superCount}
+                    onChange={(e) => setSuperCount(e.target.value)}
+                  />
+                </div>
               </div>
 
               {error && (

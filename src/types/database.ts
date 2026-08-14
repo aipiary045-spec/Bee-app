@@ -46,6 +46,7 @@ export type Database = {
           name: string;
           status: Database["public"]["Enums"]["hive_status"];
           frame_count: number;
+          super_count: number;
           created_at: string;
           updated_at: string;
         };
@@ -55,6 +56,7 @@ export type Database = {
           name: string;
           status?: Database["public"]["Enums"]["hive_status"];
           frame_count?: number;
+          super_count?: number;
           created_at?: string;
           updated_at?: string;
         };
@@ -64,6 +66,7 @@ export type Database = {
           name?: string;
           status?: Database["public"]["Enums"]["hive_status"];
           frame_count?: number;
+          super_count?: number;
           created_at?: string;
           updated_at?: string;
         };
@@ -103,6 +106,9 @@ export type Database = {
           action_super: boolean;
           action_split: boolean;
           action_treatment: boolean;
+          supers_added: number;
+          supers_removed: number;
+          super_count_after: number | null;
         };
         Insert: {
           id?: string;
@@ -129,6 +135,9 @@ export type Database = {
           action_super?: boolean;
           action_split?: boolean;
           action_treatment?: boolean;
+          supers_added?: number;
+          supers_removed?: number;
+          super_count_after?: number | null;
         };
         Update: {
           id?: string;
@@ -155,6 +164,9 @@ export type Database = {
           action_super?: boolean;
           action_split?: boolean;
           action_treatment?: boolean;
+          supers_added?: number;
+          supers_removed?: number;
+          super_count_after?: number | null;
         };
         Relationships: [
           {

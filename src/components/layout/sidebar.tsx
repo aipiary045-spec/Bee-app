@@ -80,8 +80,8 @@ export function Sidebar() {
             Field Season
           </p>
           <p className="relative mt-1.5 text-xs leading-relaxed text-hive-600">
-            Log inspections from the dashboard Quick Log link — built for gloves
-            and Oklahoma yards.
+            Log inspections from Quick Log — add or pull supers, then get back
+            to the yard.
           </p>
         </div>
         <SignOutButton className="w-full" />

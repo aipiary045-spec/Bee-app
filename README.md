@@ -63,8 +63,8 @@ supabase/
 | Table | Purpose |
 |-------|---------|
 | `apiaries` | Top-level apiary locations |
-| `hives` | Individual colonies |
-| `inspections` | Field inspection records |
+| `hives` | Individual colonies (includes current honey super count) |
+| `inspections` | Field inspection records (including supers added or removed) |
 | `queen_logs` | Queen status tracking |
 | `mite_counts` | Varroa mite test results |
 | `treatments` | Treatment schedules |

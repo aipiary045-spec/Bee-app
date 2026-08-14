@@ -16,7 +16,7 @@ export default async function InspectPage({ searchParams }: InspectPageProps) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  let hives: Pick<Hive, "id" | "name" | "status">[] = [];
+  let hives: Pick<Hive, "id" | "name" | "status" | "super_count" | "frame_count">[] = [];
   let loadError: string | null = null;
 
   const [weather] = await Promise.all([fetchLocalWeather()]);
@@ -24,7 +24,13 @@ export default async function InspectPage({ searchParams }: InspectPageProps) {
   if (user) {
     try {
       const result = await listHivesForUser(user.id);
-      hives = result.hives.map(({ id, name, status }) => ({ id, name, status }));
+      hives = result.hives.map(({ id, name, status, super_count, frame_count }) => ({
+        id,
+        name,
+        status,
+        super_count,
+        frame_count,
+      }));
     } catch (err) {
       loadError =
         err instanceof Error ? err.message : "Failed to load hives.";
@@ -40,7 +46,7 @@ export default async function InspectPage({ searchParams }: InspectPageProps) {
       <PageHeader
         eyebrow="Field Work"
         title="Quick Inspection Log"
-        description="Weather and temperature auto-fill from Agra, OK. Complete queen, health, and actions below."
+        description="Pick a hive, add or pull supers, then tap through queen, health, and notes — built for the yard."
         className="mb-6 py-5 sm:py-6"
       />
 

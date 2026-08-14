@@ -8,16 +8,27 @@ import {
   Crown,
   DollarSign,
   HeartPulse,
+  Layers,
   Loader2,
+  Minus,
+  Plus,
   Wrench,
 } from "lucide-react";
 import { createInspectionAction } from "@/app/(app)/inspect/actions";
+import { HiveStack } from "@/components/inspect/hive-stack";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn, DEFAULT_LOCATION, formatCurrency } from "@/lib/utils";
-import { EXPENSE_CATALOG } from "@/lib/expense-catalog";
+import { EXPENSE_CATALOG, EXPENSE_CATEGORY_LABELS } from "@/lib/expense-catalog";
+import {
+  MAX_SUPERS,
+  formatSuperChange,
+  formatSuperCount,
+  nextSuperCount,
+  splitSuperDelta,
+} from "@/lib/supers";
 import type { Hive } from "@/lib/hives";
 import type { Enums } from "@/types/database";
 import type { LocalWeather } from "@/lib/weather";
@@ -53,23 +64,23 @@ const eggsLarvaeOptions: {
   value: Enums<"eggs_larvae_status">;
   label: string;
 }[] = [
-  { value: "eggs_and_larvae", label: "Eggs & Larvae Present" },
+  { value: "eggs_and_larvae", label: "Eggs & Larvae" },
   { value: "eggs_only", label: "Eggs Only" },
   { value: "larvae_only", label: "Larvae Only" },
-  { value: "none_observed", label: "None Observed" },
+  { value: "none_observed", label: "None Seen" },
 ];
 
 const broodOptions: { value: Enums<"brood_pattern">; label: string }[] = [
-  { value: "excellent", label: "Solid / Excellent (5/5)" },
-  { value: "good", label: "Good (4/5)" },
-  { value: "fair", label: "Fair (3/5)" },
-  { value: "spotty", label: "Spotty (2/5)" },
-  { value: "poor", label: "Poor (1/5)" },
+  { value: "excellent", label: "Excellent" },
+  { value: "good", label: "Good" },
+  { value: "fair", label: "Fair" },
+  { value: "spotty", label: "Spotty" },
+  { value: "poor", label: "Poor" },
   { value: "none", label: "None" },
 ];
 
 const temperamentOptions: { value: Enums<"temperament">; label: string }[] = [
-  { value: "calm", label: "Calm / Gentle" },
+  { value: "calm", label: "Calm" },
   { value: "defensive", label: "Nervous" },
   { value: "aggressive", label: "Aggressive" },
 ];
@@ -83,24 +94,17 @@ const storeOptions: { value: Enums<"store_level">; label: string }[] = [
 ];
 
 const pestOptions: { value: Enums<"pest_disease">; label: string }[] = [
-  { value: "none", label: "None Observed" },
+  { value: "none", label: "None" },
   { value: "varroa", label: "Varroa" },
   { value: "chalkbrood", label: "Chalkbrood" },
-  { value: "foulbrood_suspect", label: "Foulbrood Suspect" },
+  { value: "foulbrood_suspect", label: "Foulbrood?" },
   { value: "wax_moth", label: "Wax Moth" },
   { value: "ants", label: "Ants" },
   { value: "other", label: "Other" },
 ];
 
-const actionOptions = [
-  { key: "actionFed" as const, label: "Fed Sugar Syrup / Patty" },
-  { key: "actionSuper" as const, label: "Added Honey Super" },
-  { key: "actionSplit" as const, label: "Created Split / Swarm Control" },
-  { key: "actionTreatment" as const, label: "Applied Mite Treatment" },
-];
-
 const fieldClass =
-  "flex h-9 w-full rounded-lg border border-wax-300/80 bg-wax-50/95 px-2.5 text-sm text-hive-900 shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-honey-500/40";
+  "flex h-11 w-full rounded-xl border border-wax-300/80 bg-wax-50/95 px-3 text-sm text-hive-900 shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-honey-500/40";
 
 function todayISO() {
   return new Date().toISOString().slice(0, 10);
@@ -121,14 +125,14 @@ function Segmented<T extends string>({
   onChange: (value: T) => void;
 }) {
   return (
-    <div className="flex flex-wrap gap-1">
+    <div className="flex flex-wrap gap-1.5">
       {options.map((opt) => (
         <button
           key={opt.value}
           type="button"
           onClick={() => onChange(opt.value)}
           className={cn(
-            "rounded-md border px-2.5 py-1.5 text-xs font-medium transition-colors",
+            "min-h-10 rounded-xl border px-3 py-2 text-sm font-medium transition-colors",
             value === opt.value
               ? "border-honey-500 bg-honey-500/20 text-hive-900"
               : "border-wax-300/70 bg-wax-50 text-hive-600 hover:border-honey-400/50"
@@ -145,13 +149,15 @@ function SectionCard({
   icon: Icon,
   title,
   children,
+  className,
 }: {
   icon: React.ComponentType<{ className?: string }>;
   title: string;
   children: React.ReactNode;
+  className?: string;
 }) {
   return (
-    <Card className="h-full">
+    <Card className={cn("h-full", className)}>
       <CardHeader className="space-y-0 p-4 pb-2">
         <CardTitle className="flex items-center gap-2 text-sm font-semibold text-honey-800">
           <Icon className="h-4 w-4" />
@@ -163,8 +169,13 @@ function SectionCard({
   );
 }
 
+export type QuickLogHive = Pick<
+  Hive,
+  "id" | "name" | "status" | "super_count" | "frame_count"
+>;
+
 interface QuickLogFormProps {
-  hives: Pick<Hive, "id" | "name" | "status">[];
+  hives: QuickLogHive[];
   initialHiveId?: string;
   initialWeather?: LocalWeather | null;
 }
@@ -220,7 +231,7 @@ export function QuickLogForm({
     useState<Enums<"pest_disease">>("none");
 
   const [actionFed, setActionFed] = useState(false);
-  const [actionSuper, setActionSuper] = useState(false);
+  const [superDelta, setSuperDelta] = useState(0);
   const [actionSplit, setActionSplit] = useState(false);
   const [actionTreatment, setActionTreatment] = useState(false);
   const [notes, setNotes] = useState("");
@@ -231,6 +242,12 @@ export function QuickLogForm({
     {}
   );
 
+  const selectedHive = selectable.find((hive) => hive.id === hiveId);
+  const currentSupers = selectedHive?.super_count ?? 0;
+  const nextSupers = nextSuperCount(currentSupers, superDelta);
+  const { added: supersAdded, removed: supersRemoved } =
+    splitSuperDelta(superDelta);
+
   const expenseTotal = useMemo(() => {
     if (!logExpenses) return 0;
     return selectedExpenseIds.reduce((sum, id) => {
@@ -238,6 +255,11 @@ export function QuickLogForm({
       return sum + (Number.isNaN(amount) ? 0 : amount);
     }, 0);
   }, [logExpenses, selectedExpenseIds, expenseAmounts]);
+
+  function selectHive(id: string) {
+    setHiveId(id);
+    setSuperDelta(0);
+  }
 
   function toggleExpense(id: string) {
     setSelectedExpenseIds((current) => {
@@ -253,19 +275,6 @@ export function QuickLogForm({
       return [...current, id];
     });
   }
-
-  const actionState = {
-    actionFed,
-    actionSuper,
-    actionSplit,
-    actionTreatment,
-  };
-  const setAction = {
-    actionFed: setActionFed,
-    actionSuper: setActionSuper,
-    actionSplit: setActionSplit,
-    actionTreatment: setActionTreatment,
-  };
 
   function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -289,7 +298,7 @@ export function QuickLogForm({
         miteCountPer100,
         pestsDiseases,
         actionFed,
-        actionSuper,
+        superDelta,
         actionSplit,
         actionTreatment,
         notes,
@@ -305,14 +314,22 @@ export function QuickLogForm({
         return;
       }
 
-      setSuccess(
+      const superNote = formatSuperChange(
+        result.supersAdded,
+        result.supersRemoved
+      );
+      const expenseNote =
         logExpenses && selectedExpenseIds.length > 0
-          ? `Inspection saved with ${selectedExpenseIds.length} expense${selectedExpenseIds.length === 1 ? "" : "s"}.`
-          : "Inspection saved."
+          ? ` · ${selectedExpenseIds.length} expense${selectedExpenseIds.length === 1 ? "" : "s"}`
+          : "";
+      setSuccess(
+        superNote === "No super change"
+          ? `Inspection saved${expenseNote}.`
+          : `Inspection saved. ${superNote} — hive now has ${formatSuperCount(result.superCountAfter)}${expenseNote}.`
       );
       setNotes("");
       setActionFed(false);
-      setActionSuper(false);
+      setSuperDelta(0);
       setActionSplit(false);
       setActionTreatment(false);
       setMiteCountPer100("0");
@@ -341,32 +358,110 @@ export function QuickLogForm({
     );
   }
 
+  const saveSummary = [
+    selectedHive?.name ?? "Hive",
+    superDelta === 0
+      ? formatSuperCount(currentSupers)
+      : `${formatSuperChange(supersAdded, supersRemoved)} → ${formatSuperCount(nextSupers)}`,
+  ].join(" · ");
+
   return (
-    <form onSubmit={onSubmit} className="space-y-4">
-      <div className="grid gap-4 lg:grid-cols-2">
-        <SectionCard icon={ClipboardList} title="Inspection Details">
-          <div className="space-y-1.5">
-            <Label htmlFor="hive" className="text-xs">
-              Target Hive
-            </Label>
-            <select
-              id="hive"
-              value={hiveId}
-              onChange={(e) => setHiveId(e.target.value)}
-              className={fieldClass}
-              required
-            >
-              {selectable.map((hive) => (
-                <option key={hive.id} value={hive.id}>
-                  {hive.name}
-                </option>
-              ))}
-            </select>
+    <form onSubmit={onSubmit} className="space-y-4 pb-24">
+      <SectionCard icon={Layers} title="Hive & supers">
+        <div className="space-y-1.5">
+          <Label className="text-xs">Which colony?</Label>
+          <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
+            {selectable.map((hive) => {
+              const selected = hive.id === hiveId;
+              return (
+                <button
+                  key={hive.id}
+                  type="button"
+                  onClick={() => selectHive(hive.id)}
+                  className={cn(
+                    "min-w-[8.5rem] shrink-0 rounded-2xl border px-3 py-2.5 text-left transition-all",
+                    selected
+                      ? "border-honey-500 bg-honey-500/15 shadow-sm"
+                      : "border-wax-300/70 bg-wax-50 hover:border-honey-400/50"
+                  )}
+                >
+                  <p className="font-display text-sm font-semibold text-hive-900">
+                    {hive.name}
+                  </p>
+                  <p className="mt-0.5 text-[11px] text-hive-600">
+                    {formatSuperCount(hive.super_count)} · {hive.frame_count} frames
+                  </p>
+                </button>
+              );
+            })}
           </div>
+        </div>
+
+        <div className="grid items-center gap-5 rounded-2xl border border-honey-400/25 bg-honey-50/40 p-4 sm:grid-cols-[1fr_auto_1fr]">
+          <div className="order-2 space-y-3 sm:order-1">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-honey-700">
+              Stack this visit
+            </p>
+            <p className="font-display text-2xl font-semibold text-hive-900">
+              {formatSuperCount(nextSupers)}
+            </p>
+            <p className="text-sm text-hive-600">
+              On the hive now: {formatSuperCount(currentSupers)}. Tap to add a
+              box for the flow or pull one for harvest.
+            </p>
+            <div className="flex flex-wrap gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="lg"
+                disabled={nextSupers <= 0}
+                onClick={() => setSuperDelta((delta) => delta - 1)}
+                className="min-w-[8.5rem]"
+              >
+                <Minus className="h-4 w-4" />
+                Remove
+              </Button>
+              <Button
+                type="button"
+                size="lg"
+                disabled={nextSupers >= MAX_SUPERS}
+                onClick={() => setSuperDelta((delta) => delta + 1)}
+                className="min-w-[8.5rem]"
+              >
+                <Plus className="h-4 w-4" />
+                Add super
+              </Button>
+            </div>
+            <p className="text-sm font-medium text-hive-800">
+              {formatSuperChange(supersAdded, supersRemoved)}
+            </p>
+          </div>
+
+          <HiveStack
+            className="order-1 sm:order-2"
+            hiveName={selectedHive?.name}
+            currentSupers={currentSupers}
+            nextSupers={nextSupers}
+          />
+
+          <div className="order-3 hidden text-sm text-hive-600 lg:block">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-honey-700">
+              Yard tip
+            </p>
+            <p className="mt-2 leading-relaxed">
+              Add when the top box is 70–80% drawn. Pull a capped super on a
+              strong flow, or take the last one off before winter.
+            </p>
+          </div>
+        </div>
+      </SectionCard>
+
+      <div className="grid gap-4 lg:grid-cols-2">
+        <SectionCard icon={ClipboardList} title="Inspection details">
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <Label htmlFor="date" className="text-xs">
-                Date (YYYY-MM-DD)
+                Date
               </Label>
               <Input
                 id="date"
@@ -374,7 +469,7 @@ export function QuickLogForm({
                 required
                 value={date}
                 onChange={(e) => setDate(e.target.value)}
-                className="h-9"
+                className="h-11"
               />
             </div>
             <div className="space-y-1.5">
@@ -386,20 +481,20 @@ export function QuickLogForm({
                 type="time"
                 value={inspectionTime}
                 onChange={(e) => setInspectionTime(e.target.value)}
-                className="h-9"
+                className="h-11"
               />
             </div>
           </div>
           <div className="space-y-2">
             <div className="flex items-center justify-between gap-2">
-              <Label className="text-xs">Weather (auto)</Label>
+              <Label className="text-xs">Weather</Label>
               {weatherAutoFilled ? (
                 <span className="text-[10px] font-medium uppercase tracking-wider text-meadow-800">
                   Live · {DEFAULT_LOCATION}
                 </span>
               ) : (
                 <span className="text-[10px] font-medium uppercase tracking-wider text-hive-500">
-                  Manual fallback
+                  Manual
                 </span>
               )}
             </div>
@@ -426,14 +521,14 @@ export function QuickLogForm({
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor="temp" className="text-xs text-hive-500">
-                  Temperature (°F)
+                  Temp (°F)
                 </Label>
                 <Input
                   id="temp"
                   type="number"
                   value={temperatureF}
                   onChange={(e) => setTemperatureF(e.target.value)}
-                  className="h-9"
+                  className="h-11"
                   placeholder="—"
                 />
               </div>
@@ -447,9 +542,9 @@ export function QuickLogForm({
           </div>
         </SectionCard>
 
-        <SectionCard icon={Crown} title="Queen & Brood">
+        <SectionCard icon={Crown} title="Queen & brood">
           <div className="space-y-1.5">
-            <Label className="text-xs">Queen Sighted?</Label>
+            <Label className="text-xs">Queen sighted?</Label>
             <Segmented
               value={queenSighted}
               options={queenSightedOptions}
@@ -458,7 +553,7 @@ export function QuickLogForm({
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="queen-color" className="text-xs">
-              Queen Color
+              Queen color
             </Label>
             <select
               id="queen-color"
@@ -477,7 +572,7 @@ export function QuickLogForm({
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="eggs" className="text-xs">
-              Eggs & Larvae Status
+              Eggs & larvae
             </Label>
             <select
               id="eggs"
@@ -496,7 +591,7 @@ export function QuickLogForm({
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="brood" className="text-xs">
-              Brood Laying Pattern
+              Brood pattern
             </Label>
             <select
               id="brood"
@@ -515,9 +610,9 @@ export function QuickLogForm({
           </div>
         </SectionCard>
 
-        <SectionCard icon={HeartPulse} title="Colony Health & Resources">
+        <SectionCard icon={HeartPulse} title="Health & stores">
           <div className="space-y-1.5">
-            <Label className="text-xs">Colony Temperament</Label>
+            <Label className="text-xs">Temperament</Label>
             <Segmented
               value={temperament}
               options={temperamentOptions}
@@ -527,7 +622,7 @@ export function QuickLogForm({
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <Label htmlFor="honey" className="text-xs">
-                Honey Stores
+                Honey stores
               </Label>
               <select
                 id="honey"
@@ -546,7 +641,7 @@ export function QuickLogForm({
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="pollen" className="text-xs">
-                Pollen Stores
+                Pollen stores
               </Label>
               <select
                 id="pollen"
@@ -567,7 +662,7 @@ export function QuickLogForm({
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <Label htmlFor="mites" className="text-xs">
-                Varroa Mite Count (per 100)
+                Mites / 100
               </Label>
               <Input
                 id="mites"
@@ -576,12 +671,12 @@ export function QuickLogForm({
                 step="0.1"
                 value={miteCountPer100}
                 onChange={(e) => setMiteCountPer100(e.target.value)}
-                className="h-9"
+                className="h-11"
               />
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="pests" className="text-xs">
-                Pests / Diseases
+                Pests / disease
               </Label>
               <select
                 id="pests"
@@ -601,118 +696,104 @@ export function QuickLogForm({
           </div>
         </SectionCard>
 
-        <SectionCard icon={Wrench} title="Actions Taken & Notes">
-          <div className="space-y-1.5">
-            <Label className="text-xs">Check Actions Performed</Label>
-            <div className="space-y-2">
-              {actionOptions.map((action) => (
-                <label
-                  key={action.key}
-                  className="flex items-center gap-2 text-sm text-hive-700"
-                >
-                  <input
-                    type="checkbox"
-                    checked={actionState[action.key]}
-                    onChange={(e) => setAction[action.key](e.target.checked)}
-                    className="h-3.5 w-3.5 accent-honey-600"
-                  />
-                  {action.label}
-                </label>
-              ))}
-            </div>
+        <SectionCard icon={Wrench} title="Other actions & notes">
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+            {[
+              { key: "fed", label: "Fed", on: actionFed, toggle: setActionFed },
+              {
+                key: "split",
+                label: "Split / swarm",
+                on: actionSplit,
+                toggle: setActionSplit,
+              },
+              {
+                key: "treatment",
+                label: "Treated",
+                on: actionTreatment,
+                toggle: setActionTreatment,
+              },
+            ].map((action) => (
+              <button
+                key={action.key}
+                type="button"
+                onClick={() => action.toggle(!action.on)}
+                className={cn(
+                  "min-h-12 rounded-xl border px-3 py-2 text-sm font-medium transition-colors",
+                  action.on
+                    ? "border-honey-500 bg-honey-500/20 text-hive-900"
+                    : "border-wax-300/70 bg-wax-50 text-hive-600 hover:border-honey-400/50"
+                )}
+              >
+                {action.label}
+              </button>
+            ))}
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="notes" className="text-xs">
-              Detailed Inspection Notes
+              Notes
             </Label>
             <textarea
               id="notes"
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               rows={5}
-              placeholder="Additional observations…"
-              className="w-full rounded-lg border border-wax-300/80 bg-wax-50/95 px-2.5 py-2 text-sm text-hive-900 shadow-sm placeholder:text-hive-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-honey-500/40"
+              placeholder="Queen cells, drawn comb, anything you’ll want next visit…"
+              className="w-full rounded-xl border border-wax-300/80 bg-wax-50/95 px-3 py-2 text-sm text-hive-900 shadow-sm placeholder:text-hive-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-honey-500/40"
             />
           </div>
         </SectionCard>
       </div>
 
-      <SectionCard icon={DollarSign} title="Expenses (optional)">
-        <label className="flex items-center gap-2 text-sm text-hive-700">
+      <SectionCard icon={DollarSign} title="Expenses">
+        <label className="flex min-h-11 items-center gap-2 text-sm text-hive-700">
           <input
             type="checkbox"
             checked={logExpenses}
             onChange={(e) => setLogExpenses(e.target.checked)}
-            className="h-3.5 w-3.5 accent-honey-600"
+            className="h-4 w-4 accent-honey-600"
           />
           Log purchases with this inspection
         </label>
 
         {logExpenses && (
           <div className="space-y-3">
-            <div className="space-y-1.5">
-              <Label htmlFor="expense-catalog" className="text-xs">
-                Common purchases (hold Ctrl/Cmd to select multiple)
-              </Label>
-              <select
-                id="expense-catalog"
-                multiple
-                size={8}
-                value={selectedExpenseIds}
-                onChange={(e) => {
-                  const next = Array.from(
-                    e.target.selectedOptions,
-                    (option) => option.value
-                  );
-                  setSelectedExpenseIds(next);
-                  setExpenseAmounts((amounts) => {
-                    const updated: Record<string, string> = {};
-                    for (const id of next) {
-                      updated[id] = amounts[id] ?? "";
+            {(
+              [
+                "equipment",
+                "treatments",
+                "feed",
+                "administrative",
+                "other",
+              ] as const
+            ).map((category) => (
+              <div key={category} className="space-y-1.5">
+                <p className="text-[11px] font-semibold uppercase tracking-wider text-hive-500">
+                  {EXPENSE_CATEGORY_LABELS[category]}
+                </p>
+                <div className="flex flex-wrap gap-1.5">
+                  {EXPENSE_CATALOG.filter((item) => item.category === category).map(
+                    (item) => {
+                      const selected = selectedExpenseIds.includes(item.id);
+                      return (
+                        <button
+                          key={item.id}
+                          type="button"
+                          onClick={() => toggleExpense(item.id)}
+                          className={cn(
+                            "rounded-full border px-3 py-1.5 text-xs font-medium transition-colors",
+                            selected
+                              ? "border-honey-500 bg-honey-500/20 text-hive-900"
+                              : "border-wax-300/70 bg-wax-50 text-hive-600 hover:border-honey-400/50"
+                          )}
+                        >
+                          {item.label}
+                        </button>
+                      );
                     }
-                    return updated;
-                  });
-                }}
-                className="w-full rounded-lg border border-wax-300/80 bg-wax-50/95 px-2 py-2 text-sm text-hive-900 shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-honey-500/40"
-              >
-                {(["equipment", "treatments", "feed", "administrative", "other"] as const).map(
-                  (category) => (
-                    <optgroup
-                      key={category}
-                      label={category.charAt(0).toUpperCase() + category.slice(1)}
-                    >
-                      {EXPENSE_CATALOG.filter((item) => item.category === category).map(
-                        (item) => (
-                          <option key={item.id} value={item.id}>
-                            {item.label}
-                          </option>
-                        )
-                      )}
-                    </optgroup>
-                  )
-                )}
-              </select>
-              <p className="text-[11px] text-hive-500">
-                Tip: on mobile, tap items to toggle — or use the checklist below.
-              </p>
-            </div>
-
-            <div className="max-h-40 space-y-1.5 overflow-y-auto rounded-lg border border-wax-300/50 bg-wax-50/70 p-2 sm:hidden">
-              {EXPENSE_CATALOG.map((item) => (
-                <label
-                  key={item.id}
-                  className="flex items-center gap-2 rounded-md px-1.5 py-1 text-sm text-hive-700 hover:bg-honey-50/60"
-                >
-                  <input
-                    type="checkbox"
-                    checked={selectedExpenseIds.includes(item.id)}
-                    onChange={() => toggleExpense(item.id)}
-                    className="h-3.5 w-3.5 accent-honey-600"
-                  />
-                  <span className="min-w-0 flex-1 truncate">{item.label}</span>
-                </label>
-              ))}
-            </div>
+                  )}
+                </div>
+              </div>
+            ))}
 
             {selectedExpenseIds.length > 0 ? (
               <div className="space-y-2">
@@ -745,7 +826,7 @@ export function QuickLogForm({
                             }))
                           }
                           placeholder="0.00"
-                          className="h-9 pl-6"
+                          className="h-11 pl-6"
                         />
                       </div>
                     </div>
@@ -757,7 +838,7 @@ export function QuickLogForm({
               </div>
             ) : (
               <p className="text-sm text-hive-500">
-                Select one or more items to enter prices.
+                Tap items to add prices.
               </p>
             )}
           </div>
@@ -765,22 +846,25 @@ export function QuickLogForm({
       </SectionCard>
 
       {error && (
-        <p className="rounded-lg border border-crimson-300/40 bg-crimson-50 px-3 py-2 text-sm text-crimson-800">
+        <p className="rounded-xl border border-crimson-300/40 bg-crimson-50 px-3 py-2 text-sm text-crimson-800">
           {error}
         </p>
       )}
       {success && (
-        <p className="flex items-center gap-2 rounded-lg border border-meadow-400/30 bg-meadow-100 px-3 py-2 text-sm text-meadow-800">
+        <p className="flex items-center gap-2 rounded-xl border border-meadow-400/30 bg-meadow-100 px-3 py-2 text-sm text-meadow-800">
           <CheckCircle2 className="h-4 w-4" />
           {success}
         </p>
       )}
 
-      <div className="flex justify-end">
-        <Button type="submit" disabled={pending}>
-          {pending && <Loader2 className="h-4 w-4 animate-spin" />}
-          Save inspection
-        </Button>
+      <div className="pointer-events-none fixed inset-x-0 bottom-0 z-20 px-4 pb-4 sm:px-6">
+        <div className="pointer-events-auto mx-auto flex max-w-7xl items-center justify-between gap-3 rounded-2xl border border-honey-400/40 bg-wax-50/95 px-4 py-3 shadow-[0_12px_40px_-18px_rgba(61,42,20,0.55)] backdrop-blur">
+          <p className="min-w-0 truncate text-sm text-hive-700">{saveSummary}</p>
+          <Button type="submit" disabled={pending} size="lg">
+            {pending && <Loader2 className="h-4 w-4 animate-spin" />}
+            Save inspection
+          </Button>
+        </div>
       </div>
     </form>
   );

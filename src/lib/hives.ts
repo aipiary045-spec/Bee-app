@@ -3,6 +3,7 @@ import type { Tables } from "@/types/database";
 
 export type Apiary = Tables<"apiaries">;
 export type Hive = Tables<"hives">;
+export type Inspection = Tables<"inspections">;
 
 export async function getOrCreateDefaultApiary(
   userId: string
@@ -85,4 +86,24 @@ export async function getHiveById(
     .maybeSingle();
 
   return { ...hive, apiary: apiary ?? null };
+}
+
+export async function listInspectionsForHive(
+  hiveId: string,
+  limit = 8
+): Promise<Inspection[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("inspections")
+    .select("*")
+    .eq("hive_id", hiveId)
+    .order("date", { ascending: false })
+    .order("created_at", { ascending: false })
+    .limit(limit);
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  return data ?? [];
 }
