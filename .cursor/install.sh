@@ -11,7 +11,15 @@ SUPABASE_CLI_VERSION="2.114.0"
 echo "==> Installing system packages (Docker + fuse-overlayfs for the Supabase local stack)"
 export DEBIAN_FRONTEND=noninteractive
 sudo apt-get update -qq
-sudo apt-get install -y -qq docker.io iptables fuse-overlayfs uidmap
+# --force-conf* keeps existing conffiles (e.g. a customized /etc/fuse.conf on the
+# base image) without an interactive prompt that would abort a non-tty install.
+sudo apt-get install -y -qq \
+  -o Dpkg::Options::=--force-confdef \
+  -o Dpkg::Options::=--force-confold \
+  docker.io iptables fuse-overlayfs uidmap
+# Allow the run user to use the Docker socket without sudo.
+sudo groupadd -f docker
+sudo usermod -aG docker "$(id -un)" || true
 
 echo "==> Ensuring Supabase CLI ${SUPABASE_CLI_VERSION} is installed"
 if [ "$(supabase --version 2>/dev/null || true)" != "${SUPABASE_CLI_VERSION}" ]; then
