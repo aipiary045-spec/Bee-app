@@ -34,6 +34,18 @@ esac
 
 VERCEL=(npx --yes vercel@latest)
 
+# Optional: apply this repo's SQL migrations to the hosted Supabase project
+# first, so the deployed app's schema matches. Idempotent (ADD COLUMN IF NOT
+# EXISTS / GRANTs). Only runs when SUPABASE_DB_URL is provided.
+if [ -n "${SUPABASE_DB_URL:-}" ]; then
+  echo "==> Applying Supabase migrations to the hosted database"
+  npx --yes supabase@latest db push --db-url "$SUPABASE_DB_URL" --include-all
+else
+  echo "==> Skipping Supabase migrations (SUPABASE_DB_URL not set)"
+  echo "    Apply supabase/migrations to your hosted project or the new hive"
+  echo "    features will fail with missing columns / permission denied."
+fi
+
 echo "==> Authenticated as:"
 "${VERCEL[@]}" whoami --token "$VERCEL_TOKEN"
 
