@@ -1,8 +1,15 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, Crown, Hexagon, LineChart } from "lucide-react";
+import {
+  ArrowLeft,
+  ClipboardList,
+  Crown,
+  Hexagon,
+  LineChart,
+} from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
 import { HiveQrCard } from "@/components/hives/hive-qr-card";
+import { NavCard } from "@/components/ui/nav-card";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -50,11 +57,6 @@ export default async function HiveDetailPage({ params }: HiveDetailPageProps) {
     inspections = [];
   }
 
-  const tabs = [
-    { label: "Health Trends", icon: LineChart },
-    { label: "Honey Yields", icon: Crown },
-  ];
-
   const statusVariant =
     hive.status === "active"
       ? ("success" as const)
@@ -63,32 +65,65 @@ export default async function HiveDetailPage({ params }: HiveDetailPageProps) {
         : ("muted" as const);
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-      <Button variant="ghost" size="sm" className="mb-4 -ml-2" asChild>
+    <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+      <Button variant="ghost" size="sm" className="mb-3 -ml-2" asChild>
         <Link href="/hives">
           <ArrowLeft className="h-4 w-4" />
-          All Hives
+          All hives
         </Link>
       </Button>
 
       <PageHeader
-        eyebrow={hive.apiary?.name ?? "Colony Detail"}
+        eyebrow={hive.apiary?.name ?? "Colony"}
         title={hive.name}
-        description={`Located in ${hive.apiary?.location ?? "your apiary"}. Inspection charts and mite trends will appear here as you log field data.`}
+        description={`${hive.apiary?.location ?? "Your apiary"} · ${formatSuperCount(hive.super_count)} · ${hive.frame_count} frames`}
+        actions={
+          <Button asChild>
+            <Link href={`/inspect?hive=${hive.id}`}>
+              <ClipboardList className="h-4 w-4" />
+              Quick Log
+            </Link>
+          </Button>
+        }
       />
 
-      <div className="fade-up-delay-1 mb-8 flex flex-wrap items-center gap-2">
+      <div className="fade-up-delay-1 mb-6 flex flex-wrap items-center gap-2">
         <Badge variant={statusVariant}>{hive.status}</Badge>
         <Badge variant="default">{hive.frame_count} frames</Badge>
         <Badge variant="default">{formatSuperCount(hive.super_count)}</Badge>
-        <Button variant="outline" size="sm" asChild>
-          <Link href={`/inspect?hive=${hive.id}`}>Quick Log</Link>
-        </Button>
+      </div>
+
+      <div className="fade-up-delay-1 mb-6 grid gap-3 sm:grid-cols-3">
+        <NavCard
+          href={`/inspect?hive=${hive.id}`}
+          eyebrow="This visit"
+          title="Quick Log"
+          description="Record queen, brood, supers, and notes for this box."
+          icon={ClipboardList}
+          featured
+        />
+        <NavCard
+          href="#inspections"
+          title="Inspections"
+          description={
+            inspections.length === 0
+              ? "No visits yet — start with Quick Log."
+              : `${inspections.length} recent visit${inspections.length === 1 ? "" : "s"} on file.`
+          }
+          icon={Hexagon}
+        />
+        <NavCard
+          href="/finances"
+          title="Honey & money"
+          description="Log a harvest sale or a purchase against this yard."
+          icon={Crown}
+          accent="meadow"
+        />
       </div>
 
       <div className="fade-up-delay-2 mb-8 grid gap-4 lg:grid-cols-3">
-        <div className="lg:col-span-2 grid gap-4 sm:grid-cols-2">
-          <Card className="sm:col-span-2">
+        <div className="lg:col-span-2 grid gap-4">
+          <Card id="inspections">
             <CardHeader className="pb-2">
               <CardTitle className="flex items-center gap-2 text-base">
                 <Hexagon className="h-4 w-4 text-honey-700" />
@@ -97,50 +132,71 @@ export default async function HiveDetailPage({ params }: HiveDetailPageProps) {
             </CardHeader>
             <CardContent>
               {inspections.length === 0 ? (
-                <p className="text-sm text-hive-500">
-                  No records yet — use Quick Log to start tracking this colony.
-                </p>
+                <Link
+                  href={`/inspect?hive=${hive.id}`}
+                  className="block rounded-xl border border-dashed border-honey-400/40 bg-honey-50/50 px-4 py-6 text-center text-sm text-hive-600 transition-colors hover:border-honey-400/70 hover:bg-honey-50"
+                >
+                  No records yet — tap to open Quick Log for this colony.
+                </Link>
               ) : (
                 <ul className="divide-y divide-wax-300/60">
                   {inspections.map((inspection) => (
-                    <li
-                      key={inspection.id}
-                      className="flex flex-col gap-1 py-3 first:pt-0 last:pb-0 sm:flex-row sm:items-baseline sm:justify-between"
-                    >
-                      <div>
-                        <p className="text-sm font-medium text-hive-900">
-                          {formatDate(inspection.date)}
-                        </p>
-                        <p className="text-sm text-hive-600">
-                          {inspectionSummary(inspection)}
-                        </p>
-                      </div>
-                      {inspection.notes && (
-                        <p className="max-w-md truncate text-xs text-hive-500">
-                          {inspection.notes}
-                        </p>
-                      )}
+                    <li key={inspection.id}>
+                      <Link
+                        href={`/inspect?hive=${hive.id}`}
+                        className="flex flex-col gap-1 py-3 transition-colors first:pt-0 last:pb-0 hover:text-honey-800 sm:flex-row sm:items-baseline sm:justify-between"
+                      >
+                        <div>
+                          <p className="text-sm font-medium text-hive-900">
+                            {formatDate(inspection.date)}
+                          </p>
+                          <p className="text-sm text-hive-600">
+                            {inspectionSummary(inspection)}
+                          </p>
+                        </div>
+                        {inspection.notes && (
+                          <p className="max-w-md truncate text-xs text-hive-500">
+                            {inspection.notes}
+                          </p>
+                        )}
+                      </Link>
                     </li>
                   ))}
                 </ul>
               )}
             </CardContent>
           </Card>
-          {tabs.map(({ label, icon: Icon }) => (
-            <Card key={label}>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Card>
               <CardHeader className="pb-2">
                 <CardTitle className="flex items-center gap-2 text-base">
-                  <Icon className="h-4 w-4 text-honey-700" />
-                  {label}
+                  <LineChart className="h-4 w-4 text-honey-700" />
+                  Health trends
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <p className="text-sm text-hive-500">
-                  No records yet — use Quick Log to start tracking this colony.
+                  Mite and brood charts will land here after a few Quick Logs.
                 </p>
               </CardContent>
             </Card>
-          ))}
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="flex items-center gap-2 text-base">
+                  <Crown className="h-4 w-4 text-honey-700" />
+                  Honey yields
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <Link
+                  href="/finances"
+                  className="text-sm font-medium text-honey-700 hover:text-honey-600"
+                >
+                  Record a honey sale in Finances →
+                </Link>
+              </CardContent>
+            </Card>
+          </div>
         </div>
         <HiveQrCard hiveId={hive.id} hiveName={hive.name} />
       </div>

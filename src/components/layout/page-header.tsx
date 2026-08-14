@@ -18,32 +18,31 @@ export function PageHeader({
   return (
     <header
       className={cn(
-        "fade-up relative mb-10 overflow-hidden rounded-3xl surface-panel px-6 py-7 sm:px-8",
+        "fade-up relative mb-6 overflow-hidden rounded-2xl surface-panel px-5 py-5 sm:px-6",
         className
       )}
     >
       <div className="pointer-events-none absolute inset-x-0 top-0 h-px shimmer-line" />
-      <div className="pointer-events-none absolute -right-10 -top-16 h-40 w-40 rounded-full bg-honey-400/20 blur-3xl" />
-      <div className="pointer-events-none absolute -bottom-20 left-10 h-36 w-36 rounded-full bg-meadow-400/15 blur-3xl" />
+      <div className="pointer-events-none absolute -right-10 -top-16 h-32 w-32 rounded-full bg-honey-400/20 blur-3xl" />
 
-      <div className="relative flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
+      <div className="relative flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="max-w-2xl">
           {eyebrow && (
-            <p className="text-xs font-semibold uppercase tracking-[0.28em] text-honey-700">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-honey-700">
               {eyebrow}
             </p>
           )}
-          <h1 className="font-display mt-2 text-4xl font-bold text-hive-900 sm:text-5xl">
+          <h1 className="font-display mt-1 text-3xl font-bold text-hive-900 sm:text-4xl">
             {title}
           </h1>
           {description && (
-            <p className="mt-3 text-base leading-relaxed text-hive-600">
+            <p className="mt-2 text-sm leading-relaxed text-hive-600 sm:text-base">
               {description}
             </p>
           )}
         </div>
         {actions && (
-          <div className="flex shrink-0 flex-wrap gap-3">{actions}</div>
+          <div className="flex shrink-0 flex-wrap gap-2">{actions}</div>
         )}
       </div>
     </header>

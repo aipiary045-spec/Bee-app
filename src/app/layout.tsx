@@ -31,7 +31,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" className="scroll-smooth">
       <body
         className={`${fraunces.variable} ${sourceSerif.variable} honeycomb-bg min-h-screen`}
       >

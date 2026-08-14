@@ -7,7 +7,7 @@ export function Card({
   return (
     <div
       className={cn(
-        "surface-panel rounded-2xl backdrop-blur-sm transition-all duration-300",
+        "surface-panel scroll-mt-24 rounded-2xl backdrop-blur-sm transition-all duration-300",
         className
       )}
       {...props}

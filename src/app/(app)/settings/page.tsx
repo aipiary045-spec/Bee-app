@@ -1,5 +1,6 @@
 import { MapPin, QrCode, Settings, User } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
+import { NavCard } from "@/components/ui/nav-card";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { SignOutButton } from "@/components/auth/sign-out-button";
@@ -20,16 +21,46 @@ export default async function SettingsPage() {
   }
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+    <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
       <PageHeader
         eyebrow="Configuration"
         title="Settings"
-        description="Apiary defaults, location context for weather and seasonal advice, and account preferences."
+        description="Account, yard location, and QR access — tap a card to jump."
         actions={<SignOutButton />}
       />
 
+      <div className="fade-up-delay-1 mb-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        <NavCard
+          href="#account"
+          title="Account"
+          description={userEmail ?? "Sign in to see your email."}
+          icon={User}
+        />
+        <NavCard
+          href="#location"
+          title="Yard location"
+          description={DEFAULT_LOCATION}
+          icon={MapPin}
+        />
+        <NavCard
+          href="#qr"
+          title="Yard QR"
+          description={yardUrl ? "Configured for phone scans" : "Set an app URL"}
+          icon={QrCode}
+          featured
+        />
+        <NavCard
+          href="#supabase"
+          title="Database"
+          description={
+            env.isSupabaseConfigured() ? "Supabase connected" : "Not configured"
+          }
+          icon={Settings}
+        />
+      </div>
+
       <div className="grid gap-6 lg:grid-cols-2">
-        <Card className="fade-up-delay-1">
+        <Card id="account" className="fade-up-delay-1">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <User className="h-5 w-5 text-honey-600" />
@@ -50,7 +81,7 @@ export default async function SettingsPage() {
           </CardContent>
         </Card>
 
-        <Card className="fade-up-delay-1">
+        <Card id="location" className="fade-up-delay-1">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <MapPin className="h-5 w-5 text-honey-600" />
@@ -79,7 +110,7 @@ export default async function SettingsPage() {
           </CardContent>
         </Card>
 
-        <Card className="fade-up-delay-2">
+        <Card id="qr" className="fade-up-delay-2">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <QrCode className="h-5 w-5 text-honey-600" />
@@ -106,7 +137,7 @@ export default async function SettingsPage() {
           </CardContent>
         </Card>
 
-        <Card className="fade-up-delay-2 lg:col-span-2">
+        <Card id="supabase" className="fade-up-delay-2 lg:col-span-2">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Settings className="h-5 w-5 text-hive-600" />

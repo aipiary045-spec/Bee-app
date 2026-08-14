@@ -42,12 +42,11 @@ export default async function InspectPage({ searchParams }: InspectPageProps) {
   }
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+    <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
       <PageHeader
-        eyebrow="Field Work"
-        title="Quick Inspection Log"
-        description="Pick a hive, add or pull supers, then tap through queen, health, and notes — built for the yard."
-        className="mb-6 py-5 sm:py-6"
+        eyebrow="Field work"
+        title="Quick Log"
+        description="Pick a hive, add or pull supers, then tap through queen, health, and notes."
       />
 
       {loadError && (

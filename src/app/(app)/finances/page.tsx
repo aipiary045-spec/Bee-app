@@ -65,7 +65,7 @@ export default async function FinancesPage() {
   const hasActivity = summary.activity.length > 0;
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+    <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
       <PageHeader
         eyebrow="Yard ledger"
         title="Finances"
@@ -85,7 +85,8 @@ export default async function FinancesPage() {
       )}
 
       <div className="fade-up-delay-1 mb-8 grid gap-4 sm:grid-cols-3">
-        <Card className="border-meadow-400/30 bg-gradient-to-br from-meadow-100/60 to-wax-50">
+        <a href="#income" className="block rounded-2xl outline-none ring-honey-400/40 focus-visible:ring-2">
+        <Card className="h-full border-meadow-400/30 bg-gradient-to-br from-meadow-100/60 to-wax-50 transition-transform hover:-translate-y-0.5">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium text-hive-600">
               YTD Revenue
@@ -100,12 +101,14 @@ export default async function FinancesPage() {
             </p>
             <p className="mt-1 text-xs text-hive-500">
               {summary.revenues.length} income entr
-              {summary.revenues.length === 1 ? "y" : "ies"}
+              {summary.revenues.length === 1 ? "y" : "ies"} · jump to list
             </p>
           </CardContent>
         </Card>
+        </a>
 
-        <Card className="border-honey-300/40 bg-gradient-to-br from-honey-50 to-wax-100">
+        <a href="#costs" className="block rounded-2xl outline-none ring-honey-400/40 focus-visible:ring-2">
+        <Card className="h-full border-honey-300/40 bg-gradient-to-br from-honey-50 to-wax-100 transition-transform hover:-translate-y-0.5">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium text-hive-600">
               YTD Expenses
@@ -120,10 +123,11 @@ export default async function FinancesPage() {
             </p>
             <p className="mt-1 text-xs text-hive-500">
               {summary.expenses.length} cost entr
-              {summary.expenses.length === 1 ? "y" : "ies"}
+              {summary.expenses.length === 1 ? "y" : "ies"} · jump to list
             </p>
           </CardContent>
         </Card>
+        </a>
 
         <Card
           className={cn(
@@ -183,7 +187,7 @@ export default async function FinancesPage() {
         </Card>
       ) : (
         <div className="fade-up-delay-2 grid gap-6 lg:grid-cols-2">
-          <Card>
+          <Card id="income">
             <CardHeader>
               <CardTitle className="text-base">Recent income</CardTitle>
             </CardHeader>
@@ -241,7 +245,7 @@ export default async function FinancesPage() {
             </CardContent>
           </Card>
 
-          <Card>
+          <Card id="costs">
             <CardHeader>
               <CardTitle className="text-base">Recent costs</CardTitle>
             </CardHeader>
