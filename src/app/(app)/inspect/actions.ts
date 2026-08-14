@@ -27,6 +27,7 @@ export type QuickLogInput = {
   pestsDiseases: Enums<"pest_disease">;
   actionFed: boolean;
   actionSuper: boolean;
+  actionSuperRemoved: boolean;
   actionSplit: boolean;
   actionTreatment: boolean;
   notes: string;
@@ -103,7 +104,7 @@ export async function createInspectionAction(
   try {
     const { data: hive, error: hiveError } = await supabase
       .from("hives")
-      .select("id, apiary_id")
+      .select("id, apiary_id, honey_supers")
       .eq("id", input.hiveId)
       .maybeSingle();
 
@@ -131,6 +132,7 @@ export async function createInspectionAction(
         pests_diseases: input.pestsDiseases,
         action_fed: input.actionFed,
         action_super: input.actionSuper,
+        action_super_removed: input.actionSuperRemoved,
         action_split: input.actionSplit,
         action_treatment: input.actionTreatment,
         notes: input.notes.trim() || null,
@@ -141,6 +143,23 @@ export async function createInspectionAction(
 
     if (inspectionError) {
       return { ok: false, error: inspectionError.message };
+    }
+
+    // Adding/removing a honey super in the log updates the hive's live box
+    // configuration so the hive diagram reflects the change. Clamp to 0..8.
+    const superDelta =
+      (input.actionSuper ? 1 : 0) - (input.actionSuperRemoved ? 1 : 0);
+    if (superDelta !== 0) {
+      const nextSupers = Math.max(
+        0,
+        Math.min(8, (hive.honey_supers ?? 0) + superDelta)
+      );
+      if (nextSupers !== hive.honey_supers) {
+        await supabase
+          .from("hives")
+          .update({ honey_supers: nextSupers })
+          .eq("id", input.hiveId);
+      }
     }
 
     if (miteCount !== null) {

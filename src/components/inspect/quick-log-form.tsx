@@ -95,6 +95,7 @@ const pestOptions: { value: Enums<"pest_disease">; label: string }[] = [
 const actionOptions = [
   { key: "actionFed" as const, label: "Fed Sugar Syrup / Patty" },
   { key: "actionSuper" as const, label: "Added Honey Super" },
+  { key: "actionSuperRemoved" as const, label: "Removed Honey Super" },
   { key: "actionSplit" as const, label: "Created Split / Swarm Control" },
   { key: "actionTreatment" as const, label: "Applied Mite Treatment" },
 ];
@@ -221,6 +222,7 @@ export function QuickLogForm({
 
   const [actionFed, setActionFed] = useState(false);
   const [actionSuper, setActionSuper] = useState(false);
+  const [actionSuperRemoved, setActionSuperRemoved] = useState(false);
   const [actionSplit, setActionSplit] = useState(false);
   const [actionTreatment, setActionTreatment] = useState(false);
   const [notes, setNotes] = useState("");
@@ -257,12 +259,14 @@ export function QuickLogForm({
   const actionState = {
     actionFed,
     actionSuper,
+    actionSuperRemoved,
     actionSplit,
     actionTreatment,
   };
   const setAction = {
     actionFed: setActionFed,
     actionSuper: setActionSuper,
+    actionSuperRemoved: setActionSuperRemoved,
     actionSplit: setActionSplit,
     actionTreatment: setActionTreatment,
   };
@@ -290,6 +294,7 @@ export function QuickLogForm({
         pestsDiseases,
         actionFed,
         actionSuper,
+        actionSuperRemoved,
         actionSplit,
         actionTreatment,
         notes,
@@ -313,6 +318,7 @@ export function QuickLogForm({
       setNotes("");
       setActionFed(false);
       setActionSuper(false);
+      setActionSuperRemoved(false);
       setActionSplit(false);
       setActionTreatment(false);
       setMiteCountPer100("0");
