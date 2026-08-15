@@ -47,6 +47,8 @@ export type Database = {
           status: Database["public"]["Enums"]["hive_status"];
           frame_count: number;
           super_count: number;
+          medium_count: number;
+          shallow_count: number;
           created_at: string;
           updated_at: string;
         };
@@ -57,6 +59,8 @@ export type Database = {
           status?: Database["public"]["Enums"]["hive_status"];
           frame_count?: number;
           super_count?: number;
+          medium_count?: number;
+          shallow_count?: number;
           created_at?: string;
           updated_at?: string;
         };
@@ -67,6 +71,8 @@ export type Database = {
           status?: Database["public"]["Enums"]["hive_status"];
           frame_count?: number;
           super_count?: number;
+          medium_count?: number;
+          shallow_count?: number;
           created_at?: string;
           updated_at?: string;
         };
@@ -109,6 +115,10 @@ export type Database = {
           supers_added: number;
           supers_removed: number;
           super_count_after: number | null;
+          medium_added: number;
+          medium_removed: number;
+          shallow_added: number;
+          shallow_removed: number;
         };
         Insert: {
           id?: string;
@@ -138,6 +148,10 @@ export type Database = {
           supers_added?: number;
           supers_removed?: number;
           super_count_after?: number | null;
+          medium_added?: number;
+          medium_removed?: number;
+          shallow_added?: number;
+          shallow_removed?: number;
         };
         Update: {
           id?: string;
@@ -167,6 +181,10 @@ export type Database = {
           supers_added?: number;
           supers_removed?: number;
           super_count_after?: number | null;
+          medium_added?: number;
+          medium_removed?: number;
+          shallow_added?: number;
+          shallow_removed?: number;
         };
         Relationships: [
           {

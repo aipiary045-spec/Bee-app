@@ -4,6 +4,7 @@ import {
   INSPECTION_OVERDUE_DAYS,
   MITE_THRESHOLD_PER_100,
   buildHiveAlerts,
+  buildTreatmentAlerts,
   daysSince,
   uniqueHiveCount,
 } from "./alerts.ts";
@@ -168,6 +169,26 @@ describe("buildHiveAlerts", () => {
     );
     assert.ok(alerts.length >= 2);
     assert.equal(uniqueHiveCount(alerts), 1);
+  });
+
+  it("flags an overdue in-progress treatment", () => {
+    const alerts = buildTreatmentAlerts(
+      [{ id: "h1", name: "Hive 1", status: "active" }],
+      [
+        {
+          id: "t1",
+          hiveId: "h1",
+          productName: "Apivar",
+          endDate: daysAgo(3),
+          status: "in_progress",
+        },
+      ],
+      today
+    );
+    assert.equal(alerts.length, 1);
+    assert.equal(alerts[0].kind, "treatment");
+    assert.equal(alerts[0].href, "/hives/h1#treatments");
+    assert.match(alerts[0].message, /Apivar/);
   });
 
   it("returns no alerts for a healthy recent visit", () => {

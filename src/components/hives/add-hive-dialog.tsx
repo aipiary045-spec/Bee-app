@@ -22,7 +22,8 @@ export function AddHiveDialog() {
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
   const [frameCount, setFrameCount] = useState("10");
-  const [superCount, setSuperCount] = useState("0");
+  const [mediumCount, setMediumCount] = useState("0");
+  const [shallowCount, setShallowCount] = useState("0");
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
   const [created, setCreated] = useState<{
@@ -33,7 +34,8 @@ export function AddHiveDialog() {
   function reset() {
     setName("");
     setFrameCount("10");
-    setSuperCount("0");
+    setMediumCount("0");
+    setShallowCount("0");
     setError(null);
     setCreated(null);
   }
@@ -46,7 +48,8 @@ export function AddHiveDialog() {
       const result = await createHiveAction({
         name,
         frameCount: Number(frameCount) || 10,
-        superCount: Number(superCount) || 0,
+        mediumCount: Number(mediumCount) || 0,
+        shallowCount: Number(shallowCount) || 0,
         status: "active",
       });
 
@@ -98,9 +101,9 @@ export function AddHiveDialog() {
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-3 gap-3">
                 <div className="space-y-2">
-                  <Label htmlFor="frame-count">Frame count</Label>
+                  <Label htmlFor="frame-count">Frames</Label>
                   <Input
                     id="frame-count"
                     type="number"
@@ -112,15 +115,27 @@ export function AddHiveDialog() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="super-count">Honey supers</Label>
+                  <Label htmlFor="medium-count">Medium</Label>
                   <Input
-                    id="super-count"
+                    id="medium-count"
                     type="number"
                     min={0}
                     max={12}
                     required
-                    value={superCount}
-                    onChange={(e) => setSuperCount(e.target.value)}
+                    value={mediumCount}
+                    onChange={(e) => setMediumCount(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="shallow-count">Shallow</Label>
+                  <Input
+                    id="shallow-count"
+                    type="number"
+                    min={0}
+                    max={12}
+                    required
+                    value={shallowCount}
+                    onChange={(e) => setShallowCount(e.target.value)}
                   />
                 </div>
               </div>

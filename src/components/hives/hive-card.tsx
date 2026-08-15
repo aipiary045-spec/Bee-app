@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { ClipboardList, Hexagon } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { formatSuperCount } from "@/lib/supers";
+import { formatSuperInventory, hiveSuperInventory } from "@/lib/supers";
 import { cn } from "@/lib/utils";
 import type { Hive } from "@/lib/hives";
 
@@ -18,7 +18,16 @@ function statusDot(status: Hive["status"]) {
 }
 
 interface HiveCardProps {
-  hive: Pick<Hive, "id" | "name" | "status" | "frame_count" | "super_count">;
+  hive: Pick<
+    Hive,
+    | "id"
+    | "name"
+    | "status"
+    | "frame_count"
+    | "super_count"
+    | "medium_count"
+    | "shallow_count"
+  >;
   className?: string;
 }
 
@@ -46,7 +55,7 @@ export function HiveCard({ hive, className }: HiveCardProps) {
         <div className="mt-2 flex flex-wrap gap-2">
           <Badge variant={statusVariant(hive.status)}>{hive.status}</Badge>
           <Badge variant="default">{hive.frame_count} frames</Badge>
-          <Badge variant="default">{formatSuperCount(hive.super_count)}</Badge>
+          <Badge variant="default">{formatSuperInventory(hiveSuperInventory(hive))}</Badge>
         </div>
       </Link>
       <div className="grid grid-cols-2 border-t border-wax-300/50">

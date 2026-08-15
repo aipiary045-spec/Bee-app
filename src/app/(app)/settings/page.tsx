@@ -4,6 +4,7 @@ import { NavCard } from "@/components/ui/nav-card";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { SignOutButton } from "@/components/auth/sign-out-button";
+import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { createClient } from "@/lib/supabase/server";
 import { env } from "@/lib/env";
 import { DEFAULT_LOCATION, DEFAULT_LAT, DEFAULT_LON } from "@/lib/utils";
@@ -73,6 +74,15 @@ export default async function SettingsPage() {
               <span className="font-medium text-hive-900">
                 {userEmail ?? "Not signed in"}
               </span>
+            </div>
+            <div className="flex items-center justify-between gap-3 rounded-lg border border-wax-300/60 bg-wax-50/80 px-4 py-3">
+              <div>
+                <p className="text-sm font-medium text-hive-900">Field dark</p>
+                <p className="text-xs text-hive-600">
+                  High contrast for the stand. Honey and wax stay the default.
+                </p>
+              </div>
+              <ThemeToggle />
             </div>
             <p className="text-sm leading-relaxed text-hive-600">
               Your apiary data is scoped to this account via Supabase Row Level
@@ -170,11 +180,9 @@ export default async function SettingsPage() {
                 <code className="text-xs">.env.local</code>
               </li>
               <li>
-                Run{" "}
-                <code className="text-xs">
-                  supabase/migrations/20260729000000_initial_schema.sql
-                </code>{" "}
-                in the SQL Editor
+                Run the SQL files in{" "}
+                <code className="text-xs">supabase/migrations/</code>{" "}
+                in the SQL Editor, including supers and super types
               </li>
               <li>
                 Under Authentication → Providers, keep Email enabled. Optionally

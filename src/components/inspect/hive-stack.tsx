@@ -1,24 +1,42 @@
 import { cn } from "@/lib/utils";
-import { formatSuperCount } from "@/lib/supers";
+import {
+  formatSuperInventory,
+  type SuperInventory,
+  type SuperType,
+  type SuperVisitChange,
+} from "@/lib/supers";
 
 interface HiveStackProps {
-  currentSupers: number;
-  nextSupers: number;
+  current: SuperInventory;
+  change: SuperVisitChange;
+  next: SuperInventory;
   hiveName?: string;
   className?: string;
 }
 
 function SuperBox({
-  label,
+  type,
   state,
 }: {
-  label: string;
+  type: SuperType;
   state: "current" | "added" | "removed";
 }) {
+  const label =
+    state === "added"
+      ? type === "medium"
+        ? "New medium"
+        : "New shallow"
+      : state === "removed"
+        ? "Coming off"
+        : type === "medium"
+          ? "Medium"
+          : "Shallow";
+
   return (
     <div
       className={cn(
-        "relative flex h-9 w-[9.5rem] items-center justify-center rounded-md border text-[11px] font-semibold tracking-wide transition-all duration-300",
+        "relative flex w-[9.5rem] items-center justify-center rounded-md border text-[11px] font-semibold tracking-wide transition-all duration-300",
+        type === "medium" ? "h-11" : "h-7",
         state === "current" &&
           "border-honey-600/50 bg-gradient-to-b from-honey-300 to-honey-500 text-honey-900 shadow-[inset_0_1px_0_rgba(255,255,255,0.45)]",
         state === "added" &&
@@ -32,23 +50,32 @@ function SuperBox({
   );
 }
 
+function boxesOf(count: number, type: SuperType, state: "current" | "added" | "removed") {
+  return Array.from({ length: Math.max(0, count) }, (_, index) => ({
+    key: `${state}-${type}-${index}`,
+    type,
+    state,
+  }));
+}
+
 export function HiveStack({
-  currentSupers,
-  nextSupers,
+  current,
+  change,
+  next,
   hiveName,
   className,
 }: HiveStackProps) {
-  const shown = Math.max(currentSupers, nextSupers, 0);
-  const boxes = Array.from({ length: shown }, (_, index) => {
-    const fromTop = shown - 1 - index;
-    if (nextSupers > currentSupers) {
-      return fromTop >= currentSupers ? ("added" as const) : ("current" as const);
-    }
-    if (nextSupers < currentSupers) {
-      return fromTop >= nextSupers ? ("removed" as const) : ("current" as const);
-    }
-    return "current" as const;
-  });
+  const remainingMedium = current.medium - change.mediumRemoved;
+  const remainingShallow = current.shallow - change.shallowRemoved;
+
+  const stack = [
+    ...boxesOf(change.shallowRemoved, "shallow", "removed"),
+    ...boxesOf(change.mediumRemoved, "medium", "removed"),
+    ...boxesOf(change.shallowAdded, "shallow", "added"),
+    ...boxesOf(remainingShallow, "shallow", "current"),
+    ...boxesOf(change.mediumAdded, "medium", "added"),
+    ...boxesOf(remainingMedium, "medium", "current"),
+  ];
 
   return (
     <div className={cn("flex flex-col items-center gap-1.5", className)}>
@@ -63,25 +90,15 @@ export function HiveStack({
         aria-hidden
       />
 
-      {boxes.length === 0 ? (
+      {stack.length === 0 ? (
         <p className="py-1 text-[11px] text-hive-500">No supers on yet</p>
       ) : (
-        boxes.map((state, index) => (
-          <SuperBox
-            key={`${state}-${index}`}
-            state={state}
-            label={
-              state === "added"
-                ? "New super"
-                : state === "removed"
-                  ? "Coming off"
-                  : "Honey super"
-            }
-          />
+        stack.map((box) => (
+          <SuperBox key={box.key} type={box.type} state={box.state} />
         ))
       )}
 
-      <div className="flex h-12 w-[9.5rem] items-center justify-center rounded-md border border-hive-800/40 bg-gradient-to-b from-hive-600 to-hive-800 text-[11px] font-semibold tracking-wide text-wax-100 shadow-sm">
+      <div className="flex h-12 w-[9.5rem] items-center justify-center rounded-md border border-hive-800/40 bg-gradient-to-b from-hive-600 to-hive-800 text-[11px] font-semibold tracking-wide text-white shadow-sm">
         Brood box
       </div>
       <div
@@ -90,7 +107,7 @@ export function HiveStack({
       />
 
       <p className="mt-1 text-xs font-medium text-hive-700">
-        After this visit: {formatSuperCount(nextSupers)}
+        After this visit: {formatSuperInventory(next)}
       </p>
     </div>
   );

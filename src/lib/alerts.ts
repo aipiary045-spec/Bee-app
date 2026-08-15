@@ -8,7 +8,8 @@ export type AlertKind =
   | "disease"
   | "queen"
   | "overdue"
-  | "never_inspected";
+  | "never_inspected"
+  | "treatment";
 
 export type HiveAlert = {
   id: string;
@@ -32,6 +33,14 @@ export type AlertInspection = {
   queenSighted: "yes" | "no" | "uncertain" | null;
   miteCountPer100: number | null;
   pestsDiseases: string | null;
+};
+
+export type AlertTreatment = {
+  id: string;
+  hiveId: string;
+  productName: string;
+  endDate: string | null;
+  status: "planned" | "in_progress" | "completed";
 };
 
 export function daysSince(dateISO: string, today: Date = new Date()): number {
@@ -186,4 +195,44 @@ export function buildHiveAlerts(
 
 export function uniqueHiveCount(alerts: HiveAlert[]): number {
   return new Set(alerts.map((alert) => alert.hiveId)).size;
+}
+
+export function buildTreatmentAlerts(
+  hives: AlertHive[],
+  treatments: AlertTreatment[],
+  today: Date = new Date()
+): HiveAlert[] {
+  const names = new Map(hives.map((hive) => [hive.id, hive.name]));
+  const alerts: HiveAlert[] = [];
+
+  for (const treatment of treatments) {
+    if (treatment.status === "completed") continue;
+    const hiveName = names.get(treatment.hiveId);
+    if (!hiveName) continue;
+    if (!treatment.endDate) continue;
+
+    const overdueDays = daysSince(treatment.endDate, today);
+    if (overdueDays <= 0) continue;
+
+    alerts.push({
+      id: `${treatment.id}-treatment`,
+      hiveId: treatment.hiveId,
+      hiveName,
+      kind: "treatment",
+      severity: "warning",
+      message: `${treatment.productName} overdue — pull or complete (${overdueDays} day${overdueDays === 1 ? "" : "s"} past)`,
+      href: `/hives/${treatment.hiveId}#treatments`,
+    });
+  }
+
+  return alerts.sort((a, b) => a.hiveName.localeCompare(b.hiveName));
+}
+
+export function mergeAlerts(...groups: HiveAlert[][]): HiveAlert[] {
+  const rank: Record<AlertSeverity, number> = { danger: 0, warning: 1 };
+  return groups.flat().sort((a, b) => {
+    const bySeverity = rank[a.severity] - rank[b.severity];
+    if (bySeverity !== 0) return bySeverity;
+    return a.hiveName.localeCompare(b.hiveName);
+  });
 }

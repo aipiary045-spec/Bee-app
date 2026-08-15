@@ -16,7 +16,16 @@ export default async function InspectPage({ searchParams }: InspectPageProps) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  let hives: Pick<Hive, "id" | "name" | "status" | "super_count" | "frame_count">[] = [];
+  let hives: Pick<
+    Hive,
+    | "id"
+    | "name"
+    | "status"
+    | "super_count"
+    | "medium_count"
+    | "shallow_count"
+    | "frame_count"
+  >[] = [];
   let loadError: string | null = null;
 
   const [weather] = await Promise.all([fetchLocalWeather()]);
@@ -24,13 +33,25 @@ export default async function InspectPage({ searchParams }: InspectPageProps) {
   if (user) {
     try {
       const result = await listHivesForUser(user.id);
-      hives = result.hives.map(({ id, name, status, super_count, frame_count }) => ({
-        id,
-        name,
-        status,
-        super_count,
-        frame_count,
-      }));
+      hives = result.hives.map(
+        ({
+          id,
+          name,
+          status,
+          super_count,
+          medium_count,
+          shallow_count,
+          frame_count,
+        }) => ({
+          id,
+          name,
+          status,
+          super_count,
+          medium_count,
+          shallow_count,
+          frame_count,
+        })
+      );
     } catch (err) {
       loadError =
         err instanceof Error ? err.message : "Failed to load hives.";
@@ -46,7 +67,7 @@ export default async function InspectPage({ searchParams }: InspectPageProps) {
       <PageHeader
         eyebrow="Field work"
         title="Quick Log"
-        description="Pick a hive, add or pull supers, then tap through queen, health, and notes."
+        description="Pick a hive, pull and replace supers, then tap through queen, health, and notes."
       />
 
       {loadError && (

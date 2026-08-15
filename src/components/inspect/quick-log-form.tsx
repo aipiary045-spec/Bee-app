@@ -23,11 +23,15 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn, DEFAULT_LOCATION, formatCurrency } from "@/lib/utils";
 import { EXPENSE_CATALOG, EXPENSE_CATEGORY_LABELS } from "@/lib/expense-catalog";
 import {
-  MAX_SUPERS,
-  formatSuperChange,
-  formatSuperCount,
-  nextSuperCount,
-  splitSuperDelta,
+  canAddSuper,
+  canRemoveSuper,
+  emptySuperChange,
+  formatSuperInventory,
+  formatTypedSuperChange,
+  hiveSuperInventory,
+  nextInventory,
+  type SuperType,
+  type SuperVisitChange,
 } from "@/lib/supers";
 import type { Hive } from "@/lib/hives";
 import type { Enums } from "@/types/database";
@@ -104,7 +108,7 @@ const pestOptions: { value: Enums<"pest_disease">; label: string }[] = [
 ];
 
 const fieldClass =
-  "flex h-11 w-full rounded-xl border border-wax-300/80 bg-wax-50/95 px-3 text-sm text-hive-900 shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-honey-500/40";
+  "flex h-11 w-full rounded-xl border border-wax-300/80 bg-wax-50/95 px-3 text-sm text-hive-900 shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-honey-500/40 dark:bg-[#1c1610] dark:border-honey-400/25";
 
 function todayISO() {
   return new Date().toISOString().slice(0, 10);
@@ -171,7 +175,13 @@ function SectionCard({
 
 export type QuickLogHive = Pick<
   Hive,
-  "id" | "name" | "status" | "super_count" | "frame_count"
+  | "id"
+  | "name"
+  | "status"
+  | "super_count"
+  | "medium_count"
+  | "shallow_count"
+  | "frame_count"
 >;
 
 interface QuickLogFormProps {
@@ -231,7 +241,7 @@ export function QuickLogForm({
     useState<Enums<"pest_disease">>("none");
 
   const [actionFed, setActionFed] = useState(false);
-  const [superDelta, setSuperDelta] = useState(0);
+  const [superChange, setSuperChange] = useState<SuperVisitChange>(emptySuperChange);
   const [actionSplit, setActionSplit] = useState(false);
   const [actionTreatment, setActionTreatment] = useState(false);
   const [notes, setNotes] = useState("");
@@ -243,10 +253,8 @@ export function QuickLogForm({
   );
 
   const selectedHive = selectable.find((hive) => hive.id === hiveId);
-  const currentSupers = selectedHive?.super_count ?? 0;
-  const nextSupers = nextSuperCount(currentSupers, superDelta);
-  const { added: supersAdded, removed: supersRemoved } =
-    splitSuperDelta(superDelta);
+  const currentInventory = hiveSuperInventory(selectedHive ?? {});
+  const nextSupers = nextInventory(currentInventory, superChange);
 
   const expenseTotal = useMemo(() => {
     if (!logExpenses) return 0;
@@ -258,7 +266,22 @@ export function QuickLogForm({
 
   function selectHive(id: string) {
     setHiveId(id);
-    setSuperDelta(0);
+    setSuperChange(emptySuperChange());
+  }
+
+  function bumpSuper(type: SuperType, direction: "add" | "remove") {
+    setSuperChange((current) => {
+      if (direction === "add") {
+        if (!canAddSuper(currentInventory, current)) return current;
+        return type === "medium"
+          ? { ...current, mediumAdded: current.mediumAdded + 1 }
+          : { ...current, shallowAdded: current.shallowAdded + 1 };
+      }
+      if (!canRemoveSuper(currentInventory, current, type)) return current;
+      return type === "medium"
+        ? { ...current, mediumRemoved: current.mediumRemoved + 1 }
+        : { ...current, shallowRemoved: current.shallowRemoved + 1 };
+    });
   }
 
   function toggleExpense(id: string) {
@@ -298,7 +321,10 @@ export function QuickLogForm({
         miteCountPer100,
         pestsDiseases,
         actionFed,
-        superDelta,
+        mediumAdded: superChange.mediumAdded,
+        mediumRemoved: superChange.mediumRemoved,
+        shallowAdded: superChange.shallowAdded,
+        shallowRemoved: superChange.shallowRemoved,
         actionSplit,
         actionTreatment,
         notes,
@@ -314,10 +340,12 @@ export function QuickLogForm({
         return;
       }
 
-      const superNote = formatSuperChange(
-        result.supersAdded,
-        result.supersRemoved
-      );
+      const superNote = formatTypedSuperChange({
+        mediumAdded: result.mediumAdded,
+        mediumRemoved: result.mediumRemoved,
+        shallowAdded: result.shallowAdded,
+        shallowRemoved: result.shallowRemoved,
+      });
       const expenseNote =
         logExpenses && selectedExpenseIds.length > 0
           ? ` · ${selectedExpenseIds.length} expense${selectedExpenseIds.length === 1 ? "" : "s"}`
@@ -325,11 +353,16 @@ export function QuickLogForm({
       setSuccess(
         superNote === "No super change"
           ? `Inspection saved${expenseNote}.`
-          : `Inspection saved. ${superNote} — hive now has ${formatSuperCount(result.superCountAfter)}${expenseNote}.`
+          : `Inspection saved. ${superNote} — now ${formatSuperInventory(nextInventory(currentInventory, {
+              mediumAdded: result.mediumAdded,
+              mediumRemoved: result.mediumRemoved,
+              shallowAdded: result.shallowAdded,
+              shallowRemoved: result.shallowRemoved,
+            }))}${expenseNote}.`
       );
       setNotes("");
       setActionFed(false);
-      setSuperDelta(0);
+      setSuperChange(emptySuperChange());
       setActionSplit(false);
       setActionTreatment(false);
       setMiteCountPer100("0");
@@ -360,9 +393,9 @@ export function QuickLogForm({
 
   const saveSummary = [
     selectedHive?.name ?? "Hive",
-    superDelta === 0
-      ? formatSuperCount(currentSupers)
-      : `${formatSuperChange(supersAdded, supersRemoved)} → ${formatSuperCount(nextSupers)}`,
+    formatTypedSuperChange(superChange) === "No super change"
+      ? formatSuperInventory(currentInventory)
+      : `${formatTypedSuperChange(superChange)} → ${formatSuperInventory(nextSupers)}`,
   ].join(" · ");
 
   return (
@@ -389,7 +422,7 @@ export function QuickLogForm({
                     {hive.name}
                   </p>
                   <p className="mt-0.5 text-[11px] text-hive-600">
-                    {formatSuperCount(hive.super_count)} · {hive.frame_count} frames
+                    {formatSuperInventory(hiveSuperInventory(hive))} · {hive.frame_count} frames
                   </p>
                 </button>
               );
@@ -397,51 +430,83 @@ export function QuickLogForm({
           </div>
         </div>
 
-        <div className="grid items-center gap-5 rounded-2xl border border-honey-400/25 bg-honey-50/40 p-4 sm:grid-cols-[1fr_auto_1fr]">
+        <div className="grid items-center gap-5 rounded-2xl border border-honey-400/25 bg-honey-50/40 p-4 dark:bg-honey-500/10 sm:grid-cols-[1fr_auto_1fr]">
           <div className="order-2 space-y-3 sm:order-1">
             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-honey-700">
               Stack this visit
             </p>
             <p className="font-display text-2xl font-semibold text-hive-900">
-              {formatSuperCount(nextSupers)}
+              {formatSuperInventory(nextSupers)}
             </p>
             <p className="text-sm text-hive-600">
-              On the hive now: {formatSuperCount(currentSupers)}. Tap to add a
-              box for the flow or pull one for harvest.
+              On now: {formatSuperInventory(currentInventory)}. Pull and add in
+              the same visit — harvest a capped box and put an empty one back.
             </p>
-            <div className="flex flex-wrap gap-2">
-              <Button
-                type="button"
-                variant="outline"
-                size="lg"
-                disabled={nextSupers <= 0}
-                onClick={() => setSuperDelta((delta) => delta - 1)}
-                className="min-w-[8.5rem]"
-              >
-                <Minus className="h-4 w-4" />
-                Remove
-              </Button>
-              <Button
-                type="button"
-                size="lg"
-                disabled={nextSupers >= MAX_SUPERS}
-                onClick={() => setSuperDelta((delta) => delta + 1)}
-                className="min-w-[8.5rem]"
-              >
-                <Plus className="h-4 w-4" />
-                Add super
-              </Button>
+            <div className="grid gap-2 sm:grid-cols-2">
+              <div className="space-y-2">
+                <p className="text-[11px] font-semibold uppercase tracking-wider text-hive-500">
+                  Medium
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    disabled={!canRemoveSuper(currentInventory, superChange, "medium")}
+                    onClick={() => bumpSuper("medium", "remove")}
+                  >
+                    <Minus className="h-4 w-4" />
+                    Pull
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    disabled={!canAddSuper(currentInventory, superChange)}
+                    onClick={() => bumpSuper("medium", "add")}
+                  >
+                    <Plus className="h-4 w-4" />
+                    Add
+                  </Button>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <p className="text-[11px] font-semibold uppercase tracking-wider text-hive-500">
+                  Shallow
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    disabled={!canRemoveSuper(currentInventory, superChange, "shallow")}
+                    onClick={() => bumpSuper("shallow", "remove")}
+                  >
+                    <Minus className="h-4 w-4" />
+                    Pull
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    disabled={!canAddSuper(currentInventory, superChange)}
+                    onClick={() => bumpSuper("shallow", "add")}
+                  >
+                    <Plus className="h-4 w-4" />
+                    Add
+                  </Button>
+                </div>
+              </div>
             </div>
             <p className="text-sm font-medium text-hive-800">
-              {formatSuperChange(supersAdded, supersRemoved)}
+              {formatTypedSuperChange(superChange)}
             </p>
           </div>
 
           <HiveStack
             className="order-1 sm:order-2"
             hiveName={selectedHive?.name}
-            currentSupers={currentSupers}
-            nextSupers={nextSupers}
+            current={currentInventory}
+            change={superChange}
+            next={nextSupers}
           />
 
           <div className="order-3 hidden text-sm text-hive-600 lg:block">
@@ -449,8 +514,8 @@ export function QuickLogForm({
               Yard tip
             </p>
             <p className="mt-2 leading-relaxed">
-              Add when the top box is 70–80% drawn. Pull a capped super on a
-              strong flow, or take the last one off before winter.
+              Pull a capped shallow and add a medium in the same save. Mediums
+              sit taller on the stack; shallows go on top.
             </p>
           </div>
         </div>
@@ -858,7 +923,7 @@ export function QuickLogForm({
       )}
 
       <div className="pointer-events-none fixed inset-x-0 bottom-0 z-20 px-4 pb-4 sm:px-6">
-        <div className="pointer-events-auto mx-auto flex max-w-7xl items-center justify-between gap-3 rounded-2xl border border-honey-400/40 bg-wax-50/95 px-4 py-3 shadow-[0_12px_40px_-18px_rgba(61,42,20,0.55)] backdrop-blur">
+        <div className="pointer-events-auto mx-auto flex max-w-7xl items-center justify-between gap-3 rounded-2xl border border-honey-400/40 bg-wax-50/95 px-4 py-3 shadow-[0_12px_40px_-18px_rgba(61,42,20,0.55)] backdrop-blur dark:bg-[#241c10]/95">
           <p className="min-w-0 truncate text-sm text-hive-700">{saveSummary}</p>
           <Button type="submit" disabled={pending} size="lg">
             {pending && <Loader2 className="h-4 w-4 animate-spin" />}

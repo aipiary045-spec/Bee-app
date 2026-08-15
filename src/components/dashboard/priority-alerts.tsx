@@ -6,6 +6,7 @@ import {
   ChevronRight,
   ClipboardList,
   Crown,
+  FlaskConical,
   ShieldAlert,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -18,6 +19,7 @@ const icons = {
   queen: Crown,
   overdue: AlertTriangle,
   never_inspected: ClipboardList,
+  treatment: FlaskConical,
 };
 
 interface PriorityAlertsBarProps {

@@ -54,7 +54,7 @@ export function NavCard({
         <div
           className={cn(
             "flex h-11 w-11 items-center justify-center rounded-xl",
-            featured ? "brand-mark text-wax-50" : tone.icon
+            featured ? "brand-mark text-white" : tone.icon
           )}
         >
           <Icon className="h-5 w-5" />

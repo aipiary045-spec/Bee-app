@@ -12,6 +12,7 @@ import {
 import { cn } from "@/lib/utils";
 import { BrandLogo } from "@/components/brand/brand-logo";
 import { SignOutButton } from "@/components/auth/sign-out-button";
+import { ThemeToggle } from "@/components/theme/theme-toggle";
 
 const navItems = [
   { href: "/", label: "Home", icon: LayoutDashboard },
@@ -29,7 +30,7 @@ export function Sidebar() {
   const pathname = usePathname();
 
   return (
-    <aside className="hidden lg:flex lg:w-72 lg:flex-col lg:border-r lg:border-wax-300/40 lg:bg-gradient-to-b lg:from-wax-50/90 lg:via-wax-100/70 lg:to-honey-100/30 lg:backdrop-blur-md">
+    <aside className="hidden lg:flex lg:w-72 lg:flex-col lg:border-r lg:border-wax-300/40 lg:bg-gradient-to-b lg:from-wax-50/90 lg:via-wax-100/70 lg:to-honey-100/30 lg:backdrop-blur-md dark:from-[#1c1610] dark:via-[#1a140c] dark:to-[#16120a]">
       <div className="relative overflow-hidden border-b border-wax-300/40 px-6 py-5">
         <div className="pointer-events-none absolute inset-x-0 top-0 h-px shimmer-line" />
         <Link href="/" className="flex items-center gap-3">
@@ -63,7 +64,7 @@ export function Sidebar() {
               <span
                 className={cn(
                   "flex h-8 w-8 items-center justify-center rounded-lg transition-colors",
-                  featured && !active && "brand-mark text-wax-50",
+                  featured && !active && "brand-mark text-white",
                   active
                     ? "bg-honey-500/25 text-honey-800"
                     : !featured && "bg-wax-200/60 text-hive-500 group-hover:text-hive-800"
@@ -77,7 +78,8 @@ export function Sidebar() {
         })}
       </nav>
 
-      <div className="border-t border-wax-300/40 p-4">
+      <div className="space-y-2 border-t border-wax-300/40 p-4">
+        <ThemeToggle compact />
         <SignOutButton className="w-full" />
       </div>
     </aside>
@@ -88,7 +90,7 @@ export function MobileNav() {
   const pathname = usePathname();
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-wax-300/50 bg-wax-50/90 shadow-[0_-8px_30px_-18px_rgba(61,42,20,0.35)] backdrop-blur-xl lg:hidden">
+    <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-wax-300/50 bg-wax-50/90 shadow-[0_-8px_30px_-18px_rgba(61,42,20,0.35)] backdrop-blur-xl dark:bg-[#1c1610]/95 lg:hidden">
       <div className="flex items-end justify-around px-1 py-2">
         {navItems.map(({ href, label, icon: Icon, featured }) => {
           const active = isActive(pathname, href);
@@ -107,7 +109,7 @@ export function MobileNav() {
                 className={cn(
                   "flex items-center justify-center",
                   featured
-                    ? "brand-mark h-12 w-12 rounded-2xl text-wax-50 shadow-md"
+                    ? "brand-mark h-12 w-12 rounded-2xl text-white shadow-md"
                     : "h-6 w-6",
                   active && featured && "ring-2 ring-honey-300"
                 )}

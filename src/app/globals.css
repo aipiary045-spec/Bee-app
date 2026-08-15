@@ -1,5 +1,7 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 @theme inline {
   --color-honey-50: #fef9ee;
   --color-honey-100: #fdf0d4;
@@ -44,9 +46,18 @@
     @apply border-wax-300;
   }
 
+  html.dark {
+    color-scheme: dark;
+    font-size: 17px;
+  }
+
   body {
     @apply text-hive-800 antialiased;
     font-family: var(--font-body), Georgia, serif;
+  }
+
+  .dark body {
+    color: #f3ead8;
   }
 
   h1, h2, h3, h4, h5, h6 {
@@ -71,6 +82,42 @@
     box-shadow:
       0 1px 0 rgba(255, 255, 255, 0.65) inset,
       0 10px 28px -18px rgba(61, 42, 20, 0.35);
+  }
+
+  .dark .honeycomb-bg {
+    background-color: #16120a;
+    background-image:
+      radial-gradient(ellipse 90% 55% at 12% -10%, rgba(224, 149, 24, 0.22), transparent 55%),
+      radial-gradient(ellipse 70% 45% at 100% 0%, rgba(74, 122, 58, 0.12), transparent 50%),
+      radial-gradient(ellipse 60% 40% at 50% 100%, rgba(61, 42, 20, 0.55), transparent 55%),
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='49' viewBox='0 0 28 49'%3E%3Cg fill-rule='evenodd'%3E%3Cg fill='%23efad32' fill-opacity='0.08'%3E%3Cpath d='M13.99 9.25l13 7.5v15l-13 7.5L1 31.75v-15l12.99-7.5zM3 17.9v12.7l10.99 6.34 11-6.35V17.9l-11-6.34L3 17.9zM0 15l12.98-7.5V0h-2v6.35L0 12.69v2.3zm0 18.5L12.98 41v8h-2v-6.85L0 35.81v-2.3zM15 0v7.5L27.99 15H28v-2.31h-.01L17 6.35V0h-2zm0 49v-8l12.99-7.5H28v2.31h-.01L17 42.15V49h-2z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+  }
+
+  .dark .surface-panel {
+    background: linear-gradient(165deg, rgba(36, 28, 16, 0.96), rgba(22, 18, 10, 0.92));
+    border: 1px solid rgba(239, 173, 50, 0.22);
+    box-shadow:
+      0 1px 0 rgba(255, 255, 255, 0.04) inset,
+      0 10px 28px -18px rgba(0, 0, 0, 0.55);
+  }
+
+  .dark .brand-watermark {
+    opacity: 0.08;
+  }
+
+  .dark [class*="text-hive-9"],
+  .dark [class*="text-hive-8"] {
+    color: #faf3e6;
+  }
+
+  .dark [class*="text-hive-7"],
+  .dark [class*="text-hive-6"] {
+    color: #e0d4c0;
+  }
+
+  .dark [class*="text-hive-5"],
+  .dark [class*="text-hive-4"] {
+    color: #c4b8a4;
   }
 
   .brand-mark {

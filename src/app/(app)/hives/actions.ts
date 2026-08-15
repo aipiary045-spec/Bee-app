@@ -10,6 +10,8 @@ export type CreateHiveInput = {
   status?: Enums<"hive_status">;
   frameCount?: number;
   superCount?: number;
+  mediumCount?: number;
+  shallowCount?: number;
 };
 
 export type ActionResult =
@@ -29,9 +31,14 @@ export async function createHiveAction(
     return { ok: false, error: "Frame count must be between 1 and 20." };
   }
 
-  const superCount = input.superCount ?? 0;
-  if (superCount < 0 || superCount > 12) {
-    return { ok: false, error: "Honey supers must be between 0 and 12." };
+  const mediumCount = input.mediumCount ?? input.superCount ?? 0;
+  const shallowCount = input.shallowCount ?? 0;
+  if (
+    mediumCount < 0 ||
+    shallowCount < 0 ||
+    mediumCount + shallowCount > 12
+  ) {
+    return { ok: false, error: "Honey supers must total between 0 and 12." };
   }
 
   const supabase = await createClient();
@@ -53,7 +60,9 @@ export async function createHiveAction(
         name,
         status: input.status ?? "active",
         frame_count: frameCount,
-        super_count: superCount,
+        super_count: mediumCount + shallowCount,
+        medium_count: mediumCount,
+        shallow_count: shallowCount,
       })
       .select("id")
       .single();
@@ -150,6 +159,125 @@ export async function createHarvestAction(
           "Database tables missing. Run the SQL migration in the Supabase SQL Editor first.",
       };
     }
+    return { ok: false, error: message };
+  }
+}
+
+export type CreateTreatmentInput = {
+  hiveId: string;
+  productName: string;
+  startDate: string;
+  endDate: string;
+  dosage: string;
+  notes: string;
+};
+
+export async function createTreatmentAction(
+  input: CreateTreatmentInput
+): Promise<ActionResult> {
+  if (!input.hiveId) {
+    return { ok: false, error: "Select a hive." };
+  }
+  if (!input.productName.trim()) {
+    return { ok: false, error: "Choose a treatment product." };
+  }
+  if (!input.startDate || !input.endDate) {
+    return { ok: false, error: "Start and pull-by dates are required." };
+  }
+  if (input.endDate < input.startDate) {
+    return { ok: false, error: "Pull-by date must be on or after the start date." };
+  }
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { ok: false, error: "You must be signed in to start a treatment." };
+  }
+
+  try {
+    const { error } = await supabase.from("treatments").insert({
+      hive_id: input.hiveId,
+      product_name: input.productName.trim(),
+      start_date: input.startDate,
+      end_date: input.endDate,
+      dosage: input.dosage.trim() || null,
+      status: "in_progress",
+      notes: input.notes.trim() || null,
+    });
+
+    if (error) {
+      return { ok: false, error: error.message };
+    }
+
+    revalidatePath("/");
+    revalidatePath("/hives");
+    revalidatePath(`/hives/${input.hiveId}`);
+    return { ok: true, hiveId: input.hiveId };
+  } catch (err) {
+    const message =
+      err instanceof Error ? err.message : "Failed to start treatment.";
+    if (/relation .* does not exist|Could not find the table/i.test(message)) {
+      return {
+        ok: false,
+        error:
+          "Database tables missing. Run the SQL migration in the Supabase SQL Editor first.",
+      };
+    }
+    return { ok: false, error: message };
+  }
+}
+
+export async function completeTreatmentAction(input: {
+  treatmentId: string;
+  hiveId: string;
+}): Promise<ActionResult> {
+  if (!input.treatmentId) {
+    return { ok: false, error: "Treatment is required." };
+  }
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { ok: false, error: "You must be signed in to complete a treatment." };
+  }
+
+  try {
+    const today = new Date().toISOString().slice(0, 10);
+    const { data: existing, error: loadError } = await supabase
+      .from("treatments")
+      .select("id, end_date")
+      .eq("id", input.treatmentId)
+      .maybeSingle();
+
+    if (loadError || !existing) {
+      return { ok: false, error: loadError?.message ?? "Treatment not found." };
+    }
+
+    const { error } = await supabase
+      .from("treatments")
+      .update({
+        status: "completed",
+        end_date: existing.end_date ?? today,
+      })
+      .eq("id", input.treatmentId);
+
+    if (error) {
+      return { ok: false, error: error.message };
+    }
+
+    revalidatePath("/");
+    revalidatePath("/hives");
+    revalidatePath(`/hives/${input.hiveId}`);
+    return { ok: true, hiveId: input.hiveId };
+  } catch (err) {
+    const message =
+      err instanceof Error ? err.message : "Failed to complete treatment.";
     return { ok: false, error: message };
   }
 }

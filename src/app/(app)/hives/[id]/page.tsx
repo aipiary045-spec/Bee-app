@@ -5,11 +5,15 @@ import {
   Bug,
   ClipboardList,
   Crown,
+  FlaskConical,
   Hexagon,
 } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
 import { HiveQrCard } from "@/components/hives/hive-qr-card";
 import { LogHarvestDialog } from "@/components/hives/log-harvest-dialog";
+import { StartTreatmentDialog } from "@/components/hives/start-treatment-dialog";
+import { CompleteTreatmentButton } from "@/components/hives/complete-treatment-button";
+import { HealthCharts } from "@/components/hives/health-charts";
 import { AddRevenueDialog } from "@/components/finances/add-revenue-dialog";
 import { NavCard } from "@/components/ui/nav-card";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -22,10 +26,24 @@ import {
   listHoneyYieldsForHive,
   listInspectionsForHive,
   listMiteCountsForHive,
+  listTreatmentsForHive,
 } from "@/lib/hives";
-import { buildHiveAlerts, MITE_THRESHOLD_PER_100 } from "@/lib/alerts";
+import {
+  buildHiveAlerts,
+  buildTreatmentAlerts,
+  mergeAlerts,
+  MITE_THRESHOLD_PER_100,
+} from "@/lib/alerts";
 import { formatCurrency, formatDate } from "@/lib/utils";
-import { formatSuperChange, formatSuperCount } from "@/lib/supers";
+import {
+  formatSuperChange,
+  formatSuperCount,
+  formatSuperInventory,
+  formatTypedSuperChange,
+  hiveSuperInventory,
+} from "@/lib/supers";
+import { broodScore } from "@/lib/health";
+import { isTreatmentOverdue } from "@/lib/treatments";
 import type { Inspection, MiteCount } from "@/lib/hives";
 
 interface HiveDetailPageProps {
@@ -34,12 +52,25 @@ interface HiveDetailPageProps {
 
 function inspectionSummary(inspection: Inspection) {
   const parts: string[] = [];
-  const added = inspection.supers_added ?? 0;
-  const removed = inspection.supers_removed ?? 0;
-  if (added > 0 || removed > 0) {
-    parts.push(formatSuperChange(added, removed));
+  const typed = formatTypedSuperChange({
+    mediumAdded: inspection.medium_added ?? 0,
+    mediumRemoved: inspection.medium_removed ?? 0,
+    shallowAdded: inspection.shallow_added ?? 0,
+    shallowRemoved: inspection.shallow_removed ?? 0,
+  });
+  if (typed !== "No super change") {
+    parts.push(typed);
     if (inspection.super_count_after != null) {
       parts.push(`now ${formatSuperCount(inspection.super_count_after)}`);
+    }
+  } else {
+    const added = inspection.supers_added ?? 0;
+    const removed = inspection.supers_removed ?? 0;
+    if (added > 0 || removed > 0) {
+      parts.push(formatSuperChange(added, removed));
+      if (inspection.super_count_after != null) {
+        parts.push(`now ${formatSuperCount(inspection.super_count_after)}`);
+      }
     }
   }
   if (inspection.action_fed) parts.push("Fed");
@@ -90,29 +121,55 @@ export default async function HiveDetailPage({ params }: HiveDetailPageProps) {
 
   if (!hive) notFound();
 
-  const [inspections, miteCounts, yields, sales] = await Promise.all([
-    listInspectionsForHive(id, 12).catch(() => []),
+  const [inspections, miteCounts, yields, sales, treatments] = await Promise.all([
+    listInspectionsForHive(id, 24).catch(() => []),
     listMiteCountsForHive(id).catch(() => []),
     listHoneyYieldsForHive(id).catch(() => []),
     listHoneySalesForHive(id).catch(() => []),
+    listTreatmentsForHive(id).catch(() => []),
   ]);
 
-  const alerts = buildHiveAlerts(
-    [hive],
-    inspections.map((row) => ({
-      hiveId: row.hive_id,
-      date: row.date,
-      queenSighted: row.queen_sighted,
-      miteCountPer100:
-        row.mite_count_per_100 == null ? null : Number(row.mite_count_per_100),
-      pestsDiseases: row.pests_diseases,
-    }))
+  const alerts = mergeAlerts(
+    buildHiveAlerts(
+      [hive],
+      inspections.map((row) => ({
+        hiveId: row.hive_id,
+        date: row.date,
+        queenSighted: row.queen_sighted,
+        miteCountPer100:
+          row.mite_count_per_100 == null ? null : Number(row.mite_count_per_100),
+        pestsDiseases: row.pests_diseases,
+      }))
+    ),
+    buildTreatmentAlerts(
+      [hive],
+      treatments.map((row) => ({
+        id: row.id,
+        hiveId: row.hive_id,
+        productName: row.product_name,
+        endDate: row.end_date,
+        status: row.status,
+      }))
+    )
   );
 
   const readings = miteReadings(miteCounts, inspections);
   const latestMite = readings[0];
   const harvestLbs = yields.reduce((sum, row) => sum + Number(row.weight_lbs), 0);
   const salesTotal = sales.reduce((sum, row) => sum + Number(row.amount), 0);
+  const inventory = hiveSuperInventory(hive);
+  const openTreatments = treatments.filter((row) => row.status !== "completed");
+  const broodPoints = inspections.flatMap((row) => {
+    const score = broodScore(row.brood_pattern);
+    if (score == null) return [];
+    return [
+      {
+        date: row.date,
+        value: score,
+        label: row.brood_pattern ?? undefined,
+      },
+    ];
+  });
 
   const statusVariant =
     hive.status === "active"
@@ -133,7 +190,7 @@ export default async function HiveDetailPage({ params }: HiveDetailPageProps) {
       <PageHeader
         eyebrow={hive.apiary?.name ?? "Colony"}
         title={hive.name}
-        description={`${hive.apiary?.location ?? "Your apiary"} · ${formatSuperCount(hive.super_count)} · ${hive.frame_count} frames`}
+        description={`${hive.apiary?.location ?? "Your apiary"} · ${formatSuperInventory(inventory)} · ${hive.frame_count} frames`}
         actions={
           <Button asChild>
             <Link href={`/inspect?hive=${hive.id}`}>
@@ -147,7 +204,7 @@ export default async function HiveDetailPage({ params }: HiveDetailPageProps) {
       <div className="fade-up-delay-1 mb-6 flex flex-wrap items-center gap-2">
         <Badge variant={statusVariant}>{hive.status}</Badge>
         <Badge variant="default">{hive.frame_count} frames</Badge>
-        <Badge variant="default">{formatSuperCount(hive.super_count)}</Badge>
+        <Badge variant="default">{formatSuperInventory(inventory)}</Badge>
       </div>
 
       {alerts.length > 0 && (
@@ -156,7 +213,7 @@ export default async function HiveDetailPage({ params }: HiveDetailPageProps) {
         </div>
       )}
 
-      <div className="fade-up-delay-1 mb-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="fade-up-delay-1 mb-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
         <NavCard
           href={`/inspect?hive=${hive.id}`}
           eyebrow="This visit"
@@ -186,6 +243,23 @@ export default async function HiveDetailPage({ params }: HiveDetailPageProps) {
           icon={Bug}
           accent={
             latestMite && latestMite.count >= MITE_THRESHOLD_PER_100
+              ? "crimson"
+              : "honey"
+          }
+        />
+        <NavCard
+          href="#treatments"
+          title="Treatments"
+          description={
+            openTreatments.length === 0
+              ? "No open treatments — start one when mites climb."
+              : `${openTreatments.length} open treatment${openTreatments.length === 1 ? "" : "s"}.`
+          }
+          icon={FlaskConical}
+          accent={
+            openTreatments.some((row) =>
+              isTreatmentOverdue(row.status, row.end_date)
+            )
               ? "crimson"
               : "honey"
           }
@@ -254,6 +328,24 @@ export default async function HiveDetailPage({ params }: HiveDetailPageProps) {
             </CardContent>
           </Card>
 
+          <Card id="health">
+            <CardHeader className="pb-2">
+              <CardTitle className="flex items-center gap-2 text-base">
+                <Bug className="h-4 w-4 text-honey-700" />
+                Health trends
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <HealthCharts
+                mites={readings.map((row) => ({
+                  date: row.date,
+                  value: row.count,
+                }))}
+                brood={broodPoints}
+              />
+            </CardContent>
+          </Card>
+
           <Card id="mites">
             <CardHeader className="pb-2">
               <CardTitle className="flex items-center justify-between gap-2 text-base">
@@ -293,6 +385,74 @@ export default async function HiveDetailPage({ params }: HiveDetailPageProps) {
                           {reading.count} / 100
                           {high ? " · treat" : ""}
                         </Badge>
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
+            </CardContent>
+          </Card>
+
+          <Card id="treatments">
+            <CardHeader className="pb-2">
+              <CardTitle className="flex flex-wrap items-center justify-between gap-2 text-base">
+                <span className="flex items-center gap-2">
+                  <FlaskConical className="h-4 w-4 text-honey-700" />
+                  Treatments
+                </span>
+                <StartTreatmentDialog hiveId={hive.id} hiveName={hive.name} />
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {treatments.length === 0 ? (
+                <p className="text-sm text-hive-500">
+                  No treatments yet. Start Apivar, Formic Pro, OA vapor, or
+                  another catalog product when the count calls for it.
+                </p>
+              ) : (
+                <ul className="divide-y divide-wax-300/60">
+                  {treatments.map((row) => {
+                    const overdue = isTreatmentOverdue(row.status, row.end_date);
+                    return (
+                      <li
+                        key={row.id}
+                        className="flex flex-col gap-2 py-3 first:pt-0 last:pb-0 sm:flex-row sm:items-center sm:justify-between"
+                      >
+                        <div>
+                          <p className="text-sm font-medium text-hive-900">
+                            {row.product_name}
+                          </p>
+                          <p className="text-xs text-hive-500">
+                            {formatDate(row.start_date)}
+                            {row.end_date ? ` → ${formatDate(row.end_date)}` : ""}
+                            {row.dosage ? ` · ${row.dosage}` : ""}
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Badge
+                            variant={
+                              row.status === "completed"
+                                ? "success"
+                                : overdue
+                                  ? "danger"
+                                  : "warning"
+                            }
+                          >
+                            {row.status === "completed"
+                              ? "Completed"
+                              : overdue
+                                ? "Overdue"
+                                : row.status === "in_progress"
+                                  ? "In progress"
+                                  : "Planned"}
+                          </Badge>
+                          {row.status !== "completed" && (
+                            <CompleteTreatmentButton
+                              treatmentId={row.id}
+                              hiveId={hive.id}
+                            />
+                          )}
+                        </div>
                       </li>
                     );
                   })}

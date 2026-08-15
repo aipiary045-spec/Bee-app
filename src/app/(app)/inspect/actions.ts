@@ -3,7 +3,11 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { getExpenseCatalogItem } from "@/lib/expense-catalog";
-import { applySuperChange, splitSuperDelta } from "@/lib/supers";
+import {
+  applyTypedSuperChange,
+  hiveSuperInventory,
+  type SuperVisitChange,
+} from "@/lib/supers";
 import type { Enums, TablesInsert } from "@/types/database";
 
 export type QuickLogExpenseInput = {
@@ -27,7 +31,10 @@ export type QuickLogInput = {
   miteCountPer100: string;
   pestsDiseases: Enums<"pest_disease">;
   actionFed: boolean;
-  superDelta: number;
+  mediumAdded: number;
+  mediumRemoved: number;
+  shallowAdded: number;
+  shallowRemoved: number;
   actionSplit: boolean;
   actionTreatment: boolean;
   notes: string;
@@ -42,6 +49,10 @@ export type ActionResult =
       superCountAfter: number;
       supersAdded: number;
       supersRemoved: number;
+      mediumAdded: number;
+      mediumRemoved: number;
+      shallowAdded: number;
+      shallowRemoved: number;
     }
   | { ok: false; error: string };
 
@@ -110,7 +121,7 @@ export async function createInspectionAction(
   try {
     const { data: hive, error: hiveError } = await supabase
       .from("hives")
-      .select("id, apiary_id, super_count")
+      .select("id, apiary_id, super_count, medium_count, shallow_count")
       .eq("id", input.hiveId)
       .maybeSingle();
 
@@ -118,17 +129,19 @@ export async function createInspectionAction(
       return { ok: false, error: hiveError?.message ?? "Hive not found." };
     }
 
-    const { added: supersAdded, removed: supersRemoved } = splitSuperDelta(
-      input.superDelta
-    );
-    const superResult = applySuperChange(
-      hive.super_count ?? 0,
-      supersAdded,
-      supersRemoved
-    );
+    const change: SuperVisitChange = {
+      mediumAdded: input.mediumAdded,
+      mediumRemoved: input.mediumRemoved,
+      shallowAdded: input.shallowAdded,
+      shallowRemoved: input.shallowRemoved,
+    };
+    const current = hiveSuperInventory(hive);
+    const superResult = applyTypedSuperChange(current, change);
     if (!superResult.ok) {
       return { ok: false, error: superResult.error };
     }
+    const supersAdded = change.mediumAdded + change.shallowAdded;
+    const supersRemoved = change.mediumRemoved + change.shallowRemoved;
 
     const { data: inspection, error: inspectionError } = await supabase
       .from("inspections")
@@ -154,7 +167,11 @@ export async function createInspectionAction(
         action_treatment: input.actionTreatment,
         supers_added: supersAdded,
         supers_removed: supersRemoved,
-        super_count_after: superResult.next,
+        super_count_after: superResult.total,
+        medium_added: change.mediumAdded,
+        medium_removed: change.mediumRemoved,
+        shallow_added: change.shallowAdded,
+        shallow_removed: change.shallowRemoved,
         notes: input.notes.trim() || null,
         created_by: user.id,
       })
@@ -168,7 +185,11 @@ export async function createInspectionAction(
     if (supersAdded > 0 || supersRemoved > 0) {
       const { error: hiveUpdateError } = await supabase
         .from("hives")
-        .update({ super_count: superResult.next })
+        .update({
+          medium_count: superResult.next.medium,
+          shallow_count: superResult.next.shallow,
+          super_count: superResult.total,
+        })
         .eq("id", input.hiveId);
 
       if (hiveUpdateError) {
@@ -227,9 +248,13 @@ export async function createInspectionAction(
     return {
       ok: true,
       inspectionId: inspection.id,
-      superCountAfter: superResult.next,
+      superCountAfter: superResult.total,
       supersAdded,
       supersRemoved,
+      mediumAdded: change.mediumAdded,
+      mediumRemoved: change.mediumRemoved,
+      shallowAdded: change.shallowAdded,
+      shallowRemoved: change.shallowRemoved,
     };
   } catch (err) {
     const message =

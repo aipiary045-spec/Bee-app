@@ -8,6 +8,7 @@ export type Inspection = Tables<"inspections">;
 export type MiteCount = Tables<"mite_counts">;
 export type HoneyYield = Tables<"honey_yields">;
 export type Revenue = Tables<"revenues">;
+export type Treatment = Tables<"treatments">;
 
 export async function getOrCreateDefaultApiary(
   userId: string
@@ -167,6 +168,43 @@ export async function listHoneyYieldsForHive(
     .order("harvest_date", { ascending: false })
     .order("created_at", { ascending: false })
     .limit(12);
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  return data ?? [];
+}
+
+export async function listTreatmentsForHive(hiveId: string): Promise<Treatment[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("treatments")
+    .select("*")
+    .eq("hive_id", hiveId)
+    .order("start_date", { ascending: false })
+    .order("created_at", { ascending: false })
+    .limit(12);
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  return data ?? [];
+}
+
+export async function listOpenTreatmentsForHives(
+  hiveIds: string[]
+): Promise<Treatment[]> {
+  if (hiveIds.length === 0) return [];
+
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("treatments")
+    .select("*")
+    .in("hive_id", hiveIds)
+    .neq("status", "completed")
+    .order("end_date", { ascending: true });
 
   if (error) {
     throw new Error(error.message);
