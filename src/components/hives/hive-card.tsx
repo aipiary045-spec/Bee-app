@@ -1,7 +1,8 @@
 import Link from "next/link";
-import { ClipboardList, Hexagon, QrCode } from "lucide-react";
+import { ClipboardList, QrCode } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { HiveStackEditor } from "@/components/hives/hive-stack-editor";
+import { YardHive } from "@/components/yard/yard-hive";
 import { formatSuperInventory, hiveSuperInventory } from "@/lib/supers";
 import { cn } from "@/lib/utils";
 import type { Hive } from "@/lib/hives";
@@ -36,27 +37,29 @@ export function HiveCard({ hive, className }: HiveCardProps) {
   return (
     <article
       className={cn(
-        "surface-panel flex h-full flex-col overflow-hidden rounded-2xl transition-all duration-200 hover:-translate-y-1 hover:border-honey-400/50 hover:shadow-[0_18px_40px_-24px_rgba(61,42,20,0.45)]",
+        "lift-card surface-panel flex h-full flex-col overflow-hidden rounded-2xl hover:border-honey-400/50 hover:shadow-[0_18px_40px_-24px_rgba(61,42,20,0.45)]",
         className
       )}
     >
       <Link href={`/hives/${hive.id}`} className="flex flex-1 flex-col p-4">
-        <div className="flex items-start justify-between">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-honey-500/15 ring-1 ring-honey-400/20">
-            <Hexagon className="h-5 w-5 text-honey-700" />
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <p className="font-display text-lg font-semibold text-hive-900">
+              {hive.name}
+            </p>
+            <div className="mt-2 flex flex-wrap gap-2">
+              <Badge variant={statusVariant(hive.status)}>{hive.status}</Badge>
+              <Badge variant="default">{hive.frame_count} frames</Badge>
+              <Badge variant="default">{formatSuperInventory(hiveSuperInventory(hive))}</Badge>
+            </div>
           </div>
-          <span
-            className={`mt-1 h-2.5 w-2.5 rounded-full ${statusDot(hive.status)}`}
-            aria-hidden
-          />
-        </div>
-        <p className="font-display mt-3 text-lg font-semibold text-hive-900">
-          {hive.name}
-        </p>
-        <div className="mt-2 flex flex-wrap gap-2">
-          <Badge variant={statusVariant(hive.status)}>{hive.status}</Badge>
-          <Badge variant="default">{hive.frame_count} frames</Badge>
-          <Badge variant="default">{formatSuperInventory(hiveSuperInventory(hive))}</Badge>
+          <div className="relative shrink-0">
+            <span
+              className={`absolute -right-0.5 -top-0.5 z-10 h-2.5 w-2.5 rounded-full ${statusDot(hive.status)} ${hive.status === "active" ? "sun-pulse" : ""}`}
+              aria-hidden
+            />
+            <YardHive hive={hive} size="sm" showLabel={false} />
+          </div>
         </div>
       </Link>
       <div className="border-t border-wax-300/50 px-3 py-3">

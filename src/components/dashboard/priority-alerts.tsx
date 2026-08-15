@@ -31,7 +31,7 @@ export function PriorityAlertsBar({ alerts }: PriorityAlertsBarProps) {
     return (
       <Link
         href="/hives"
-        className="surface-panel flex items-center gap-3 rounded-2xl border-meadow-400/30 px-5 py-4 transition-colors hover:border-honey-400/50 hover:bg-honey-50/40"
+        className="lift-card surface-panel flex items-center gap-3 rounded-2xl border-meadow-400/30 px-5 py-4 hover:border-honey-400/50 hover:bg-honey-50/40"
       >
         <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-meadow-100 text-meadow-800">
           <CheckCircle2 className="h-4 w-4" />

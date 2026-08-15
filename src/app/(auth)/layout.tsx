@@ -1,4 +1,5 @@
 import { BrandWatermark } from "@/components/brand/brand-logo";
+import { FlyingBees } from "@/components/motion/flying-bees";
 
 export default function AuthLayout({
   children,
@@ -7,6 +8,7 @@ export default function AuthLayout({
 }) {
   return (
     <div className="relative flex min-h-screen items-center justify-center overflow-hidden px-4 py-12">
+      <FlyingBees count={2} className="opacity-70" />
       <div className="pointer-events-none absolute -left-24 top-10 h-72 w-72 rounded-full bg-honey-400/25 blur-3xl" />
       <div className="pointer-events-none absolute -right-16 bottom-8 h-80 w-80 rounded-full bg-meadow-400/20 blur-3xl" />
       <BrandWatermark

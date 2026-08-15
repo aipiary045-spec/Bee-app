@@ -45,7 +45,7 @@ export function NavCard({
     <Link
       href={href}
       className={cn(
-        "surface-panel group flex h-full min-h-[8.5rem] flex-col justify-between rounded-2xl p-5 transition-all duration-200 hover:-translate-y-1 hover:border-honey-400/50 hover:shadow-[0_18px_40px_-24px_rgba(61,42,20,0.45)]",
+        "lift-card surface-panel group flex h-full min-h-[8.5rem] flex-col justify-between rounded-2xl p-5 hover:border-honey-400/50 hover:shadow-[0_18px_40px_-24px_rgba(61,42,20,0.45)]",
         featured && tone.featured,
         className
       )}

@@ -18,7 +18,7 @@ export function PageHeader({
   return (
     <header
       className={cn(
-        "fade-up relative mb-6 overflow-hidden rounded-2xl surface-panel px-5 py-5 sm:px-6",
+        "fade-up relative mb-6 overflow-hidden rounded-3xl surface-panel px-5 py-6 sm:px-7",
         className
       )}
     >

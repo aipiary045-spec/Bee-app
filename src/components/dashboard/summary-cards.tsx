@@ -61,7 +61,7 @@ export function SummaryCards({
         <Link
           key={stat.label}
           href={stat.href}
-          className="surface-panel group relative overflow-hidden rounded-2xl p-5 transition-all duration-200 hover:-translate-y-1 hover:border-honey-400/50 hover:shadow-[0_18px_40px_-24px_rgba(61,42,20,0.45)]"
+          className="lift-card surface-panel group relative overflow-hidden rounded-2xl p-5 hover:border-honey-400/50 hover:shadow-[0_18px_40px_-24px_rgba(61,42,20,0.45)]"
         >
           <div
             className={`pointer-events-none absolute inset-0 bg-gradient-to-br ${stat.wash}`}

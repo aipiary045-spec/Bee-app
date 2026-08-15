@@ -1,3 +1,4 @@
+import type { CSSProperties } from "react";
 import { cn } from "@/lib/utils";
 import {
   formatSuperInventory,
@@ -73,7 +74,9 @@ interface YardHiveProps {
   inventory?: SuperInventory;
   selected?: boolean;
   size?: "sm" | "md";
+  showLabel?: boolean;
   className?: string;
+  style?: CSSProperties;
 }
 
 export function YardHive({
@@ -81,7 +84,9 @@ export function YardHive({
   inventory,
   selected = false,
   size = "md",
+  showLabel = true,
   className,
+  style,
 }: YardHiveProps) {
   const stack = inventory ?? hiveSuperInventory(hive);
   const scale = sizes[size];
@@ -94,6 +99,7 @@ export function YardHive({
         "flex flex-col items-center justify-end gap-2",
         className
       )}
+      style={style}
     >
       <div
         className={cn(
@@ -158,20 +164,22 @@ export function YardHive({
         </div>
       </div>
 
-      <div className="text-center">
-        <p
-          className={cn(
-            "font-display font-semibold leading-tight text-hive-900",
-            scale.name,
-            selected && "text-honey-800"
-          )}
-        >
-          {hive.name}
-        </p>
-        <p className={cn("text-hive-600", scale.count)}>
-          {dead ? "Deadout" : formatSuperInventory(stack)}
-        </p>
-      </div>
+      {showLabel && (
+        <div className="text-center">
+          <p
+            className={cn(
+              "font-display font-semibold leading-tight text-hive-900",
+              scale.name,
+              selected && "text-honey-800"
+            )}
+          >
+            {hive.name}
+          </p>
+          <p className={cn("text-hive-600", scale.count)}>
+            {dead ? "Deadout" : formatSuperInventory(stack)}
+          </p>
+        </div>
+      )}
     </div>
   );
 }

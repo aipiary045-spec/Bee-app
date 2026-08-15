@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Fraunces, Source_Serif_4 } from "next/font/google";
+import { Fraunces, Nunito } from "next/font/google";
 import { Providers } from "@/components/providers";
 import { THEME_INIT_SCRIPT } from "@/lib/theme";
 import "./globals.css";
@@ -10,16 +10,16 @@ const fraunces = Fraunces({
   display: "swap",
 });
 
-const sourceSerif = Source_Serif_4({
+const nunito = Nunito({
   subsets: ["latin"],
-  variable: "--font-source-serif",
+  variable: "--font-nunito",
   display: "swap",
 });
 
 export const metadata: Metadata = {
-  title: "Apiary App — Beekeeping Management",
+  title: "Apiary — Hive records for working beekeepers",
   description:
-    "Modern apiary management for Agra, Oklahoma beekeepers. Track hives, inspections, mite counts, honey yields, and expenses.",
+    "Track hives, inspections, mites, harvests, and yard costs from your phone. Built for backyard keepers and side-liners.",
   icons: {
     icon: [{ url: "/favicon.png", type: "image/png" }],
     apple: [{ url: "/brand/apiary-logo.png" }],
@@ -37,7 +37,7 @@ export default function RootLayout({
         <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
       </head>
       <body
-        className={`${fraunces.variable} ${sourceSerif.variable} honeycomb-bg min-h-screen`}
+        className={`${fraunces.variable} ${nunito.variable} honeycomb-bg min-h-screen`}
       >
         <Providers>{children}</Providers>
       </body>

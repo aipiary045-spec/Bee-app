@@ -16,7 +16,7 @@ export function GetAroundStrip({ className }: { className?: string }) {
           key={href}
           href={href}
           className={cn(
-            "inline-flex min-h-11 items-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold transition-colors",
+            "nav-pop inline-flex min-h-11 items-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold transition-colors",
             featured
               ? "border-honey-500/50 bg-honey-500/15 text-honey-900 hover:bg-honey-500/25"
               : "border-wax-300/70 bg-wax-50/80 text-hive-700 hover:border-honey-400/50 hover:bg-honey-50/60"

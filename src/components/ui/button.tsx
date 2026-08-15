@@ -8,7 +8,7 @@ const buttonVariants = cva(
     variants: {
       variant: {
         default:
-          "brand-mark text-white hover:brightness-110 active:scale-[0.98]",
+          "brand-mark text-white hover:brightness-110 active:scale-[0.96]",
         secondary:
           "bg-wax-200/90 text-hive-800 hover:bg-wax-300 border border-wax-300/80",
         outline:
