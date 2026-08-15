@@ -53,12 +53,8 @@ export default async function AppLayout({
         />
         <div className="pointer-events-none absolute inset-x-0 top-0 h-40 bg-gradient-to-b from-honey-200/25 to-transparent" />
         {yards.length > 0 && (
-          <div className="relative z-20 border-b border-wax-300/40 bg-wax-50/80 px-4 py-2 backdrop-blur-md dark:bg-[#1c1610]/80 lg:hidden">
-            <YardSwitcher
-              yards={yards}
-              activeId={activeYardId}
-              compact
-            />
+          <div className="relative z-20 px-4 pt-3 lg:hidden">
+            <YardSwitcher yards={yards} activeId={activeYardId} compact />
           </div>
         )}
         <main className="relative flex-1 pb-24 lg:pb-0">{children}</main>
