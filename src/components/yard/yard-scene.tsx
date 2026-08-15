@@ -4,6 +4,7 @@ import Link from "next/link";
 import { ClipboardList } from "lucide-react";
 import { FlyingBees } from "@/components/motion/flying-bees";
 import { YardHive, type YardHiveData } from "@/components/yard/yard-hive";
+import { YardSlideDots, useYardSlide } from "@/components/yard/yard-slide-dots";
 import { YardWeather } from "@/components/yard/yard-weather";
 import { cn } from "@/lib/utils";
 import { yardSkyClass } from "@/lib/yards";
@@ -28,6 +29,9 @@ export function YardScene({
   yardLocation,
   showWeather = false,
 }: YardSceneProps) {
+  const { scrollerRef, itemRefs, activeIndex, canSlide, hint, scrollToIndex } =
+    useYardSlide(hives.length);
+
   return (
     <div
       className={cn(
@@ -97,59 +101,89 @@ export function YardScene({
       {hives.length === 0 ? (
         <div className={cn("relative px-6 py-16", showWeather && "pt-12")}>{empty}</div>
       ) : (
-        <div
-          className={cn(
-            "relative flex min-h-[22rem] items-end gap-5 overflow-x-auto px-6 pb-3 sm:gap-8 sm:px-10",
-            showWeather ? "pt-12" : "pt-20"
+        <div className="relative">
+          <div
+            ref={scrollerRef}
+            className={cn(
+              "relative flex min-h-[22rem] items-end gap-5 overflow-x-auto px-6 pb-3 sm:gap-8 sm:px-10",
+              "hide-scrollbar snap-x snap-mandatory",
+              showWeather ? "pt-12" : "pt-20"
+            )}
+          >
+            {hives.map((hive, index) => {
+              const stack = (
+                <YardHive
+                  hive={hive}
+                  size="md"
+                  className="hive-bob"
+                  style={{ animationDelay: `${index * 0.35}s` }}
+                />
+              );
+              return (
+                <div
+                  key={hive.id}
+                  ref={(node) => {
+                    itemRefs.current[index] = node;
+                  }}
+                  className="flex shrink-0 snap-center flex-col items-center gap-2"
+                >
+                  {interactive ? (
+                    <Link
+                      href={`/hives/${hive.id}`}
+                      className="rounded-xl outline-none ring-honey-400/50 transition-transform duration-300 hover:-translate-y-1 focus-visible:ring-2"
+                      aria-label={`${hive.name}, ${hive.status}`}
+                    >
+                      {stack}
+                    </Link>
+                  ) : (
+                    <div>{stack}</div>
+                  )}
+                  {interactive ? (
+                    <Link
+                      href={`/inspect?hive=${hive.id}`}
+                      className="inline-flex items-center gap-1 rounded-full border border-honey-500/40 bg-wax-50/80 px-2.5 py-1 text-[11px] font-semibold text-honey-800 backdrop-blur-sm hover:bg-honey-100"
+                    >
+                      <ClipboardList className="h-3 w-3" />
+                      Log
+                    </Link>
+                  ) : (
+                    <span className="inline-flex items-center gap-1 rounded-full border border-honey-500/40 bg-wax-50/80 px-2.5 py-1 text-[11px] font-semibold text-honey-800">
+                      <ClipboardList className="h-3 w-3" />
+                      Log
+                    </span>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+          {canSlide && hint.moreLeft && (
+            <div
+              className="pointer-events-none absolute inset-y-0 left-0 w-10 bg-gradient-to-r from-black/15 to-transparent"
+              aria-hidden
+            />
           )}
-        >
-          {hives.map((hive, index) => {
-            const stack = (
-              <YardHive
-                hive={hive}
-                size="md"
-                className="hive-bob"
-                style={{ animationDelay: `${index * 0.35}s` }}
-              />
-            );
-            return (
-              <div key={hive.id} className="flex shrink-0 flex-col items-center gap-2">
-                {interactive ? (
-                  <Link
-                    href={`/hives/${hive.id}`}
-                    className="rounded-xl outline-none ring-honey-400/50 transition-transform duration-300 hover:-translate-y-1 focus-visible:ring-2"
-                    aria-label={`${hive.name}, ${hive.status}`}
-                  >
-                    {stack}
-                  </Link>
-                ) : (
-                  <div>{stack}</div>
-                )}
-                {interactive ? (
-                  <Link
-                    href={`/inspect?hive=${hive.id}`}
-                    className="inline-flex items-center gap-1 rounded-full border border-honey-500/40 bg-wax-50/80 px-2.5 py-1 text-[11px] font-semibold text-honey-800 backdrop-blur-sm hover:bg-honey-100"
-                  >
-                    <ClipboardList className="h-3 w-3" />
-                    Log
-                  </Link>
-                ) : (
-                  <span className="inline-flex items-center gap-1 rounded-full border border-honey-500/40 bg-wax-50/80 px-2.5 py-1 text-[11px] font-semibold text-honey-800">
-                    <ClipboardList className="h-3 w-3" />
-                    Log
-                  </span>
-                )}
-              </div>
-            );
-          })}
+          {canSlide && hint.moreRight && (
+            <div
+              className="pointer-events-none absolute inset-y-0 right-0 w-10 bg-gradient-to-l from-black/15 to-transparent"
+              aria-hidden
+            />
+          )}
         </div>
       )}
 
-      <div
-        className="relative h-10 bg-gradient-to-b from-[#5a9a3a] via-[#4a7a2e] to-[#3a5c22] dark:from-[#355224] dark:to-[#1a2a14]"
-        aria-hidden
-      >
-        <div className="grass-sway absolute inset-x-0 -top-3 h-6 bg-[radial-gradient(ellipse_at_center,_#6aaa44_40%,_transparent_70%)] opacity-80" />
+      <div className="relative h-11 bg-gradient-to-b from-[#5a9a3a] via-[#4a7a2e] to-[#3a5c22] dark:from-[#355224] dark:to-[#1a2a14]">
+        <div
+          className="grass-sway pointer-events-none absolute inset-x-0 -top-3 h-6 bg-[radial-gradient(ellipse_at_center,_#6aaa44_40%,_transparent_70%)] opacity-80"
+          aria-hidden
+        />
+        {canSlide && (
+          <YardSlideDots
+            labels={hives.map((hive) => hive.name)}
+            activeIndex={activeIndex}
+            onSelect={scrollToIndex}
+            className="absolute inset-x-0 bottom-1.5 z-10 mx-auto"
+          />
+        )}
       </div>
     </div>
   );
@@ -162,19 +196,28 @@ interface YardPickerProps {
 }
 
 export function YardPicker({ hives, selectedId, onSelect }: YardPickerProps) {
+  const { scrollerRef, itemRefs, activeIndex, canSlide, scrollToIndex } =
+    useYardSlide(hives.length);
+
   return (
     <div className="relative overflow-hidden rounded-2xl border border-meadow-400/25">
       <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-[#b9dff2] via-[#e7f4d8] to-[#7bb85a] dark:from-[#243044] dark:via-[#2a2618] dark:to-[#2d4a24]" />
-      <div className="relative flex items-end gap-4 overflow-x-auto px-4 pb-2 pt-10">
-        {hives.map((hive) => {
+      <div
+        ref={scrollerRef}
+        className="relative flex items-end gap-4 overflow-x-auto px-4 pb-2 pt-10 hide-scrollbar snap-x snap-mandatory"
+      >
+        {hives.map((hive, index) => {
           const selected = hive.id === selectedId;
           return (
             <button
               key={hive.id}
+              ref={(node) => {
+                itemRefs.current[index] = node;
+              }}
               type="button"
               onClick={() => onSelect(hive.id)}
               className={cn(
-                "shrink-0 rounded-xl px-1 pb-1 pt-2 outline-none transition-shadow",
+                "shrink-0 snap-center rounded-xl px-1 pb-1 pt-2 outline-none transition-shadow",
                 selected && "bg-wax-50/50 ring-2 ring-honey-400 shadow-sm"
               )}
               aria-pressed={selected}
@@ -185,10 +228,16 @@ export function YardPicker({ hives, selectedId, onSelect }: YardPickerProps) {
           );
         })}
       </div>
-      <div
-        className="relative h-6 bg-gradient-to-b from-[#5a9a3a] to-[#3a5c22] dark:from-[#355224] dark:to-[#1a2a14]"
-        aria-hidden
-      />
+      <div className="relative h-8 bg-gradient-to-b from-[#5a9a3a] to-[#3a5c22] dark:from-[#355224] dark:to-[#1a2a14]">
+        {canSlide && (
+          <YardSlideDots
+            labels={hives.map((hive) => hive.name)}
+            activeIndex={activeIndex}
+            onSelect={scrollToIndex}
+            className="absolute inset-x-0 bottom-1 z-10 mx-auto"
+          />
+        )}
+      </div>
     </div>
   );
 }

@@ -92,6 +92,30 @@ const demoHives: YardHiveData[] = [
     medium_count: 0,
     shallow_count: 1,
   },
+  {
+    id: "demo-creek",
+    name: "Creek",
+    status: "active",
+    super_count: 2,
+    medium_count: 1,
+    shallow_count: 1,
+  },
+  {
+    id: "demo-hill",
+    name: "Hill",
+    status: "active",
+    super_count: 1,
+    medium_count: 1,
+    shallow_count: 0,
+  },
+  {
+    id: "demo-orchard",
+    name: "Orchard",
+    status: "active",
+    super_count: 3,
+    medium_count: 2,
+    shallow_count: 1,
+  },
 ];
 
 export default function WelcomePage() {
