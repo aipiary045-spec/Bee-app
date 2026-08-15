@@ -1,3 +1,5 @@
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+
 # dependencies
 /node_modules
 /.pnp
@@ -28,22 +30,17 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
-# env files
-.env*.local
-.env
+# env files (can opt-in for committing if needed)
+.env*
+!.env.example
+
+# local sqlite
+prisma/*.db
+prisma/*.db-journal
+
+# vercel
+.vercel
 
 # typescript
 *.tsbuildinfo
 next-env.d.ts
-
-# supabase
-.branches
-.temp
-.vercel
-
-# CritterOps (separate app; do not commit its install/db artifacts)
-critterops/node_modules
-critterops/.next
-critterops/prisma/*.db
-critterops/prisma/*.db-journal
-critterops/.env

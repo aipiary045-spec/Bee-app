@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 400">
+  <rect width="640" height="400" fill="#d7c4a3"/>
+  <rect x="0" y="240" width="640" height="160" fill="#8b6a3d"/>
+  <rect x="40" y="80" width="560" height="160" fill="#c4b089"/>
+  <ellipse cx="420" cy="150" rx="46" ry="28" fill="#3b2a18"/>
+  <text x="32" y="36" fill="#3b2a18" font-family="sans-serif" font-size="20">BEFORE · North soffit</text>
+</svg>

@@ -1,0 +1,417 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// CritterOps — Jobber-style field ops for The Wildlife Pros (Dawson / Oklahoma NWCO).
+// Money is stored as integer cents. Swap the datasource to postgresql for production.
+
+model Organization {
+  id               String   @id @default(cuid())
+  name             String
+  tradeName        String
+  phone            String
+  email            String
+  website          String?
+  address          String?
+  city             String?
+  state            String   @default("OK")
+  zip              String?
+  nwcoPermitNumber String?
+  pesticideLicense String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  users            User[]
+  clients          Client[]
+  requests         WorkRequest[]
+  quotes           Quote[]
+  jobs             Job[]
+  invoices         Invoice[]
+  traps            Trap[]
+  routePlans       RoutePlan[]
+}
+
+model User {
+  id             String   @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  name           String
+  email          String   @unique
+  phone          String?
+  role           String
+  passwordHash   String
+  nwcoPermit     String?
+  applicatorId   String?
+  color          String   @default("#00a67e")
+  homeLat        Float?
+  homeLng        Float?
+  active         Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  visits         Visit[]
+  trapEvents     TrapEvent[]
+  captures       CaptureLog[]
+  applications   ChemicalApplication[]
+  notes          ActivityNote[]
+  photos         Photo[]
+}
+
+model Client {
+  id             String   @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  firstName      String
+  lastName       String
+  companyName    String?
+  email          String?
+  phone          String
+  altPhone       String?
+  billingEmail   String?
+  notes          String?
+  portalToken    String   @unique
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  properties     Property[]
+  requests       WorkRequest[]
+  quotes         Quote[]
+  jobs           Job[]
+  invoices       Invoice[]
+}
+
+model Property {
+  id           String   @id @default(cuid())
+  clientId     String
+  client       Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  label        String
+  address1     String
+  address2     String?
+  city         String
+  state        String   @default("OK")
+  zip          String
+  county       String?
+  lat          Float?
+  lng          Float?
+  accessNotes  String?
+  petsOnSite   String?
+  gateCode     String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  requests     WorkRequest[]
+  quotes       Quote[]
+  jobs         Job[]
+  visits       Visit[]
+  traps        Trap[]
+  entryPoints  EntryPoint[]
+  captures     CaptureLog[]
+  applications ChemicalApplication[]
+  photos       Photo[]
+  invoices     Invoice[]
+}
+
+model WorkRequest {
+  id             String   @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  clientId       String
+  client         Client   @relation(fields: [clientId], references: [id])
+  propertyId     String
+  property       Property @relation(fields: [propertyId], references: [id])
+  number         String
+  status         String
+  source         String
+  complaint      String
+  targetSpecies  String?
+  preferredWindow String?
+  createdAt      DateTime @default(now())
+  quotes         Quote[]
+  jobs           Job[]
+}
+
+model Quote {
+  id             String   @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  clientId       String
+  client         Client   @relation(fields: [clientId], references: [id])
+  propertyId     String
+  property       Property @relation(fields: [propertyId], references: [id])
+  requestId      String?
+  request        WorkRequest? @relation(fields: [requestId], references: [id])
+  number         String
+  status         String
+  title          String
+  message        String?
+  subtotalCents  Int      @default(0)
+  taxCents       Int      @default(0)
+  totalCents     Int      @default(0)
+  validUntil     DateTime?
+  sentAt         DateTime?
+  approvedAt     DateTime?
+  declinedAt     DateTime?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  lines          QuoteLine[]
+  jobs           Job[]
+}
+
+model QuoteLine {
+  id          String @id @default(cuid())
+  quoteId     String
+  quote       Quote  @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+  name        String
+  description String?
+  quantity    Int    @default(1)
+  unitCents   Int
+  sortOrder   Int    @default(0)
+}
+
+model Job {
+  id             String   @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  clientId       String
+  client         Client   @relation(fields: [clientId], references: [id])
+  propertyId     String
+  property       Property @relation(fields: [propertyId], references: [id])
+  requestId      String?
+  request        WorkRequest? @relation(fields: [requestId], references: [id])
+  quoteId        String?
+  quote          Quote?   @relation(fields: [quoteId], references: [id])
+  number         String
+  title          String
+  type           String
+  status         String
+  complaint      String
+  targetSpecies  String?
+  instructions   String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  visits         Visit[]
+  traps          Trap[]
+  captures       CaptureLog[]
+  entryPoints    EntryPoint[]
+  applications   ChemicalApplication[]
+  photos         Photo[]
+  notes          ActivityNote[]
+  invoices       Invoice[]
+  forms          ComplianceForm[]
+}
+
+model Visit {
+  id          String   @id @default(cuid())
+  jobId       String
+  job         Job      @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  propertyId  String
+  property    Property @relation(fields: [propertyId], references: [id])
+  technicianId String?
+  technician  User?    @relation(fields: [technicianId], references: [id])
+  title       String
+  status      String
+  startsAt    DateTime
+  endsAt      DateTime
+  completedAt DateTime?
+  notes       String?
+  createdAt   DateTime @default(now())
+  routeStops  RouteStop[]
+}
+
+model RecurringRule {
+  id          String  @id @default(cuid())
+  jobId       String
+  frequency   String
+  interval    Int     @default(1)
+  daysOfWeek  String?
+  nextVisitAt DateTime?
+  active      Boolean @default(true)
+}
+
+model Invoice {
+  id             String   @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  clientId       String
+  client         Client   @relation(fields: [clientId], references: [id])
+  propertyId     String?
+  property       Property? @relation(fields: [propertyId], references: [id])
+  jobId          String?
+  job            Job?     @relation(fields: [jobId], references: [id])
+  number         String
+  status         String
+  issuedAt       DateTime @default(now())
+  dueAt          DateTime?
+  subtotalCents  Int      @default(0)
+  taxCents       Int      @default(0)
+  totalCents     Int      @default(0)
+  balanceCents   Int      @default(0)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  lines          InvoiceLine[]
+  payments       Payment[]
+}
+
+model InvoiceLine {
+  id          String  @id @default(cuid())
+  invoiceId   String
+  invoice     Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  name        String
+  description String?
+  quantity    Int     @default(1)
+  unitCents   Int
+  sortOrder   Int     @default(0)
+}
+
+model Payment {
+  id         String   @id @default(cuid())
+  invoiceId  String
+  invoice    Invoice  @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  amountCents Int
+  method     String
+  receivedAt DateTime @default(now())
+  note       String?
+}
+
+model Trap {
+  id             String   @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  serialNumber   String
+  type           String
+  status         String
+  propertyId     String?
+  property       Property? @relation(fields: [propertyId], references: [id])
+  jobId          String?
+  job            Job?     @relation(fields: [jobId], references: [id])
+  locationNote   String?
+  deployedAt     DateTime?
+  lastCheckedAt  DateTime?
+  createdAt      DateTime @default(now())
+  events         TrapEvent[]
+  captures       CaptureLog[]
+}
+
+model TrapEvent {
+  id        String   @id @default(cuid())
+  trapId    String
+  trap      Trap     @relation(fields: [trapId], references: [id], onDelete: Cascade)
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id])
+  type      String
+  notes     String?
+  at        DateTime @default(now())
+}
+
+model CaptureLog {
+  id              String   @id @default(cuid())
+  jobId           String?
+  job             Job?     @relation(fields: [jobId], references: [id])
+  propertyId      String
+  property        Property @relation(fields: [propertyId], references: [id])
+  trapId          String?
+  trap            Trap?    @relation(fields: [trapId], references: [id])
+  technicianId    String?
+  technician      User?    @relation(fields: [technicianId], references: [id])
+  species         String
+  count           Int      @default(1)
+  disposition     String
+  method          String
+  capturedAt      DateTime
+  relocationSite  String?
+  notes           String?
+}
+
+model EntryPoint {
+  id            String   @id @default(cuid())
+  propertyId    String
+  property      Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  jobId         String?
+  job           Job?     @relation(fields: [jobId], references: [id])
+  label         String
+  area          String
+  status        String
+  materialUsed  String?
+  notes         String?
+  photos        Photo[]
+}
+
+model ChemicalApplication {
+  id               String   @id @default(cuid())
+  jobId            String?
+  job              Job?     @relation(fields: [jobId], references: [id])
+  propertyId       String
+  property         Property @relation(fields: [propertyId], references: [id])
+  applicatorId     String?
+  applicator       User?    @relation(fields: [applicatorId], references: [id])
+  appliedAt        DateTime
+  productName      String
+  epaRegNumber     String
+  targetPest       String
+  applicationRate  String
+  amountUsed       String
+  siteDescription  String
+  method           String
+  windMph          Int?
+  temperatureF     Int?
+  notes            String?
+}
+
+model ComplianceForm {
+  id             String   @id @default(cuid())
+  jobId          String?
+  job            Job?     @relation(fields: [jobId], references: [id])
+  type           String
+  title          String
+  fieldsJson     String
+  submittedAt    DateTime @default(now())
+  retentionUntil DateTime
+}
+
+model Photo {
+  id           String   @id @default(cuid())
+  jobId        String?
+  job          Job?     @relation(fields: [jobId], references: [id])
+  propertyId   String
+  property     Property @relation(fields: [propertyId], references: [id])
+  entryPointId String?
+  entryPoint   EntryPoint? @relation(fields: [entryPointId], references: [id])
+  userId       String?
+  user         User?    @relation(fields: [userId], references: [id])
+  kind         String
+  url          String
+  caption      String?
+  takenAt      DateTime @default(now())
+}
+
+model ActivityNote {
+  id        String   @id @default(cuid())
+  jobId     String
+  job       Job      @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id])
+  kind      String
+  body      String
+  createdAt DateTime @default(now())
+}
+
+model RoutePlan {
+  id             String   @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  technicianId   String
+  date           DateTime
+  totalMiles     Float    @default(0)
+  createdAt      DateTime @default(now())
+  stops          RouteStop[]
+}
+
+model RouteStop {
+  id          String    @id @default(cuid())
+  routePlanId String
+  routePlan   RoutePlan @relation(fields: [routePlanId], references: [id], onDelete: Cascade)
+  visitId     String
+  visit       Visit     @relation(fields: [visitId], references: [id])
+  stopOrder   Int
+  milesFromPrev Float   @default(0)
+}

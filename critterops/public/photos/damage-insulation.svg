@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 400">
+  <rect width="640" height="400" fill="#efe6d4"/>
+  <path d="M0 220 C80 180 160 260 240 210 C320 160 400 250 480 200 C560 150 640 230 640 230 V400 H0Z" fill="#c9a36a"/>
+  <circle cx="180" cy="200" r="8" fill="#5b4630"/>
+  <circle cx="300" cy="230" r="6" fill="#5b4630"/>
+  <text x="32" y="36" fill="#3b2a18" font-family="sans-serif" font-size="20">DAMAGE · Attic insulation trail</text>
+</svg>
