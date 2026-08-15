@@ -53,13 +53,15 @@ export function Sidebar({
             <p className="font-display text-xl font-bold leading-tight text-hive-900">
               Apiary
             </p>
-            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-honey-700">
-              {yardLocation || yardName}
-            </p>
+            {yards.length === 0 && (
+              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-honey-700">
+                {yardLocation || yardName}
+              </p>
+            )}
           </div>
         </Link>
         {yards.length > 0 && (
-          <div className="mt-4">
+          <div className="mt-3">
             <YardSwitcher yards={yards} activeId={activeYardId} compact />
           </div>
         )}
