@@ -4,7 +4,7 @@ import { GetAroundStrip } from "@/components/layout/get-around";
 import { SummaryCards } from "@/components/dashboard/summary-cards";
 import { WeatherWidget } from "@/components/dashboard/weather-widget";
 import { PriorityAlertsBar } from "@/components/dashboard/priority-alerts";
-import { HiveCard } from "@/components/hives/hive-card";
+import { YardScene } from "@/components/yard/yard-scene";
 import { BrandLogo } from "@/components/brand/brand-logo";
 import { Button } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase/server";
@@ -66,7 +66,7 @@ export default async function DashboardPage() {
       <PageHeader
         eyebrow="Agra Apiary"
         title="Home"
-        description="The yard first. Open a hive, or jump to Quick Log from the card."
+        description="Walk the stand. Tap a hive to open it, or Log to record a visit."
       />
 
       <div className="fade-up-delay-1 mb-6">
@@ -83,13 +83,13 @@ export default async function DashboardPage() {
       </div>
 
       <section className="fade-up-delay-2 mb-10">
-        <div className="mb-4 flex items-end justify-between gap-3">
+        <div className="mb-3 flex items-end justify-between gap-3">
           <div>
             <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-honey-700">
-              Yard
+              The stand
             </p>
             <h2 className="font-display mt-1 text-2xl font-semibold text-hive-900">
-              Your hives
+              Yard
             </h2>
           </div>
           <Link
@@ -100,28 +100,25 @@ export default async function DashboardPage() {
           </Link>
         </div>
 
-        {hives.length === 0 ? (
-          <div className="surface-panel rounded-2xl border-dashed px-6 py-12 text-center">
-            <div className="mx-auto mb-4 flex justify-center">
-              <BrandLogo size={64} className="h-14 w-14" />
+        <YardScene
+          hives={hives}
+          empty={
+            <div className="text-center">
+              <div className="mx-auto mb-4 flex justify-center">
+                <BrandLogo size={64} className="h-14 w-14" />
+              </div>
+              <p className="font-display text-lg font-semibold text-hive-900">
+                Empty stand
+              </p>
+              <p className="mx-auto mt-2 max-w-md text-sm text-hive-700">
+                Add a colony and it will show up here with the supers on it.
+              </p>
+              <Button className="mt-5" asChild>
+                <Link href="/hives">Add a hive</Link>
+              </Button>
             </div>
-            <p className="font-display text-lg font-semibold text-hive-900">
-              No colonies yet
-            </p>
-            <p className="mx-auto mt-2 max-w-md text-sm text-hive-600">
-              Add your first hive, then Quick Log from the card on this page.
-            </p>
-            <Button className="mt-5" asChild>
-              <Link href="/hives">Add a hive</Link>
-            </Button>
-          </div>
-        ) : (
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {hives.map((hive) => (
-              <HiveCard key={hive.id} hive={hive} />
-            ))}
-          </div>
-        )}
+          }
+        />
       </section>
 
       <div className="fade-up-delay-3 mb-6 grid gap-6 lg:grid-cols-3">

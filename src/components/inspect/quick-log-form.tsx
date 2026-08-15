@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { createInspectionAction } from "@/app/(app)/inspect/actions";
 import { HiveStack } from "@/components/inspect/hive-stack";
+import { YardPicker } from "@/components/yard/yard-scene";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -403,31 +404,11 @@ export function QuickLogForm({
       <SectionCard icon={Layers} title="Hive & supers">
         <div className="space-y-1.5">
           <Label className="text-xs">Which colony?</Label>
-          <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
-            {selectable.map((hive) => {
-              const selected = hive.id === hiveId;
-              return (
-                <button
-                  key={hive.id}
-                  type="button"
-                  onClick={() => selectHive(hive.id)}
-                  className={cn(
-                    "min-w-[8.5rem] shrink-0 rounded-2xl border px-3 py-2.5 text-left transition-all",
-                    selected
-                      ? "border-honey-500 bg-honey-500/15 shadow-sm"
-                      : "border-wax-300/70 bg-wax-50 hover:border-honey-400/50"
-                  )}
-                >
-                  <p className="font-display text-sm font-semibold text-hive-900">
-                    {hive.name}
-                  </p>
-                  <p className="mt-0.5 text-[11px] text-hive-600">
-                    {formatSuperInventory(hiveSuperInventory(hive))} · {hive.frame_count} frames
-                  </p>
-                </button>
-              );
-            })}
-          </div>
+          <YardPicker
+            hives={selectable}
+            selectedId={hiveId}
+            onSelect={selectHive}
+          />
         </div>
 
         <div className="grid items-center gap-5 rounded-2xl border border-honey-400/25 bg-honey-50/40 p-4 dark:bg-honey-500/10 sm:grid-cols-[1fr_auto_1fr]">
