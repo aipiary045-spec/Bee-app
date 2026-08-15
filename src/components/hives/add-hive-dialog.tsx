@@ -4,7 +4,6 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Loader2, Plus } from "lucide-react";
 import { createHiveAction } from "@/app/(app)/hives/actions";
-import { HiveQrCard } from "@/components/hives/hive-qr-card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -167,27 +166,23 @@ export function AddHiveDialog() {
             <DialogHeader>
               <DialogTitle>{created.name} created</DialogTitle>
               <DialogDescription>
-                Download or print this QR code and attach it to the hive. Scanning
-                opens Quick Log for this colony.
+                {created.name} is on the stand. Print a tag later from the hive
+                page if you want one on the box.
               </DialogDescription>
             </DialogHeader>
 
-            <HiveQrCard
-              hiveId={created.id}
-              hiveName={created.name}
-              variant="inline"
-            />
-
-            <div className="mt-4 flex justify-end gap-2">
+            <div className="flex justify-end gap-2">
               <Button
                 type="button"
                 variant="outline"
                 onClick={() => {
+                  const id = created.id;
                   setOpen(false);
                   reset();
+                  router.push(`/hives/${id}/qr`);
                 }}
               >
-                Done
+                Print tag
               </Button>
               <Button
                 type="button"

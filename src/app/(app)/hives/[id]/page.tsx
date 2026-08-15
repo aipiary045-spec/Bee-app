@@ -7,9 +7,9 @@ import {
   Crown,
   FlaskConical,
   Hexagon,
+  QrCode,
 } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
-import { HiveQrCard } from "@/components/hives/hive-qr-card";
 import { LogHarvestDialog } from "@/components/hives/log-harvest-dialog";
 import { StartTreatmentDialog } from "@/components/hives/start-treatment-dialog";
 import { CompleteTreatmentButton } from "@/components/hives/complete-treatment-button";
@@ -192,12 +192,20 @@ export default async function HiveDetailPage({ params }: HiveDetailPageProps) {
         title={hive.name}
         description={`${hive.apiary?.location ?? "Your apiary"} · ${formatSuperInventory(inventory)} · ${hive.frame_count} frames`}
         actions={
-          <Button asChild>
-            <Link href={`/inspect?hive=${hive.id}`}>
-              <ClipboardList className="h-4 w-4" />
-              Quick Log
-            </Link>
-          </Button>
+          <div className="flex flex-wrap gap-2">
+            <Button variant="outline" size="sm" asChild>
+              <Link href={`/hives/${hive.id}/qr`}>
+                <QrCode className="h-4 w-4" />
+                Tag
+              </Link>
+            </Button>
+            <Button asChild>
+              <Link href={`/inspect?hive=${hive.id}`}>
+                <ClipboardList className="h-4 w-4" />
+                Quick Log
+              </Link>
+            </Button>
+          </div>
         }
       />
 
@@ -277,8 +285,7 @@ export default async function HiveDetailPage({ params }: HiveDetailPageProps) {
         />
       </div>
 
-      <div className="fade-up-delay-2 mb-8 grid gap-4 lg:grid-cols-3">
-        <div className="lg:col-span-2 space-y-4">
+      <div className="fade-up-delay-2 mb-8 space-y-4">
           <Card id="inspections">
             <CardHeader className="pb-2">
               <CardTitle className="flex items-center justify-between gap-2 text-base">
@@ -525,8 +532,6 @@ export default async function HiveDetailPage({ params }: HiveDetailPageProps) {
               )}
             </CardContent>
           </Card>
-        </div>
-        <HiveQrCard hiveId={hive.id} hiveName={hive.name} />
       </div>
     </div>
   );
