@@ -790,19 +790,28 @@ export function QuickLogForm({
         </SectionCard>
       </div>
 
-      <SectionCard icon={DollarSign} title="Expenses">
-        <label className="flex min-h-11 items-center gap-2 text-sm text-hive-700">
-          <input
-            type="checkbox"
-            checked={logExpenses}
-            onChange={(e) => setLogExpenses(e.target.checked)}
-            className="h-4 w-4 accent-honey-600"
-          />
-          Log purchases with this inspection
-        </label>
+      <SectionCard icon={DollarSign} title="Purchases">
+        <button
+          type="button"
+          onClick={() => setLogExpenses((current) => !current)}
+          className={cn(
+            "flex min-h-12 w-full items-center justify-between rounded-xl border px-3 py-2 text-left text-sm font-medium transition-colors",
+            logExpenses
+              ? "border-honey-500 bg-honey-500/20 text-hive-900"
+              : "border-wax-300/70 bg-wax-50 text-hive-700 hover:border-honey-400/50"
+          )}
+        >
+          <span>Bought something this visit</span>
+          <span className="text-xs font-semibold text-honey-800">
+            {logExpenses ? "On" : "Off"}
+          </span>
+        </button>
 
         {logExpenses && (
-          <div className="space-y-3">
+          <div className="space-y-4">
+            <p className="text-sm text-hive-600">
+              Tap what you bought, then put the price.
+            </p>
             {(
               [
                 "equipment",
@@ -812,11 +821,11 @@ export function QuickLogForm({
                 "other",
               ] as const
             ).map((category) => (
-              <div key={category} className="space-y-1.5">
-                <p className="text-[11px] font-semibold uppercase tracking-wider text-hive-500">
+              <div key={category} className="space-y-2">
+                <p className="text-[11px] font-semibold uppercase tracking-wider text-honey-700">
                   {EXPENSE_CATEGORY_LABELS[category]}
                 </p>
-                <div className="flex flex-wrap gap-1.5">
+                <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                   {EXPENSE_CATALOG.filter((item) => item.category === category).map(
                     (item) => {
                       const selected = selectedExpenseIds.includes(item.id);
@@ -826,7 +835,7 @@ export function QuickLogForm({
                           type="button"
                           onClick={() => toggleExpense(item.id)}
                           className={cn(
-                            "rounded-full border px-3 py-1.5 text-xs font-medium transition-colors",
+                            "min-h-11 rounded-xl border px-3 py-2 text-left text-sm font-medium transition-colors",
                             selected
                               ? "border-honey-500 bg-honey-500/20 text-hive-900"
                               : "border-wax-300/70 bg-wax-50 text-hive-600 hover:border-honey-400/50"
@@ -842,8 +851,10 @@ export function QuickLogForm({
             ))}
 
             {selectedExpenseIds.length > 0 ? (
-              <div className="space-y-2">
-                <Label className="text-xs">Prices</Label>
+              <div className="space-y-2 rounded-xl border border-wax-300/60 bg-wax-50/80 p-3">
+                <p className="text-xs font-semibold uppercase tracking-wider text-honey-700">
+                  Prices
+                </p>
                 {selectedExpenseIds.map((id) => {
                   const item = EXPENSE_CATALOG.find((entry) => entry.id === id);
                   if (!item) return null;
@@ -878,14 +889,12 @@ export function QuickLogForm({
                     </div>
                   );
                 })}
-                <p className="text-right text-sm font-medium text-hive-800">
-                  Total: {formatCurrency(expenseTotal)}
+                <p className="text-right text-sm font-semibold text-hive-800">
+                  Total {formatCurrency(expenseTotal)}
                 </p>
               </div>
             ) : (
-              <p className="text-sm text-hive-500">
-                Tap items to add prices.
-              </p>
+              <p className="text-sm text-hive-500">Nothing selected yet.</p>
             )}
           </div>
         )}

@@ -5,6 +5,7 @@ import {
   Scale,
 } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
+import { YardLede } from "@/components/yards/yard-lede";
 import { AddExpenseDialog } from "@/components/expenses/add-expense-dialog";
 import { DeleteExpenseButton } from "@/components/expenses/delete-expense-button";
 import { AddRevenueDialog } from "@/components/finances/add-revenue-dialog";
@@ -67,7 +68,7 @@ export default async function FinancesPage() {
   return (
     <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
       <PageHeader
-        eyebrow="Yard ledger"
+        eyebrow={<YardLede />}
         title="Finances"
         description="Sales and costs for the yard you have open."
         actions={

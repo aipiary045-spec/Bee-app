@@ -1,13 +1,12 @@
 import { PageHeader } from "@/components/layout/page-header";
+import { YardLede } from "@/components/yards/yard-lede";
 import { AddHiveDialog } from "@/components/hives/add-hive-dialog";
 import { HiveCard } from "@/components/hives/hive-card";
-import { NavCard } from "@/components/ui/nav-card";
 import { Card, CardContent } from "@/components/ui/card";
 import { BrandLogo } from "@/components/brand/brand-logo";
 import { createClient } from "@/lib/supabase/server";
 import { listHivesForUser } from "@/lib/hives";
 import type { Hive } from "@/lib/hives";
-import { ClipboardList } from "lucide-react";
 
 export default async function HivesPage() {
   const supabase = await createClient();
@@ -16,14 +15,12 @@ export default async function HivesPage() {
   } = await supabase.auth.getUser();
 
   let hives: Hive[] = [];
-  let apiaryName = "Your apiary";
   let loadError: string | null = null;
 
   if (user) {
     try {
       const result = await listHivesForUser(user.id);
       hives = result.hives;
-      apiaryName = result.apiary.name;
     } catch (err) {
       loadError =
         err instanceof Error ? err.message : "Failed to load hives.";
@@ -37,9 +34,9 @@ export default async function HivesPage() {
   return (
     <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
       <PageHeader
-        eyebrow={apiaryName}
+        eyebrow={<YardLede />}
         title="Hives"
-        description="Colonies on the yard you have open. Switch stands from the yard selector."
+        description="Colonies on the yard you have open."
         actions={<AddHiveDialog />}
       />
 
@@ -68,23 +65,11 @@ export default async function HivesPage() {
       )}
 
       {hives.length > 0 && (
-        <>
-          <div className="fade-up-delay-1 mb-5 max-w-md">
-            <NavCard
-              href="/inspect"
-              eyebrow="At the stand"
-              title="Quick Log"
-              description="Pick a hive and record the visit without hunting through menus."
-              icon={ClipboardList}
-              featured
-            />
-          </div>
-          <div className="stagger-in grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {hives.map((hive) => (
-              <HiveCard key={hive.id} hive={hive} />
-            ))}
-          </div>
-        </>
+        <div className="stagger-in grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          {hives.map((hive) => (
+            <HiveCard key={hive.id} hive={hive} />
+          ))}
+        </div>
       )}
     </div>
   );

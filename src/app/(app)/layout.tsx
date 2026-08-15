@@ -1,6 +1,6 @@
 import { Sidebar, MobileNav } from "@/components/layout/sidebar";
+import { QuickLogFab } from "@/components/layout/quick-log-fab";
 import { BrandWatermark } from "@/components/brand/brand-logo";
-import { YardSwitcher } from "@/components/yards/yard-switcher";
 import { createClient } from "@/lib/supabase/server";
 import { getYardsAndActive } from "@/lib/hives";
 import { toYardChoice, type YardChoice } from "@/lib/yards";
@@ -52,12 +52,8 @@ export default async function AppLayout({
           size={320}
         />
         <div className="pointer-events-none absolute inset-x-0 top-0 h-40 bg-gradient-to-b from-honey-200/25 to-transparent" />
-        {yards.length > 0 && (
-          <div className="relative z-20 px-4 pt-3 lg:hidden">
-            <YardSwitcher yards={yards} activeId={activeYardId} compact />
-          </div>
-        )}
         <main className="relative flex-1 pb-24 lg:pb-0">{children}</main>
+        <QuickLogFab />
         <MobileNav />
       </div>
     </div>

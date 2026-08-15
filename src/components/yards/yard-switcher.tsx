@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Check, ChevronDown, MapPin } from "lucide-react";
+import { Check, ChevronDown } from "lucide-react";
 import { selectYardAction } from "@/app/(app)/settings/actions";
 import { cn } from "@/lib/utils";
 import type { YardChoice } from "@/lib/yards";
@@ -11,6 +11,7 @@ import type { YardChoice } from "@/lib/yards";
 interface YardSwitcherProps {
   yards: YardChoice[];
   activeId: string;
+  variant?: "lede" | "pill" | "chips";
   compact?: boolean;
   className?: string;
 }
@@ -18,6 +19,7 @@ interface YardSwitcherProps {
 export function YardSwitcher({
   yards,
   activeId,
+  variant,
   compact = false,
   className,
 }: YardSwitcherProps) {
@@ -26,6 +28,7 @@ export function YardSwitcher({
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
   const active = yards.find((yard) => yard.id === activeId) ?? yards[0];
+  const look = variant ?? (compact ? "pill" : "chips");
 
   useEffect(() => {
     function onPointerDown(event: MouseEvent) {
@@ -50,7 +53,7 @@ export function YardSwitcher({
     return null;
   }
 
-  if (!compact) {
+  if (look === "chips") {
     return (
       <div className={cn("flex flex-wrap gap-2", className)}>
         {yards.map((yard) => {
@@ -76,48 +79,41 @@ export function YardSwitcher({
     );
   }
 
-  const pillClass =
-    "inline-flex max-w-full items-center gap-1.5 rounded-full border border-wax-300/70 bg-wax-50 px-3 py-1.5 text-sm font-semibold text-hive-900 shadow-sm hover:bg-honey-50 dark:bg-[#1c1610] dark:border-honey-400/25 dark:hover:bg-[#261c12]";
-
-  if (yards.length === 1) {
-    return (
-      <Link
-        href="/settings#yard"
-        className={cn(pillClass, className)}
-        title="Edit this yard"
-      >
-        <MapPin className="h-3.5 w-3.5 shrink-0 text-honey-700" aria-hidden />
-        <span className="truncate">{active.name}</span>
-      </Link>
-    );
-  }
+  const triggerClass =
+    look === "lede"
+      ? "inline-flex max-w-full items-center gap-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-honey-700 hover:text-honey-800"
+      : "inline-flex max-w-full items-center gap-1.5 rounded-full border border-wax-300/70 bg-wax-50 px-3 py-1.5 text-sm font-semibold text-hive-900 shadow-sm hover:bg-honey-50 dark:bg-[#1c1610] dark:border-honey-400/25 dark:hover:bg-[#261c12]";
 
   return (
-    <div ref={rootRef} className={cn("relative inline-flex", className)}>
+    <div ref={rootRef} className={cn("relative inline-flex max-w-full", className)}>
       <button
         type="button"
-        disabled={pending}
-        onClick={() => setOpen((current) => !current)}
-        aria-haspopup="listbox"
-        aria-expanded={open}
-        className={cn(pillClass, pending && "opacity-70")}
+        disabled={pending || yards.length === 1}
+        onClick={() => {
+          if (yards.length > 1) setOpen((current) => !current);
+        }}
+        aria-haspopup={yards.length > 1 ? "listbox" : undefined}
+        aria-expanded={yards.length > 1 ? open : undefined}
+        className={cn(triggerClass, pending && "opacity-70")}
       >
-        <MapPin className="h-3.5 w-3.5 shrink-0 text-honey-700" aria-hidden />
         <span className="truncate">{active.name}</span>
-        <ChevronDown
-          className={cn(
-            "h-3.5 w-3.5 shrink-0 text-hive-500 transition-transform",
-            open && "rotate-180"
-          )}
-          aria-hidden
-        />
+        {yards.length > 1 && (
+          <ChevronDown
+            className={cn(
+              "h-3.5 w-3.5 shrink-0 transition-transform",
+              look === "lede" ? "text-honey-700" : "text-hive-500",
+              open && "rotate-180"
+            )}
+            aria-hidden
+          />
+        )}
       </button>
 
       {open && yards.length > 1 && (
         <div
           role="listbox"
           aria-label="Yards"
-          className="absolute left-0 top-full z-30 mt-1.5 min-w-[12.5rem] overflow-hidden rounded-2xl border border-wax-300/70 bg-wax-50 py-1 shadow-lg dark:border-honey-400/25 dark:bg-[#1c1610]"
+          className="absolute left-0 top-full z-30 mt-1.5 min-w-[12.5rem] overflow-hidden rounded-2xl border border-wax-300/70 bg-wax-50 py-1 text-left font-normal normal-case tracking-normal shadow-lg dark:border-honey-400/25 dark:bg-[#1c1610]"
         >
           {yards.map((yard) => {
             const selected = yard.id === active.id;

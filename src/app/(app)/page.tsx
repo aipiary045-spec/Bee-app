@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { PageHeader } from "@/components/layout/page-header";
-import { GetAroundStrip } from "@/components/layout/get-around";
+import { YardLede } from "@/components/yards/yard-lede";
 import { SummaryCards } from "@/components/dashboard/summary-cards";
 import { PriorityAlertsBar } from "@/components/dashboard/priority-alerts";
 import { YardScene } from "@/components/yard/yard-scene";
@@ -29,7 +29,6 @@ export default async function DashboardPage() {
 
   let hives: Hive[] = [];
   let alerts: HiveAlert[] = [];
-  let yardName = "Your apiary";
   let yardLocation = "";
   let weather: LocalWeather | null = null;
 
@@ -37,7 +36,6 @@ export default async function DashboardPage() {
     try {
       const result = await listHivesForUser(user.id);
       hives = result.hives;
-      yardName = result.apiary.name || "Your apiary";
       yardLocation = result.apiary.location?.trim() ?? "";
       weather = await fetchLocalWeather({
         location: yardLocation,
@@ -72,7 +70,7 @@ export default async function DashboardPage() {
   return (
     <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
       <PageHeader
-        eyebrow={yardName}
+        eyebrow={<YardLede />}
         title="Home"
         description="Walk the stand. Tap a hive to open it, or Log to record a visit."
       />
@@ -81,14 +79,11 @@ export default async function DashboardPage() {
         <PriorityAlertsBar alerts={alerts} />
       </div>
 
-      <div className="fade-up-delay-1 mb-8 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <GetAroundStrip />
-        <p className="text-sm text-hive-600">
-          {hives.length === 0
-            ? "Add a colony to start the yard."
-            : `${activeHives} active · ${attentionCount} need a look`}
-        </p>
-      </div>
+      <p className="fade-up-delay-1 mb-6 text-sm text-hive-600">
+        {hives.length === 0
+          ? "Add a colony to start the yard."
+          : `${activeHives} active · ${attentionCount} need a look`}
+      </p>
 
       <section className="fade-up-delay-2 mb-10">
         <div className="mb-3 flex items-end justify-between gap-3">

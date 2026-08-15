@@ -95,12 +95,12 @@ export function YardScene({
       )}
 
       {hives.length === 0 ? (
-        <div className={cn("relative px-6 py-16", showWeather && "pt-16")}>{empty}</div>
+        <div className={cn("relative px-6 py-16", showWeather && "pt-12")}>{empty}</div>
       ) : (
         <div
           className={cn(
             "relative flex min-h-[22rem] items-end gap-5 overflow-x-auto px-6 pb-3 sm:gap-8 sm:px-10",
-            showWeather ? "pt-16" : "pt-20"
+            showWeather ? "pt-12" : "pt-20"
           )}
         >
           {hives.map((hive, index) => {

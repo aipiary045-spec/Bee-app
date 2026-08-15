@@ -1,7 +1,7 @@
 import { cn } from "@/lib/utils";
 
 interface PageHeaderProps {
-  eyebrow?: string;
+  eyebrow?: React.ReactNode;
   title: string;
   description?: string;
   actions?: React.ReactNode;
@@ -27,11 +27,14 @@ export function PageHeader({
 
       <div className="relative flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="max-w-2xl">
-          {eyebrow && (
-            <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-honey-700">
-              {eyebrow}
-            </p>
-          )}
+          {eyebrow &&
+            (typeof eyebrow === "string" ? (
+              <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-honey-700">
+                {eyebrow}
+              </p>
+            ) : (
+              <div className="min-w-0">{eyebrow}</div>
+            ))}
           <h1 className="font-display mt-1 text-3xl font-bold text-hive-900 sm:text-4xl">
             {title}
           </h1>

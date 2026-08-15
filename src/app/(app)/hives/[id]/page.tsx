@@ -11,6 +11,7 @@ import {
   QrCode,
 } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
+import { YardLede } from "@/components/yards/yard-lede";
 import { HiveStackEditor } from "@/components/hives/hive-stack-editor";
 import { LogHarvestDialog } from "@/components/hives/log-harvest-dialog";
 import { StartTreatmentDialog } from "@/components/hives/start-treatment-dialog";
@@ -191,24 +192,16 @@ export default async function HiveDetailPage({ params }: HiveDetailPageProps) {
       </Button>
 
       <PageHeader
-        eyebrow={hive.apiary?.name ?? "Colony"}
+        eyebrow={<YardLede />}
         title={hive.name}
         description={`${hive.apiary?.location ?? "Your apiary"} · ${formatSuperInventory(inventory)} · ${hive.frame_count} frames`}
         actions={
-          <div className="flex flex-wrap gap-2">
-            <Button variant="outline" size="sm" asChild>
-              <Link href={`/hives/${hive.id}/qr`}>
-                <QrCode className="h-4 w-4" />
-                Tag
-              </Link>
-            </Button>
-            <Button asChild>
-              <Link href={`/inspect?hive=${hive.id}`}>
-                <ClipboardList className="h-4 w-4" />
-                Quick Log
-              </Link>
-            </Button>
-          </div>
+          <Button variant="outline" size="sm" asChild>
+            <Link href={`/hives/${hive.id}/qr`}>
+              <QrCode className="h-4 w-4" />
+              Tag
+            </Link>
+          </Button>
         }
       />
 

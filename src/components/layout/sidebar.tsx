@@ -18,8 +18,8 @@ import type { YardChoice } from "@/lib/yards";
 
 const navItems = [
   { href: "/", label: "Home", icon: LayoutDashboard },
-  { href: "/inspect", label: "Quick Log", icon: ClipboardList, featured: true },
   { href: "/hives", label: "Hives", icon: Hexagon },
+  { href: "/inspect", label: "Quick Log", icon: ClipboardList },
   { href: "/finances", label: "Finances", icon: DollarSign },
   { href: "/settings", label: "Settings", icon: Settings },
 ];
@@ -68,7 +68,7 @@ export function Sidebar({
       </div>
 
       <nav className="flex flex-1 flex-col gap-1.5 p-4">
-        {navItems.map(({ href, label, icon: Icon, featured }) => {
+        {navItems.map(({ href, label, icon: Icon }) => {
           const active = isActive(pathname, href);
           return (
             <Link
@@ -76,7 +76,6 @@ export function Sidebar({
               href={href}
               className={cn(
                 "nav-pop group flex items-center gap-3 rounded-xl px-3.5 py-3 text-sm font-medium transition-all duration-200",
-                featured && !active && "bg-honey-500/10 ring-1 ring-honey-400/25",
                 active
                   ? "bg-honey-500/18 text-hive-900 shadow-sm ring-1 ring-honey-400/35"
                   : "text-hive-600 hover:bg-wax-200/70 hover:text-hive-900"
@@ -85,10 +84,9 @@ export function Sidebar({
               <span
                 className={cn(
                   "flex h-8 w-8 items-center justify-center rounded-lg transition-colors",
-                  featured && !active && "brand-mark text-white",
                   active
                     ? "bg-honey-500/25 text-honey-800"
-                    : !featured && "bg-wax-200/60 text-hive-500 group-hover:text-hive-800"
+                    : "bg-wax-200/60 text-hive-500 group-hover:text-hive-800"
                 )}
               >
                 <Icon className="h-4 w-4" />
@@ -113,7 +111,7 @@ export function MobileNav() {
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-wax-300/50 bg-wax-50/90 shadow-[0_-8px_30px_-18px_rgba(61,42,20,0.35)] backdrop-blur-xl dark:bg-[#1c1610]/95 lg:hidden">
       <div className="flex items-end justify-around px-1 py-2">
-        {navItems.map(({ href, label, icon: Icon, featured }) => {
+        {navItems.map(({ href, label, icon: Icon }) => {
           const active = isActive(pathname, href);
           return (
             <Link
@@ -121,21 +119,11 @@ export function MobileNav() {
               href={href}
               className={cn(
                 "nav-pop flex min-w-[3.6rem] flex-col items-center gap-1 rounded-xl px-1.5 py-1 text-[10px] font-semibold tracking-wide transition-all",
-                featured && "-mt-3",
-                active && !featured && "bg-honey-500/15 text-honey-800",
-                !active && !featured && "text-hive-500"
+                active ? "bg-honey-500/15 text-honey-800" : "text-hive-500"
               )}
             >
-              <span
-                className={cn(
-                  "flex items-center justify-center",
-                  featured
-                    ? "brand-mark h-12 w-12 rounded-2xl text-white shadow-md"
-                    : "h-6 w-6",
-                  active && featured && "ring-2 ring-honey-300"
-                )}
-              >
-                <Icon className={cn(featured ? "h-5 w-5" : "h-5 w-5", active && !featured && "text-honey-700")} />
+              <span className="flex h-6 w-6 items-center justify-center">
+                <Icon className={cn("h-5 w-5", active && "text-honey-700")} />
               </span>
               {label}
             </Link>

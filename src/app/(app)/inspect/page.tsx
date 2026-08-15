@@ -1,4 +1,5 @@
 import { PageHeader } from "@/components/layout/page-header";
+import { YardLede } from "@/components/yards/yard-lede";
 import { QuickLogForm } from "@/components/inspect/quick-log-form";
 import { createClient } from "@/lib/supabase/server";
 import { listHivesForUser } from "@/lib/hives";
@@ -67,7 +68,7 @@ export default async function InspectPage({ searchParams }: InspectPageProps) {
   return (
     <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
       <PageHeader
-        eyebrow="Field work"
+        eyebrow={<YardLede />}
         title="Quick Log"
         description="Pick a hive, pull and replace supers, then tap through queen, health, and notes."
       />
