@@ -1,12 +1,14 @@
 import { DEFAULT_LAT, DEFAULT_LON, DEFAULT_LOCATION } from "@/lib/utils";
 
+export { formatWeatherClock } from "@/lib/weather-format";
+
 export type LocalWeather = {
   condition: string;
   temperatureF: number;
   windSpeedMph: number;
   humidity: number;
   location: string;
-  fetchedAt: string;
+  observedAt: string;
 };
 
 /** WMO weather interpretation codes → form-friendly labels */
@@ -46,6 +48,7 @@ export async function fetchLocalWeather(
 
     const data = (await res.json()) as {
       current?: {
+        time?: string;
         temperature_2m?: number;
         relative_humidity_2m?: number;
         weather_code?: number;
@@ -64,7 +67,7 @@ export async function fetchLocalWeather(
       windSpeedMph: Math.round(current.wind_speed_10m ?? 0),
       humidity: Math.round(current.relative_humidity_2m ?? 0),
       location: DEFAULT_LOCATION,
-      fetchedAt: new Date().toISOString(),
+      observedAt: current.time ?? new Date().toISOString(),
     };
   } catch {
     return null;

@@ -19,14 +19,17 @@ import {
   mergeAlerts,
   uniqueHiveCount,
 } from "@/lib/alerts";
+import { fetchLocalWeather } from "@/lib/weather";
 import type { Hive } from "@/lib/hives";
 import type { HiveAlert } from "@/lib/alerts";
 
 export default async function DashboardPage() {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const [{ data: auth }, weather] = await Promise.all([
+    supabase.auth.getUser(),
+    fetchLocalWeather(),
+  ]);
+  const user = auth.user;
 
   let hives: Hive[] = [];
   let alerts: HiveAlert[] = [];
@@ -129,7 +132,7 @@ export default async function DashboardPage() {
             attentionCount={attentionCount}
           />
         </div>
-        <WeatherWidget />
+        <WeatherWidget weather={weather} />
       </div>
     </div>
   );
