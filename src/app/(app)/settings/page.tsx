@@ -1,17 +1,16 @@
-import { MapPin, QrCode, Settings, User } from "lucide-react";
+import Link from "next/link";
+import { Hexagon, MapPin, Moon, QrCode, User } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
-import { NavCard } from "@/components/ui/nav-card";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { SignOutButton } from "@/components/auth/sign-out-button";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { createClient } from "@/lib/supabase/server";
 import { env } from "@/lib/env";
-import { DEFAULT_LOCATION, DEFAULT_LAT, DEFAULT_LON } from "@/lib/utils";
+import { DEFAULT_LOCATION } from "@/lib/utils";
 
 export default async function SettingsPage() {
   let userEmail: string | null = null;
-  const yardUrl = env.appUrl();
 
   if (env.isSupabaseConfigured()) {
     const supabase = await createClient();
@@ -22,45 +21,13 @@ export default async function SettingsPage() {
   }
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+    <div className="mx-auto max-w-2xl px-4 py-6 sm:px-6">
       <PageHeader
-        eyebrow="Configuration"
         title="Settings"
-        description="Account, yard location, and QR access — tap a card to jump."
-        actions={<SignOutButton />}
+        description="Your account, how the app looks at the stand, and this yard."
       />
 
-      <div className="fade-up-delay-1 mb-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        <NavCard
-          href="#account"
-          title="Account"
-          description={userEmail ?? "Sign in to see your email."}
-          icon={User}
-        />
-        <NavCard
-          href="#location"
-          title="Yard location"
-          description={DEFAULT_LOCATION}
-          icon={MapPin}
-        />
-        <NavCard
-          href="#qr"
-          title="Yard QR"
-          description={yardUrl ? "Configured for phone scans" : "Set an app URL"}
-          icon={QrCode}
-          featured
-        />
-        <NavCard
-          href="#supabase"
-          title="Database"
-          description={
-            env.isSupabaseConfigured() ? "Supabase connected" : "Not configured"
-          }
-          icon={Settings}
-        />
-      </div>
-
-      <div className="grid gap-6 lg:grid-cols-2">
+      <div className="space-y-4">
         <Card id="account" className="fade-up-delay-1">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -69,127 +36,74 @@ export default async function SettingsPage() {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
-            <div className="flex items-center justify-between rounded-lg border border-wax-300/60 bg-wax-50/80 px-4 py-3">
-              <span className="text-sm text-hive-600">Email</span>
-              <span className="font-medium text-hive-900">
+            <div className="flex items-center justify-between gap-3 rounded-lg border border-wax-300/60 bg-wax-50/80 px-4 py-3">
+              <span className="text-sm text-hive-600">Signed in as</span>
+              <span className="text-right font-medium text-hive-900">
                 {userEmail ?? "Not signed in"}
               </span>
             </div>
-            <div className="flex items-center justify-between gap-3 rounded-lg border border-wax-300/60 bg-wax-50/80 px-4 py-3">
-              <div>
-                <p className="text-sm font-medium text-hive-900">Field dark</p>
-                <p className="text-xs text-hive-600">
-                  High contrast for the stand. Honey and wax stay the default.
-                </p>
-              </div>
-              <ThemeToggle />
-            </div>
-            <p className="text-sm leading-relaxed text-hive-600">
-              Your apiary data is scoped to this account via Supabase Row Level
-              Security.
-            </p>
+            <SignOutButton className="w-full sm:w-auto" />
           </CardContent>
         </Card>
 
-        <Card id="location" className="fade-up-delay-1">
+        <Card id="look" className="fade-up-delay-1">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Moon className="h-5 w-5 text-honey-600" />
+              Look
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <p className="text-sm font-medium text-hive-900">Field dark</p>
+                <p className="mt-1 text-sm text-hive-600">
+                  Bigger type and higher contrast for the stand. Honey and wax
+                  stay the usual look until you switch.
+                </p>
+              </div>
+              <ThemeToggle className="shrink-0" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card id="yard" className="fade-up-delay-2">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <MapPin className="h-5 w-5 text-honey-600" />
-              Default Location
+              Yard
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
-            <div className="flex items-center justify-between rounded-lg border border-wax-300/60 bg-wax-50/80 px-4 py-3">
+            <div className="flex items-center justify-between gap-3 rounded-lg border border-wax-300/60 bg-wax-50/80 px-4 py-3">
               <span className="text-sm text-hive-600">Location</span>
               <span className="font-medium text-hive-900">{DEFAULT_LOCATION}</span>
             </div>
-            <div className="flex items-center justify-between rounded-lg border border-wax-300/60 bg-wax-50/80 px-4 py-3">
-              <span className="text-sm text-hive-600">Coordinates</span>
-              <span className="font-mono text-sm text-hive-800">
-                {DEFAULT_LAT.toFixed(4)}, {DEFAULT_LON.toFixed(4)}
-              </span>
-            </div>
             <p className="text-sm leading-relaxed text-hive-600">
-              Weather widgets and seasonal foraging advice use this location.
-              Override via{" "}
-              <code className="rounded bg-wax-200 px-1.5 py-0.5 text-xs">
-                NEXT_PUBLIC_DEFAULT_*
-              </code>{" "}
-              env vars.
+              Weather on Home uses this yard. Forage notes follow the Oklahoma
+              season.
             </p>
           </CardContent>
         </Card>
 
-        <Card id="qr" className="fade-up-delay-2">
+        <Card id="tags" className="fade-up-delay-2">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <QrCode className="h-5 w-5 text-honey-600" />
-              Yard QR access
+              Hive tags
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
-            <div className="flex items-center gap-2">
-              <Badge variant={yardUrl ? "success" : "warning"}>
-                {yardUrl ? "Configured" : "Not set"}
-              </Badge>
-            </div>
-            <div className="rounded-lg border border-wax-300/60 bg-wax-50/80 px-4 py-3">
-              <p className="text-xs text-hive-500">NEXT_PUBLIC_APP_URL</p>
-              <p className="mt-1 break-all font-mono text-sm text-hive-900">
-                {yardUrl ?? "Not configured"}
-              </p>
-            </div>
             <p className="text-sm leading-relaxed text-hive-600">
-              Hive QR codes use this LAN URL so phones on your Wi‑Fi can open
-              Quick Log while the app is running. Keep the computer and phone on
-              the same network.
+              Each hive has a QR you can print and stick on the box. Scan it
+              with your phone to open Quick Log for that colony.
             </p>
-          </CardContent>
-        </Card>
-
-        <Card id="supabase" className="fade-up-delay-2 lg:col-span-2">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Settings className="h-5 w-5 text-hive-600" />
-              Supabase Connection
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="flex items-center gap-2">
-              <Badge variant={env.isSupabaseConfigured() ? "success" : "warning"}>
-                {env.isSupabaseConfigured() ? "Connected" : "Not configured"}
-              </Badge>
-              <span className="text-sm text-hive-600">
-                Credentials live in <code className="text-xs">.env.local</code>
-              </span>
-            </div>
-            <ol className="list-inside list-decimal space-y-2 text-sm leading-relaxed text-hive-600">
-              <li>
-                Create a project at{" "}
-                <a
-                  href="https://supabase.com/dashboard"
-                  target="_blank"
-                  rel="noreferrer"
-                  className="font-medium text-honey-700 hover:text-honey-600"
-                >
-                  supabase.com/dashboard
-                </a>
-              </li>
-              <li>
-                Copy Project URL + anon key into{" "}
-                <code className="text-xs">.env.local</code>
-              </li>
-              <li>
-                Run the SQL files in{" "}
-                <code className="text-xs">supabase/migrations/</code>{" "}
-                in the SQL Editor, including supers and super types
-              </li>
-              <li>
-                Under Authentication → Providers, keep Email enabled. Optionally
-                turn off “Confirm email” for faster local testing.
-              </li>
-              <li>Restart <code className="text-xs">npm run dev</code>, then sign up at /signup</li>
-            </ol>
+            <Button variant="outline" asChild>
+              <Link href="/hives">
+                <Hexagon className="h-4 w-4" />
+                Open hives
+              </Link>
+            </Button>
           </CardContent>
         </Card>
       </div>
