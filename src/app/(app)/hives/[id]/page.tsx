@@ -15,6 +15,7 @@ import { HiveStackEditor } from "@/components/hives/hive-stack-editor";
 import { LogHarvestDialog } from "@/components/hives/log-harvest-dialog";
 import { StartTreatmentDialog } from "@/components/hives/start-treatment-dialog";
 import { CompleteTreatmentButton } from "@/components/hives/complete-treatment-button";
+import { DeleteInspectionButton } from "@/components/hives/delete-inspection-button";
 import { HealthCharts } from "@/components/hives/health-charts";
 import { AddRevenueDialog } from "@/components/finances/add-revenue-dialog";
 import { NavCard } from "@/components/ui/nav-card";
@@ -323,25 +324,27 @@ export default async function HiveDetailPage({ params }: HiveDetailPageProps) {
               ) : (
                 <ul className="divide-y divide-wax-300/60">
                   {inspections.map((inspection) => (
-                    <li key={inspection.id}>
-                      <Link
-                        href={`/inspect?hive=${hive.id}`}
-                        className="flex flex-col gap-1 py-3 transition-colors first:pt-0 last:pb-0 hover:text-honey-800 sm:flex-row sm:items-baseline sm:justify-between"
-                      >
-                        <div>
-                          <p className="text-sm font-medium text-hive-900">
-                            {formatDate(inspection.date)}
-                          </p>
-                          <p className="text-sm text-hive-600">
-                            {inspectionSummary(inspection)}
-                          </p>
-                        </div>
+                    <li
+                      key={inspection.id}
+                      className="flex items-start justify-between gap-3 py-3 first:pt-0 last:pb-0"
+                    >
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium text-hive-900">
+                          {formatDate(inspection.date)}
+                        </p>
+                        <p className="text-sm text-hive-600">
+                          {inspectionSummary(inspection)}
+                        </p>
                         {inspection.notes && (
-                          <p className="max-w-md truncate text-xs text-hive-500">
+                          <p className="mt-1 max-w-md truncate text-xs text-hive-500">
                             {inspection.notes}
                           </p>
                         )}
-                      </Link>
+                      </div>
+                      <DeleteInspectionButton
+                        inspectionId={inspection.id}
+                        dateLabel={formatDate(inspection.date)}
+                      />
                     </li>
                   ))}
                 </ul>

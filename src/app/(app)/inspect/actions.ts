@@ -292,3 +292,76 @@ export async function createInspectionAction(
     return { ok: false, error: message };
   }
 }
+
+export type DeleteInspectionResult =
+  | { ok: true; hiveId: string }
+  | { ok: false; error: string };
+
+export async function deleteInspectionAction(
+  inspectionId: string
+): Promise<DeleteInspectionResult> {
+  if (!inspectionId) {
+    return { ok: false, error: "Choose a visit to remove." };
+  }
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { ok: false, error: "You must be signed in to remove a visit." };
+  }
+
+  try {
+    const { data: inspection, error: loadError } = await supabase
+      .from("inspections")
+      .select("id, hive_id")
+      .eq("id", inspectionId)
+      .maybeSingle();
+
+    if (loadError) {
+      return { ok: false, error: loadError.message };
+    }
+    if (!inspection) {
+      return { ok: false, error: "That visit was not found." };
+    }
+
+    const { error: miteError } = await supabase
+      .from("mite_counts")
+      .delete()
+      .eq("inspection_id", inspectionId);
+    if (miteError) {
+      return { ok: false, error: miteError.message };
+    }
+
+    const { error: queenError } = await supabase
+      .from("queen_logs")
+      .delete()
+      .eq("inspection_id", inspectionId);
+    if (queenError) {
+      return { ok: false, error: queenError.message };
+    }
+
+    const { error } = await supabase
+      .from("inspections")
+      .delete()
+      .eq("id", inspectionId);
+
+    if (error) {
+      return { ok: false, error: error.message };
+    }
+
+    revalidatePath("/");
+    revalidatePath("/inspect");
+    revalidatePath("/hives");
+    revalidatePath(`/hives/${inspection.hive_id}`);
+
+    return { ok: true, hiveId: inspection.hive_id };
+  } catch (err) {
+    return {
+      ok: false,
+      error: err instanceof Error ? err.message : "Failed to remove that visit.",
+    };
+  }
+}
