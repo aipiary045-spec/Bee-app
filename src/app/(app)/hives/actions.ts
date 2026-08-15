@@ -123,7 +123,15 @@ export async function adjustHiveSupersAction(input: {
       .maybeSingle();
 
     if (hiveError || !hive) {
-      return { ok: false, error: hiveError?.message ?? "Hive not found." };
+      const raw = hiveError?.message ?? "Hive not found.";
+      if (/column .* does not exist/i.test(raw)) {
+        return {
+          ok: false,
+          error:
+            "The yard still needs a one-time database update before supers can be saved. In Supabase → SQL Editor, run supabase/migrations/20260815120000_ensure_supers.sql, then try again.",
+        };
+      }
+      return { ok: false, error: raw };
     }
 
     const change = emptySuperChange();
