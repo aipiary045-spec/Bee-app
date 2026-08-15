@@ -3,7 +3,7 @@ import {
   EXPENSE_CATEGORY_LABELS,
   type ExpenseCategory,
 } from "@/lib/expense-catalog";
-import { getOrCreateDefaultApiary } from "@/lib/hives";
+import { getActiveApiary } from "@/lib/hives";
 import type { Tables } from "@/types/database";
 
 export type Expense = Tables<"expenses">;
@@ -26,7 +26,7 @@ export async function listExpensesForUser(userId: string): Promise<{
   ytdTotal: number;
   byCategory: ExpenseCategoryTotal[];
 }> {
-  const apiary = await getOrCreateDefaultApiary(userId);
+  const apiary = await getActiveApiary(userId);
   const supabase = await createClient();
   const yearStart = `${new Date().getFullYear()}-01-01`;
 

@@ -3,7 +3,7 @@ import {
   REVENUE_CATEGORY_LABELS,
   type RevenueCategory,
 } from "@/lib/revenue-catalog";
-import { getOrCreateDefaultApiary } from "@/lib/hives";
+import { getActiveApiary } from "@/lib/hives";
 import type { Tables } from "@/types/database";
 
 export type Revenue = Tables<"revenues">;
@@ -26,7 +26,7 @@ export async function listRevenuesForUser(userId: string): Promise<{
   ytdTotal: number;
   byCategory: RevenueCategoryTotal[];
 }> {
-  const apiary = await getOrCreateDefaultApiary(userId);
+  const apiary = await getActiveApiary(userId);
   const supabase = await createClient();
   const yearStart = `${new Date().getFullYear()}-01-01`;
 

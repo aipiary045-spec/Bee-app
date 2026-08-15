@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import {
-  getOrCreateDefaultApiary,
+  getActiveApiary,
   hiveHasSuperColumns,
   insertInspectionCompat,
   persistHiveSuperInventory,
@@ -69,7 +69,7 @@ export async function createHiveAction(
   }
 
   try {
-    const apiary = await getOrCreateDefaultApiary(user.id);
+    const apiary = await getActiveApiary(user.id);
 
     const fullInsert = await supabase
       .from("hives")

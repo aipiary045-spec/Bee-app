@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { readActiveYardId } from "@/lib/active-yard";
 import type { AlertInspection } from "@/lib/alerts";
 import {
   attachStacksToHives,
@@ -7,6 +8,7 @@ import {
   writeHiveStacksToDescription,
 } from "@/lib/hive-stack-store";
 import type { SuperInventory } from "@/lib/supers";
+import { resolveActiveApiary } from "@/lib/yards";
 import type { Tables, TablesInsert } from "@/types/database";
 
 export type Apiary = Tables<"apiaries">;
@@ -54,11 +56,68 @@ export async function getOrCreateDefaultApiary(
   return created;
 }
 
+export async function listApiariesForUser(userId: string): Promise<Apiary[]> {
+  await getOrCreateDefaultApiary(userId);
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("apiaries")
+    .select("*")
+    .eq("user_id", userId)
+    .order("created_at", { ascending: true });
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  return data ?? [];
+}
+
+export async function getYardsAndActive(userId: string): Promise<{
+  yards: Apiary[];
+  active: Apiary;
+}> {
+  const yards = await listApiariesForUser(userId);
+  const requested = await readActiveYardId();
+  const active = resolveActiveApiary(yards, requested);
+  if (!active) {
+    throw new Error("No yard found for this account.");
+  }
+  return { yards, active };
+}
+
+export async function getActiveApiary(userId: string): Promise<Apiary> {
+  const { active } = await getYardsAndActive(userId);
+  return active;
+}
+
+export async function createApiaryForUser(
+  userId: string,
+  input: { name: string; location: string }
+): Promise<Apiary> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("apiaries")
+    .insert({
+      user_id: userId,
+      name: input.name,
+      location: input.location,
+      description: "",
+    })
+    .select("*")
+    .single();
+
+  if (error || !data) {
+    throw new Error(error?.message ?? "Could not add the yard.");
+  }
+
+  return data;
+}
+
 export async function listHivesForUser(userId: string): Promise<{
   apiary: Apiary;
   hives: Hive[];
 }> {
-  const apiary = await getOrCreateDefaultApiary(userId);
+  const apiary = await getActiveApiary(userId);
   const supabase = await createClient();
 
   const { data: hives, error } = await supabase

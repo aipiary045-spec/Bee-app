@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
-import { getOrCreateDefaultApiary } from "@/lib/hives";
+import { getActiveApiary } from "@/lib/hives";
 import { getExpenseCatalogItem } from "@/lib/expense-catalog";
 import type { Enums, TablesInsert } from "@/types/database";
 
@@ -88,7 +88,7 @@ export async function createExpensesBatchAction(
   }
 
   try {
-    const apiary = await getOrCreateDefaultApiary(user.id);
+    const apiary = await getActiveApiary(user.id);
 
     const hiveId: string | null = input.hiveId?.trim() || null;
     if (hiveId) {

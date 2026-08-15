@@ -1,7 +1,9 @@
 import { Sidebar, MobileNav } from "@/components/layout/sidebar";
 import { BrandWatermark } from "@/components/brand/brand-logo";
+import { YardSwitcher } from "@/components/yards/yard-switcher";
 import { createClient } from "@/lib/supabase/server";
-import { getOrCreateDefaultApiary } from "@/lib/hives";
+import { getYardsAndActive } from "@/lib/hives";
+import { toYardChoice, type YardChoice } from "@/lib/yards";
 import { env } from "@/lib/env";
 
 export default async function AppLayout({
@@ -11,6 +13,8 @@ export default async function AppLayout({
 }) {
   let yardName = "Apiary";
   let yardLocation = "Your yard";
+  let yards: YardChoice[] = [];
+  let activeYardId = "";
 
   if (env.isSupabaseConfigured()) {
     try {
@@ -19,9 +23,11 @@ export default async function AppLayout({
         data: { user },
       } = await supabase.auth.getUser();
       if (user) {
-        const apiary = await getOrCreateDefaultApiary(user.id);
-        yardName = apiary.name || "Apiary";
-        yardLocation = apiary.location?.trim() || "Your yard";
+        const { yards: list, active } = await getYardsAndActive(user.id);
+        yards = list.map(toYardChoice);
+        activeYardId = active.id;
+        yardName = active.name || "Apiary";
+        yardLocation = active.location?.trim() || "Your yard";
       }
     } catch {
       // Keep the product defaults if the yard is not ready yet.
@@ -30,7 +36,12 @@ export default async function AppLayout({
 
   return (
     <div className="flex min-h-screen">
-      <Sidebar yardName={yardName} yardLocation={yardLocation} />
+      <Sidebar
+        yardName={yardName}
+        yardLocation={yardLocation}
+        yards={yards}
+        activeYardId={activeYardId}
+      />
       <div className="relative flex flex-1 flex-col overflow-hidden">
         <BrandWatermark
           className="-right-16 -top-10 sm:-right-8 sm:top-8"
@@ -41,6 +52,15 @@ export default async function AppLayout({
           size={320}
         />
         <div className="pointer-events-none absolute inset-x-0 top-0 h-40 bg-gradient-to-b from-honey-200/25 to-transparent" />
+        {yards.length > 0 && (
+          <div className="relative z-20 border-b border-wax-300/40 bg-wax-50/80 px-4 py-2 backdrop-blur-md dark:bg-[#1c1610]/80 lg:hidden">
+            <YardSwitcher
+              yards={yards}
+              activeId={activeYardId}
+              compact
+            />
+          </div>
+        )}
         <main className="relative flex-1 pb-24 lg:pb-0">{children}</main>
         <MobileNav />
       </div>

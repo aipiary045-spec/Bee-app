@@ -39,7 +39,7 @@ export default async function HivesPage() {
       <PageHeader
         eyebrow={apiaryName}
         title="Hives"
-        description="Open a colony for history, or jump straight into Quick Log from the card."
+        description="Colonies on the yard you have open. Switch stands from the yard selector."
         actions={<AddHiveDialog />}
       />
 

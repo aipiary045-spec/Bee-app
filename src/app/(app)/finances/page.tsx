@@ -69,7 +69,7 @@ export default async function FinancesPage() {
       <PageHeader
         eyebrow="Yard ledger"
         title="Finances"
-        description="One ledger for sales and costs. Profit updates as you go."
+        description="Sales and costs for the yard you have open."
         actions={
           <div className="flex flex-wrap gap-2">
             <AddRevenueDialog hives={hives} />

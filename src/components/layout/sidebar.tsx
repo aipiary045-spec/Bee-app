@@ -13,6 +13,8 @@ import { cn } from "@/lib/utils";
 import { BrandLogo } from "@/components/brand/brand-logo";
 import { SignOutButton } from "@/components/auth/sign-out-button";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
+import { YardSwitcher } from "@/components/yards/yard-switcher";
+import type { YardChoice } from "@/lib/yards";
 
 const navItems = [
   { href: "/", label: "Home", icon: LayoutDashboard },
@@ -29,11 +31,15 @@ function isActive(pathname: string, href: string) {
 interface SidebarProps {
   yardName?: string;
   yardLocation?: string;
+  yards?: YardChoice[];
+  activeYardId?: string;
 }
 
 export function Sidebar({
   yardName = "Apiary",
   yardLocation = "Your yard",
+  yards = [],
+  activeYardId = "",
 }: SidebarProps) {
   const pathname = usePathname();
 
@@ -52,6 +58,11 @@ export function Sidebar({
             </p>
           </div>
         </Link>
+        {yards.length > 0 && (
+          <div className="mt-4">
+            <YardSwitcher yards={yards} activeId={activeYardId} compact />
+          </div>
+        )}
       </div>
 
       <nav className="flex flex-1 flex-col gap-1.5 p-4">

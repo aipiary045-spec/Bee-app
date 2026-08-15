@@ -8,11 +8,18 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
 interface YardFormProps {
+  yardId?: string;
   name: string;
   location: string;
+  submitLabel?: string;
 }
 
-export function YardForm({ name, location }: YardFormProps) {
+export function YardForm({
+  yardId,
+  name,
+  location,
+  submitLabel = "Save yard",
+}: YardFormProps) {
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
@@ -24,6 +31,7 @@ export function YardForm({ name, location }: YardFormProps) {
     setSaved(false);
     startTransition(async () => {
       const result = await updateYardAction({
+        yardId,
         name: String(form.get("name") ?? ""),
         location: String(form.get("location") ?? ""),
       });
@@ -65,7 +73,7 @@ export function YardForm({ name, location }: YardFormProps) {
       {saved && <p className="text-sm text-meadow-600">Yard saved.</p>}
       <Button type="submit" disabled={pending}>
         {pending && <Loader2 className="h-4 w-4 animate-spin" />}
-        Save yard
+        {submitLabel}
       </Button>
     </form>
   );
