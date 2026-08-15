@@ -26,7 +26,15 @@ function isActive(pathname: string, href: string) {
   return href === "/" ? pathname === "/" : pathname.startsWith(href);
 }
 
-export function Sidebar() {
+interface SidebarProps {
+  yardName?: string;
+  yardLocation?: string;
+}
+
+export function Sidebar({
+  yardName = "Apiary",
+  yardLocation = "Your yard",
+}: SidebarProps) {
   const pathname = usePathname();
 
   return (
@@ -39,8 +47,8 @@ export function Sidebar() {
             <p className="font-display text-xl font-bold leading-tight text-hive-900">
               Apiary
             </p>
-            <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-honey-700">
-              Agra, Oklahoma
+            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-honey-700">
+              {yardLocation || yardName}
             </p>
           </div>
         </Link>
@@ -54,7 +62,7 @@ export function Sidebar() {
               key={href}
               href={href}
               className={cn(
-                "group flex items-center gap-3 rounded-xl px-3.5 py-3 text-sm font-medium transition-all duration-200",
+                "nav-pop group flex items-center gap-3 rounded-xl px-3.5 py-3 text-sm font-medium transition-all duration-200",
                 featured && !active && "bg-honey-500/10 ring-1 ring-honey-400/25",
                 active
                   ? "bg-honey-500/18 text-hive-900 shadow-sm ring-1 ring-honey-400/35"
@@ -99,7 +107,7 @@ export function MobileNav() {
               key={href}
               href={href}
               className={cn(
-                "flex min-w-[3.6rem] flex-col items-center gap-1 rounded-xl px-1.5 py-1 text-[10px] font-semibold tracking-wide transition-all",
+                "nav-pop flex min-w-[3.6rem] flex-col items-center gap-1 rounded-xl px-1.5 py-1 text-[10px] font-semibold tracking-wide transition-all",
                 featured && "-mt-3",
                 active && !featured && "bg-honey-500/15 text-honey-800",
                 !active && !featured && "text-hive-500"

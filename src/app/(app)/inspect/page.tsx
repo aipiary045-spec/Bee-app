@@ -27,12 +27,14 @@ export default async function InspectPage({ searchParams }: InspectPageProps) {
     | "frame_count"
   >[] = [];
   let loadError: string | null = null;
-
-  const [weather] = await Promise.all([fetchLocalWeather()]);
+  let weather = user ? null : await fetchLocalWeather();
 
   if (user) {
     try {
       const result = await listHivesForUser(user.id);
+      weather = await fetchLocalWeather({
+        location: result.apiary.location,
+      });
       hives = result.hives.map(
         ({
           id,

@@ -25,18 +25,22 @@ import type { HiveAlert } from "@/lib/alerts";
 
 export default async function DashboardPage() {
   const supabase = await createClient();
-  const [{ data: auth }, weather] = await Promise.all([
-    supabase.auth.getUser(),
-    fetchLocalWeather(),
-  ]);
+  const { data: auth } = await supabase.auth.getUser();
   const user = auth.user;
 
   let hives: Hive[] = [];
   let alerts: HiveAlert[] = [];
+  let yardName = "Your apiary";
+  let weather = user ? null : await fetchLocalWeather();
+
   if (user) {
     try {
       const result = await listHivesForUser(user.id);
       hives = result.hives;
+      yardName = result.apiary.name || "Your apiary";
+      weather = await fetchLocalWeather({
+        location: result.apiary.location,
+      });
       const hiveIds = hives.map((hive) => hive.id);
       const [inspections, treatments] = await Promise.all([
         listRecentInspectionsForHives(hiveIds),
@@ -67,7 +71,7 @@ export default async function DashboardPage() {
   return (
     <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
       <PageHeader
-        eyebrow="Agra Apiary"
+        eyebrow={yardName}
         title="Home"
         description="Walk the stand. Tap a hive to open it, or Log to record a visit."
       />

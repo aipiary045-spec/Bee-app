@@ -82,8 +82,8 @@ export function AddHiveDialog() {
             <DialogHeader>
               <DialogTitle>Add a hive</DialogTitle>
               <DialogDescription>
-                Create a colony in your Agra apiary. A printable Quick Log QR
-                code is generated right after.
+                Add a colony to your yard. A printable Quick Log tag is ready
+                right after.
               </DialogDescription>
             </DialogHeader>
 

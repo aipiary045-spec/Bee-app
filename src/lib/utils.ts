@@ -31,15 +31,15 @@ export function getSeasonalForagingAdvice(month: number): string {
     0: "Winter cluster — minimal disturbance. Check food stores on warm days above 50°F.",
     1: "Late winter — prepare for spring buildup. Monitor pollen patties if needed.",
     2: "Early spring — first inspections. Watch for swarm cells as nectar flows begin.",
-    3: "Spring bloom — peak foraging in Oklahoma. Add supers as brood expands.",
+    3: "Spring bloom — peak foraging in many yards. Add supers as brood expands.",
     4: "Late spring — swarm season peak. Monitor space and queen cells weekly.",
-    5: "Summer solstice — honey flow active. Ensure adequate ventilation in Oklahoma heat.",
-    6: "Mid-summer — harvest early honey. Mite counts critical before fall buildup.",
+    5: "Summer solstice — honey flow active. Give ventilation on hot days.",
+    6: "Mid-summer — harvest early honey. Mite counts matter before fall buildup.",
     7: "Late summer — robbing risk increases. Reduce entrances, treat for varroa.",
-    8: "Early fall — goldenrod and aster flows. Final mite treatment window.",
-    9: "Fall — consolidate weak colonies. Ensure 60–80 lbs stores for winter.",
-    10: "Late fall — wrap hives if needed. Mouse guards on all entrances.",
-    11: "Winter prep complete — monitor weight monthly. Agra avg low: 28°F.",
+    8: "Early fall — late nectar flows. Final mite treatment window for many regions.",
+    9: "Fall — consolidate weak colonies. Leave enough stores for winter.",
+    10: "Late fall — wrap or insulate if your winters call for it. Mouse guards on.",
+    11: "Winter — disturb the cluster as little as you can. Check weight on mild days.",
   };
   return advice[month] ?? "Monitor colony health and local forage conditions.";
 }

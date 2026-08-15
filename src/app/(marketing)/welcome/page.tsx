@@ -9,6 +9,9 @@ import {
 } from "lucide-react";
 import { BrandLogo, BrandWatermark } from "@/components/brand/brand-logo";
 import { Button } from "@/components/ui/button";
+import { FlyingBees } from "@/components/motion/flying-bees";
+import { YardScene } from "@/components/yard/yard-scene";
+import type { YardHiveData } from "@/components/yard/yard-hive";
 
 const features = [
   {
@@ -19,96 +22,124 @@ const features = [
   },
   {
     icon: Hexagon,
-    title: "Live hive tracking",
+    title: "A yard you can see",
     description:
-      "Keep every colony organized with status, frame counts, and a clear history of what happened in each box.",
+      "Every colony shows as a stack. Open a hive for history, or tap Log at the stand without hunting through menus.",
   },
   {
     icon: DollarSign,
-    title: "Finances",
+    title: "Finances in one ledger",
     description:
-      "Log honey sales, nucs, and yard costs together — see season profit, not just what you spent.",
+      "Honey sales, nucs, feed, and treatments sit together so you can see season profit, not just what you spent.",
   },
   {
     icon: QrCode,
-    title: "Yard QR codes",
+    title: "Hive tags",
     description:
-      "Print a code for each hive and open Quick Log from your phone at the stand — no digging through menus.",
+      "Print a code for each box and open Quick Log from your phone — handy when you run more than a couple of colonies.",
   },
   {
     icon: Sun,
-    title: "Local weather context",
+    title: "Weather for your town",
     description:
-      "Agra-area conditions surface on your dashboard so inspection days and forage notes stay grounded in the season.",
+      "Set your yard location and Home shows local conditions plus a seasonal forage note for the month you are in.",
   },
   {
     icon: ShieldCheck,
-    title: "Private to your yard",
+    title: "Private to your account",
     description:
-      "Your apiary data stays behind your account with secure sign-in — built for working beekeepers, not spreadsheets.",
+      "Your records stay behind your sign-in. Built for working beekeepers, not a shared spreadsheet in the truck.",
   },
 ];
 
-const testimonials = [
+const uses = [
   {
-    quote:
-      "I used to lose notes on paper scraps in the truck. Quick Log from the QR code means the inspection is saved before I close the lid.",
-    name: "Marcus Hale",
-    role: "Hobbyist · 8 hives · Prague, OK",
+    title: "Backyard",
+    body: "A few hives behind the house. Keep queen notes and mite counts where you can find them next week.",
   },
   {
-    quote:
-      "Treatments and sugar run up fast. Seeing expenses by category finally told us where the season money was going.",
-    name: "Elena Brooks",
-    role: "Side-line · 22 hives · Stillwater area",
+    title: "Side-line",
+    body: "Treatments and sugar add up. The ledger shows where the season money is going before harvest.",
   },
   {
-    quote:
-      "We run Agra outyards with part-time help. Shared hive history and mite counts keep everyone working from the same story.",
-    name: "Jonah Reed",
-    role: "Small commercial · Lincoln County",
+    title: "Shared stand",
+    body: "Family or club help on the same yard. One hive history so the next visit starts from the same story.",
+  },
+];
+
+const demoHives: YardHiveData[] = [
+  {
+    id: "demo-north",
+    name: "North",
+    status: "active",
+    super_count: 3,
+    medium_count: 2,
+    shallow_count: 1,
+  },
+  {
+    id: "demo-maple",
+    name: "Maple",
+    status: "active",
+    super_count: 2,
+    medium_count: 2,
+    shallow_count: 0,
+  },
+  {
+    id: "demo-gate",
+    name: "Gate",
+    status: "active",
+    super_count: 1,
+    medium_count: 0,
+    shallow_count: 1,
   },
 ];
 
 export default function WelcomePage() {
   return (
     <div className="relative">
-      {/* Hero — one composition: brand, headline, support, CTAs, dominant mark */}
       <section className="relative mx-auto flex min-h-[calc(100vh-5.5rem)] w-full max-w-6xl flex-col justify-center px-4 pb-16 pt-6 sm:px-6 lg:px-8">
         <BrandWatermark
           className="-right-8 top-0 sm:right-0 sm:top-8 lg:right-4"
           size={520}
         />
+        <FlyingBees className="opacity-80" />
         <div className="pointer-events-none absolute -left-24 top-24 h-72 w-72 rounded-full bg-honey-400/20 blur-3xl" />
         <div className="pointer-events-none absolute bottom-10 right-10 h-64 w-64 rounded-full bg-meadow-400/15 blur-3xl" />
 
-        <div className="relative z-10 max-w-2xl fade-up">
-          <div className="mb-8 flex items-center gap-4">
-            <div className="float-slow">
-              <BrandLogo size={110} className="h-24 w-24 sm:h-28 sm:w-28" priority />
+        <div className="relative z-10 grid items-center gap-12 lg:grid-cols-[1.05fr_0.95fr]">
+          <div className="max-w-2xl fade-up">
+            <div className="mb-8 flex items-center gap-4">
+              <div className="float-slow">
+                <BrandLogo size={110} className="h-24 w-24 sm:h-28 sm:w-28" priority />
+              </div>
+            </div>
+
+            <p className="font-display text-5xl font-bold tracking-tight text-hive-900 sm:text-6xl lg:text-7xl">
+              The yard,
+              <span className="block text-honey-700">in your pocket.</span>
+            </p>
+            <p className="mt-4 max-w-xl text-lg leading-relaxed text-hive-600 sm:text-xl">
+              Hive records for working beekeepers — inspections, mites, harvests,
+              and costs in one calm place. Set your own yard. Invite your own
+              season.
+            </p>
+
+            <div className="mt-8 flex flex-wrap items-center gap-3">
+              <Button size="lg" asChild>
+                <Link href="/signup">Start your yard</Link>
+              </Button>
+              <Button size="lg" variant="outline" asChild>
+                <Link href="/login">Sign in</Link>
+              </Button>
             </div>
           </div>
 
-          <p className="font-display text-5xl font-bold tracking-tight text-hive-900 sm:text-6xl lg:text-7xl">
-            Apiary
-          </p>
-          <p className="mt-4 max-w-xl text-lg leading-relaxed text-hive-600 sm:text-xl">
-            Modern yard records for Oklahoma beekeepers — inspections, mites,
-            costs, and hive history in one calm place.
-          </p>
-
-          <div className="mt-8 flex flex-wrap items-center gap-3">
-            <Button size="lg" asChild>
-              <Link href="/signup">Start managing your yard</Link>
-            </Button>
-            <Button size="lg" variant="outline" asChild>
-              <Link href="/login">Sign in</Link>
-            </Button>
+          <div className="fade-up-delay-2 hidden sm:block">
+            <YardScene hives={demoHives} interactive={false} />
           </div>
         </div>
       </section>
 
-      {/* Features */}
       <section className="relative border-t border-wax-300/50 bg-gradient-to-b from-wax-50/40 to-transparent">
         <div className="mx-auto max-w-6xl px-4 py-20 sm:px-6 lg:px-8">
           <div className="fade-up max-w-2xl">
@@ -124,14 +155,10 @@ export default function WelcomePage() {
             </p>
           </div>
 
-          <div className="mt-14 grid gap-x-10 gap-y-12 sm:grid-cols-2 lg:grid-cols-3">
-            {features.map(({ icon: Icon, title, description }, index) => (
-              <div
-                key={title}
-                className="fade-up group"
-                style={{ animationDelay: `${0.06 * (index + 1)}s` }}
-              >
-                <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-xl bg-honey-500/15 text-honey-800 ring-1 ring-honey-400/25 transition-colors group-hover:bg-honey-500/25">
+          <div className="stagger-in mt-14 grid gap-x-10 gap-y-12 sm:grid-cols-2 lg:grid-cols-3">
+            {features.map(({ icon: Icon, title, description }) => (
+              <div key={title} className="group">
+                <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-xl bg-honey-500/15 text-honey-800 ring-1 ring-honey-400/25 transition-transform duration-300 group-hover:-translate-y-1 group-hover:bg-honey-500/25">
                   <Icon className="h-5 w-5" />
                 </div>
                 <h3 className="font-display text-xl font-semibold text-hive-900">
@@ -146,7 +173,6 @@ export default function WelcomePage() {
         </div>
       </section>
 
-      {/* Testimonials */}
       <section className="relative overflow-hidden border-t border-wax-300/50">
         <BrandWatermark
           className="-left-20 bottom-0 rotate-[-12deg] opacity-60"
@@ -155,36 +181,31 @@ export default function WelcomePage() {
         <div className="relative mx-auto max-w-6xl px-4 py-20 sm:px-6 lg:px-8">
           <div className="fade-up max-w-2xl">
             <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-honey-700">
-              From the yard
+              Who it is for
             </p>
             <h2 className="font-display mt-3 text-3xl font-bold text-hive-900 sm:text-4xl">
-              Beekeepers who keep better notes keep better bees
+              One app for a backyard, a side-line, or a shared stand
             </h2>
           </div>
 
-          <div className="mt-14 grid gap-10 lg:grid-cols-3">
-            {testimonials.map((item, index) => (
+          <div className="stagger-in mt-14 grid gap-10 lg:grid-cols-3">
+            {uses.map((item) => (
               <figure
-                key={item.name}
-                className="fade-up relative border-l-2 border-honey-500/40 pl-5"
-                style={{ animationDelay: `${0.08 * (index + 1)}s` }}
+                key={item.title}
+                className="lift-card surface-panel rounded-2xl p-6"
               >
-                <blockquote className="font-display text-lg leading-relaxed text-hive-800 sm:text-xl">
-                  “{item.quote}”
-                </blockquote>
-                <figcaption className="mt-5">
-                  <p className="text-sm font-semibold text-hive-900">
-                    {item.name}
-                  </p>
-                  <p className="mt-0.5 text-xs text-hive-500">{item.role}</p>
-                </figcaption>
+                <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-honey-700">
+                  {item.title}
+                </p>
+                <p className="font-display mt-3 text-lg leading-relaxed text-hive-800 sm:text-xl">
+                  {item.body}
+                </p>
               </figure>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Closing CTA */}
       <section className="border-t border-wax-300/50">
         <div className="mx-auto flex max-w-6xl flex-col items-start gap-6 px-4 py-20 sm:px-6 lg:flex-row lg:items-center lg:justify-between lg:px-8">
           <div className="fade-up max-w-xl">
@@ -192,8 +213,8 @@ export default function WelcomePage() {
               Ready for the next inspection?
             </h2>
             <p className="mt-3 text-base text-hive-600">
-              Create your account and add your first hive in a couple of
-              minutes.
+              Create an account, name your yard, and add the first hive in a
+              couple of minutes.
             </p>
           </div>
           <div className="fade-up flex flex-wrap gap-3">
@@ -208,7 +229,7 @@ export default function WelcomePage() {
       </section>
 
       <footer className="border-t border-wax-300/40 px-4 py-8 text-center text-xs text-hive-500 sm:px-6">
-        Apiary · Built for Agra, Oklahoma beekeepers
+        Apiary · Hive records for working beekeepers
       </footer>
     </div>
   );

@@ -40,9 +40,9 @@ export async function getOrCreateDefaultApiary(
     .from("apiaries")
     .insert({
       user_id: userId,
-      name: "Agra Apiary",
-      location: "Agra, OK",
-      description: "Primary apiary near Agra, Oklahoma",
+      name: "My Apiary",
+      location: "",
+      description: "",
     })
     .select("*")
     .single();

@@ -108,7 +108,7 @@ export function AuthForm({ mode }: AuthFormProps) {
         <p className="mt-3 text-hive-600">
           {mode === "login"
             ? "Sign in to manage your apiary."
-            : "Create an account to track hives, inspections, and harvests."}
+            : "Create an account to track your hives, inspections, and harvests."}
         </p>
       </div>
 

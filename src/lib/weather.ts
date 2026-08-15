@@ -1,4 +1,5 @@
 import { DEFAULT_LAT, DEFAULT_LON, DEFAULT_LOCATION } from "@/lib/utils";
+import { geocodeLocation } from "@/lib/weather-geo";
 
 export { formatWeatherClock } from "@/lib/weather-format";
 
@@ -9,6 +10,12 @@ export type LocalWeather = {
   humidity: number;
   location: string;
   observedAt: string;
+};
+
+export type WeatherQuery = {
+  location?: string | null;
+  lat?: number;
+  lon?: number;
 };
 
 /** WMO weather interpretation codes → form-friendly labels */
@@ -25,10 +32,22 @@ function conditionFromCode(code: number): string {
 }
 
 export async function fetchLocalWeather(
-  lat = DEFAULT_LAT,
-  lon = DEFAULT_LON
+  query: WeatherQuery = {}
 ): Promise<LocalWeather | null> {
   try {
+    let lat = query.lat ?? DEFAULT_LAT;
+    let lon = query.lon ?? DEFAULT_LON;
+    let label = query.location?.trim() || DEFAULT_LOCATION;
+
+    if (query.location?.trim() && query.lat == null && query.lon == null) {
+      const geo = await geocodeLocation(query.location);
+      if (geo) {
+        lat = geo.lat;
+        lon = geo.lon;
+        label = geo.label;
+      }
+    }
+
     const url = new URL("https://api.open-meteo.com/v1/forecast");
     url.searchParams.set("latitude", String(lat));
     url.searchParams.set("longitude", String(lon));
@@ -38,7 +57,7 @@ export async function fetchLocalWeather(
     );
     url.searchParams.set("temperature_unit", "fahrenheit");
     url.searchParams.set("wind_speed_unit", "mph");
-    url.searchParams.set("timezone", "America/Chicago");
+    url.searchParams.set("timezone", "auto");
 
     const res = await fetch(url.toString(), {
       next: { revalidate: 600 },
@@ -66,7 +85,7 @@ export async function fetchLocalWeather(
       temperatureF: Math.round(current.temperature_2m),
       windSpeedMph: Math.round(current.wind_speed_10m ?? 0),
       humidity: Math.round(current.relative_humidity_2m ?? 0),
-      location: DEFAULT_LOCATION,
+      location: label,
       observedAt: current.time ?? new Date().toISOString(),
     };
   } catch {

@@ -17,7 +17,7 @@ export default function MarketingLayout({
               Apiary
             </p>
             <p className="mt-1 text-[10px] font-semibold uppercase tracking-[0.22em] text-honey-700">
-              Agra, OK
+              For the stand
             </p>
           </div>
         </Link>

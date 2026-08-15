@@ -16,7 +16,7 @@ export default async function HivesPage() {
   } = await supabase.auth.getUser();
 
   let hives: Hive[] = [];
-  let apiaryName = "Agra Apiary";
+  let apiaryName = "Your apiary";
   let loadError: string | null = null;
 
   if (user) {
@@ -79,7 +79,7 @@ export default async function HivesPage() {
               featured
             />
           </div>
-          <div className="fade-up-delay-2 grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          <div className="stagger-in grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {hives.map((hive) => (
               <HiveCard key={hive.id} hive={hive} />
             ))}
