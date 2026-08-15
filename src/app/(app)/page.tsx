@@ -18,7 +18,7 @@ import {
   mergeAlerts,
   uniqueHiveCount,
 } from "@/lib/alerts";
-import { fetchLocalWeather } from "@/lib/weather";
+import { fetchLocalWeather, type LocalWeather } from "@/lib/weather";
 import type { Hive } from "@/lib/hives";
 import type { HiveAlert } from "@/lib/alerts";
 
@@ -30,15 +30,17 @@ export default async function DashboardPage() {
   let hives: Hive[] = [];
   let alerts: HiveAlert[] = [];
   let yardName = "Your apiary";
-  let weather = user ? null : await fetchLocalWeather();
+  let yardLocation = "";
+  let weather: LocalWeather | null = null;
 
   if (user) {
     try {
       const result = await listHivesForUser(user.id);
       hives = result.hives;
       yardName = result.apiary.name || "Your apiary";
+      yardLocation = result.apiary.location?.trim() ?? "";
       weather = await fetchLocalWeather({
-        location: result.apiary.location,
+        location: yardLocation,
       });
       const hiveIds = hives.map((hive) => hive.id);
       const [inspections, treatments] = await Promise.all([
@@ -109,6 +111,7 @@ export default async function DashboardPage() {
         <YardScene
           hives={hives}
           weather={weather}
+          yardLocation={user ? yardLocation : undefined}
           showWeather
           empty={
             <div className="text-center">

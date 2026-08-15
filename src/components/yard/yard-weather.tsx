@@ -1,15 +1,18 @@
 "use client";
 
+import Link from "next/link";
 import { Droplets, Wind } from "lucide-react";
 import { getSeasonalForagingAdvice } from "@/lib/utils";
 import { formatWeatherClock, type LocalWeather } from "@/lib/weather";
 
 interface YardWeatherProps {
   weather: LocalWeather | null;
+  yardLocation?: string | null;
 }
 
-export function YardWeather({ weather }: YardWeatherProps) {
+export function YardWeather({ weather, yardLocation }: YardWeatherProps) {
   const forage = getSeasonalForagingAdvice(new Date().getMonth());
+  const town = yardLocation?.trim() ?? "";
 
   return (
     <div className="pointer-events-none absolute inset-x-3 top-3 z-10 max-w-sm">
@@ -38,6 +41,21 @@ export function YardWeather({ weather }: YardWeatherProps) {
               </p>
             </div>
           </div>
+        ) : town ? (
+          <p className="text-sm font-medium text-hive-800">
+            Could not read weather for {town}.
+          </p>
+        ) : yardLocation !== undefined ? (
+          <p className="text-sm font-medium text-hive-800">
+            Add this yard&apos;s town in{" "}
+            <Link
+              href="/settings#yard"
+              className="pointer-events-auto font-semibold text-honey-800 underline decoration-honey-400/70 underline-offset-2"
+            >
+              Settings
+            </Link>
+            . Weather follows the stand, not where you are.
+          </p>
         ) : (
           <p className="text-sm font-medium text-hive-800">
             Weather is quiet right now.

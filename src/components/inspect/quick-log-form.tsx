@@ -21,7 +21,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { cn, DEFAULT_LOCATION, formatCurrency } from "@/lib/utils";
+import { cn, formatCurrency } from "@/lib/utils";
 import { EXPENSE_CATALOG, EXPENSE_CATEGORY_LABELS } from "@/lib/expense-catalog";
 import {
   canAddSuper,
@@ -536,7 +536,7 @@ export function QuickLogForm({
               <Label className="text-xs">Weather</Label>
               {weatherAutoFilled ? (
                 <span className="text-[10px] font-medium uppercase tracking-wider text-meadow-800">
-                  Live · {DEFAULT_LOCATION}
+                  Live · {initialWeather?.location ?? "this yard"}
                 </span>
               ) : (
                 <span className="text-[10px] font-medium uppercase tracking-wider text-hive-500">

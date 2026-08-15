@@ -66,7 +66,8 @@ export function YardForm({
           className="min-h-12 rounded-xl"
         />
         <p className="text-sm leading-relaxed text-hive-600">
-          Home weather looks up this place. Use a town keepers would recognize.
+          Weather on Home and Quick Log is for this yard&apos;s town, not
+          where you are standing. Use a place keepers would recognize.
         </p>
       </div>
       {error && <p className="text-sm text-crimson-600">{error}</p>}

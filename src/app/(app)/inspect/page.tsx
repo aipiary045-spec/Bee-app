@@ -2,7 +2,7 @@ import { PageHeader } from "@/components/layout/page-header";
 import { QuickLogForm } from "@/components/inspect/quick-log-form";
 import { createClient } from "@/lib/supabase/server";
 import { listHivesForUser } from "@/lib/hives";
-import { fetchLocalWeather } from "@/lib/weather";
+import { fetchLocalWeather, type LocalWeather } from "@/lib/weather";
 import type { Hive } from "@/lib/hives";
 
 interface InspectPageProps {
@@ -27,7 +27,7 @@ export default async function InspectPage({ searchParams }: InspectPageProps) {
     | "frame_count"
   >[] = [];
   let loadError: string | null = null;
-  let weather = user ? null : await fetchLocalWeather();
+  let weather: LocalWeather | null = null;
 
   if (user) {
     try {

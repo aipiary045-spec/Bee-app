@@ -15,6 +15,7 @@ interface YardSceneProps {
   className?: string;
   interactive?: boolean;
   weather?: LocalWeather | null;
+  yardLocation?: string | null;
   showWeather?: boolean;
 }
 
@@ -24,6 +25,7 @@ export function YardScene({
   className,
   interactive = true,
   weather = null,
+  yardLocation,
   showWeather = false,
 }: YardSceneProps) {
   return (
@@ -65,7 +67,9 @@ export function YardScene({
         aria-hidden
       />
       <FlyingBees count={2} className="opacity-90" />
-      {showWeather && <YardWeather weather={weather} />}
+      {showWeather && (
+        <YardWeather weather={weather} yardLocation={yardLocation} />
+      )}
 
       {hives.length === 0 ? (
         <div className={cn("relative px-6 py-16", showWeather && "pt-28")}>{empty}</div>

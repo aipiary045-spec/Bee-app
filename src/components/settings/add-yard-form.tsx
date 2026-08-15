@@ -49,6 +49,10 @@ export function AddYardForm() {
           placeholder="Stillwater, OK"
           className="min-h-12 rounded-xl"
         />
+        <p className="text-sm leading-relaxed text-hive-600">
+          Each stand keeps its own weather. Leave this blank and that yard
+          will wait for a town before it reads the sky.
+        </p>
       </div>
       {error && <p className="text-sm text-crimson-600">{error}</p>}
       <Button type="submit" variant="outline" disabled={pending}>

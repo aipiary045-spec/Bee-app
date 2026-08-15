@@ -1,7 +1,11 @@
-import { DEFAULT_LAT, DEFAULT_LON, DEFAULT_LOCATION } from "@/lib/utils";
 import { geocodeLocation } from "@/lib/weather-geo";
+import {
+  resolveWeatherTarget,
+  type WeatherQuery,
+} from "@/lib/weather-target";
 
 export { formatWeatherClock } from "@/lib/weather-format";
+export type { WeatherQuery } from "@/lib/weather-target";
 
 export type LocalWeather = {
   condition: string;
@@ -10,12 +14,6 @@ export type LocalWeather = {
   humidity: number;
   location: string;
   observedAt: string;
-};
-
-export type WeatherQuery = {
-  location?: string | null;
-  lat?: number;
-  lon?: number;
 };
 
 /** WMO weather interpretation codes → form-friendly labels */
@@ -35,17 +33,23 @@ export async function fetchLocalWeather(
   query: WeatherQuery = {}
 ): Promise<LocalWeather | null> {
   try {
-    let lat = query.lat ?? DEFAULT_LAT;
-    let lon = query.lon ?? DEFAULT_LON;
-    let label = query.location?.trim() || DEFAULT_LOCATION;
+    const target = resolveWeatherTarget(query);
+    if (target.kind === "none") return null;
 
-    if (query.location?.trim() && query.lat == null && query.lon == null) {
-      const geo = await geocodeLocation(query.location);
-      if (geo) {
-        lat = geo.lat;
-        lon = geo.lon;
-        label = geo.label;
-      }
+    let lat: number;
+    let lon: number;
+    let label: string;
+
+    if (target.kind === "coords") {
+      lat = target.lat;
+      lon = target.lon;
+      label = target.label;
+    } else {
+      const geo = await geocodeLocation(target.location);
+      if (!geo) return null;
+      lat = geo.lat;
+      lon = geo.lon;
+      label = geo.label;
     }
 
     const url = new URL("https://api.open-meteo.com/v1/forecast");
