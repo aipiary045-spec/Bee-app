@@ -81,3 +81,75 @@ export async function createHiveAction(
     return { ok: false, error: message };
   }
 }
+
+export type CreateHarvestInput = {
+  hiveId: string;
+  harvestDate: string;
+  weightLbs: string;
+  framesHarvested: string;
+  notes: string;
+};
+
+export async function createHarvestAction(
+  input: CreateHarvestInput
+): Promise<ActionResult> {
+  if (!input.hiveId) {
+    return { ok: false, error: "Select a hive." };
+  }
+  if (!input.harvestDate) {
+    return { ok: false, error: "Harvest date is required." };
+  }
+
+  const weight = Number(input.weightLbs);
+  if (Number.isNaN(weight) || weight < 0) {
+    return { ok: false, error: "Enter a valid harvest weight." };
+  }
+
+  const frames =
+    input.framesHarvested.trim() === ""
+      ? null
+      : Number(input.framesHarvested);
+  if (frames !== null && (Number.isNaN(frames) || frames < 0)) {
+    return { ok: false, error: "Enter a valid frame count, or leave it blank." };
+  }
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { ok: false, error: "You must be signed in to log a harvest." };
+  }
+
+  try {
+    const { error } = await supabase.from("honey_yields").insert({
+      hive_id: input.hiveId,
+      harvest_date: input.harvestDate,
+      weight_lbs: weight,
+      frames_harvested: frames,
+      notes: input.notes.trim() || null,
+    });
+
+    if (error) {
+      return { ok: false, error: error.message };
+    }
+
+    revalidatePath("/");
+    revalidatePath("/hives");
+    revalidatePath(`/hives/${input.hiveId}`);
+    revalidatePath("/finances");
+    return { ok: true, hiveId: input.hiveId };
+  } catch (err) {
+    const message =
+      err instanceof Error ? err.message : "Failed to log harvest.";
+    if (/relation .* does not exist|Could not find the table/i.test(message)) {
+      return {
+        ok: false,
+        error:
+          "Database tables missing. Run the SQL migration in the Supabase SQL Editor first.",
+      };
+    }
+    return { ok: false, error: message };
+  }
+}

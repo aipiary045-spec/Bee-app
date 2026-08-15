@@ -9,8 +9,10 @@ import { HiveCard } from "@/components/hives/hive-card";
 import { BrandLogo } from "@/components/brand/brand-logo";
 import { Button } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase/server";
-import { listHivesForUser } from "@/lib/hives";
+import { listHivesForUser, listRecentInspectionsForHives } from "@/lib/hives";
+import { buildHiveAlerts, uniqueHiveCount } from "@/lib/alerts";
 import type { Hive } from "@/lib/hives";
+import type { HiveAlert } from "@/lib/alerts";
 
 export default async function DashboardPage() {
   const supabase = await createClient();
@@ -19,17 +21,24 @@ export default async function DashboardPage() {
   } = await supabase.auth.getUser();
 
   let hives: Hive[] = [];
+  let alerts: HiveAlert[] = [];
   if (user) {
     try {
       const result = await listHivesForUser(user.id);
       hives = result.hives;
+      const inspections = await listRecentInspectionsForHives(
+        hives.map((hive) => hive.id)
+      );
+      alerts = buildHiveAlerts(hives, inspections);
     } catch {
       hives = [];
+      alerts = [];
     }
   }
 
   const preview = hives.slice(0, 4);
   const activeHives = hives.filter((hive) => hive.status === "active").length;
+  const attentionCount = uniqueHiveCount(alerts);
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
@@ -77,7 +86,7 @@ export default async function DashboardPage() {
       </section>
 
       <div className="fade-up-delay-2 mb-8">
-        <PriorityAlertsBar hives={hives} />
+        <PriorityAlertsBar alerts={alerts} />
       </div>
 
       <div className="fade-up-delay-2 mb-10 grid gap-6 lg:grid-cols-3">
@@ -85,7 +94,7 @@ export default async function DashboardPage() {
           <SummaryCards
             activeHives={activeHives}
             totalHives={hives.length}
-            attentionCount={3}
+            attentionCount={attentionCount}
           />
         </div>
         <WeatherWidget />

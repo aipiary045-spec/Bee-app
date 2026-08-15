@@ -26,6 +26,8 @@ type HiveOption = { id: string; name: string };
 
 type Props = {
   hives: HiveOption[];
+  defaultHiveId?: string;
+  triggerLabel?: string;
 };
 
 const fieldClass =
@@ -40,7 +42,11 @@ const revenueGroups = [
   "other",
 ] as const;
 
-export function AddRevenueDialog({ hives }: Props) {
+export function AddRevenueDialog({
+  hives,
+  defaultHiveId = "",
+  triggerLabel = "Add Revenue",
+}: Props) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
@@ -53,7 +59,7 @@ export function AddRevenueDialog({ hives }: Props) {
   const [date, setDate] = useState(
     () => new Date().toISOString().slice(0, 10)
   );
-  const [hiveId, setHiveId] = useState("");
+  const [hiveId, setHiveId] = useState(defaultHiveId);
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
@@ -77,7 +83,7 @@ export function AddRevenueDialog({ hives }: Props) {
     setCustomCategory("honey_sales");
     setCustomAmount("");
     setDate(new Date().toISOString().slice(0, 10));
-    setHiveId("");
+    setHiveId(defaultHiveId);
     setError(null);
   }
 
@@ -150,7 +156,7 @@ export function AddRevenueDialog({ hives }: Props) {
       <DialogTrigger asChild>
         <Button>
           <Plus className="h-4 w-4" />
-          Add Revenue
+          {triggerLabel}
         </Button>
       </DialogTrigger>
       <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">

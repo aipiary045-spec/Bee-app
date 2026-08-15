@@ -1,9 +1,13 @@
 import { createClient } from "@/lib/supabase/server";
+import type { AlertInspection } from "@/lib/alerts";
 import type { Tables } from "@/types/database";
 
 export type Apiary = Tables<"apiaries">;
 export type Hive = Tables<"hives">;
 export type Inspection = Tables<"inspections">;
+export type MiteCount = Tables<"mite_counts">;
+export type HoneyYield = Tables<"honey_yields">;
+export type Revenue = Tables<"revenues">;
 
 export async function getOrCreateDefaultApiary(
   userId: string
@@ -100,6 +104,87 @@ export async function listInspectionsForHive(
     .order("date", { ascending: false })
     .order("created_at", { ascending: false })
     .limit(limit);
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  return data ?? [];
+}
+
+export async function listRecentInspectionsForHives(
+  hiveIds: string[]
+): Promise<AlertInspection[]> {
+  if (hiveIds.length === 0) return [];
+
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("inspections")
+    .select("hive_id, date, queen_sighted, mite_count_per_100, pests_diseases")
+    .in("hive_id", hiveIds)
+    .order("date", { ascending: false })
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  return (data ?? []).map((row) => ({
+    hiveId: row.hive_id,
+    date: row.date,
+    queenSighted: row.queen_sighted,
+    miteCountPer100:
+      row.mite_count_per_100 == null ? null : Number(row.mite_count_per_100),
+    pestsDiseases: row.pests_diseases,
+  }));
+}
+
+export async function listMiteCountsForHive(hiveId: string): Promise<MiteCount[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("mite_counts")
+    .select("*")
+    .eq("hive_id", hiveId)
+    .order("date", { ascending: false })
+    .order("created_at", { ascending: false })
+    .limit(12);
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  return data ?? [];
+}
+
+export async function listHoneyYieldsForHive(
+  hiveId: string
+): Promise<HoneyYield[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("honey_yields")
+    .select("*")
+    .eq("hive_id", hiveId)
+    .order("harvest_date", { ascending: false })
+    .order("created_at", { ascending: false })
+    .limit(12);
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  return data ?? [];
+}
+
+export async function listHoneySalesForHive(hiveId: string): Promise<Revenue[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("revenues")
+    .select("*")
+    .eq("hive_id", hiveId)
+    .eq("category", "honey_sales")
+    .order("date", { ascending: false })
+    .order("created_at", { ascending: false })
+    .limit(8);
 
   if (error) {
     throw new Error(error.message);
