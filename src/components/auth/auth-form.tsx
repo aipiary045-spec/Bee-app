@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { env } from "@/lib/env";
+import { MIN_PASSWORD_LENGTH, passwordIssue } from "@/lib/password";
 
 type AuthMode = "login" | "signup";
 
@@ -40,9 +41,12 @@ export function AuthForm({ mode }: AuthFormProps) {
       return;
     }
 
-    if (password.length < 6) {
-      setError("Password must be at least 6 characters.");
-      return;
+    if (mode === "signup") {
+      const issue = passwordIssue(password);
+      if (issue) {
+        setError(issue);
+        return;
+      }
     }
 
     if (mode === "signup" && password !== confirmPassword) {
@@ -62,13 +66,14 @@ export function AuthForm({ mode }: AuthFormProps) {
         if (signUpError) throw signUpError;
 
         if (data.session) {
-          router.push("/");
+          router.push("/signup/details");
           router.refresh();
           return;
         }
 
+        document.cookie = "apiary-setup=1; Path=/; Max-Age=86400; SameSite=Lax";
         setMessage(
-          "Account created. Check your email to confirm, or sign in if email confirmation is disabled in Supabase."
+          "Account created. Check your email, then sign in. Next we’ll ask for your name and yard."
         );
       } else {
         const { error: signInError } = await supabase.auth.signInWithPassword({
@@ -76,7 +81,13 @@ export function AuthForm({ mode }: AuthFormProps) {
           password,
         });
         if (signInError) throw signInError;
-        router.push("/");
+        const needsSetup = document.cookie.includes("apiary-setup=1");
+        if (needsSetup) {
+          document.cookie = "apiary-setup=; Path=/; Max-Age=0; SameSite=Lax";
+          router.push("/signup/details");
+        } else {
+          router.push("/");
+        }
         router.refresh();
       }
     } catch (err) {
@@ -108,7 +119,7 @@ export function AuthForm({ mode }: AuthFormProps) {
         <p className="mt-3 text-hive-600">
           {mode === "login"
             ? "Sign in to manage your apiary."
-            : "Create an account to track your hives, inspections, and harvests."}
+            : "Create an account, then tell us your name and where the stand sits."}
         </p>
       </div>
 
@@ -149,10 +160,14 @@ export function AuthForm({ mode }: AuthFormProps) {
             type="password"
             autoComplete={mode === "login" ? "current-password" : "new-password"}
             required
-            minLength={6}
+            minLength={mode === "signup" ? MIN_PASSWORD_LENGTH : undefined}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            placeholder="At least 6 characters"
+            placeholder={
+              mode === "signup"
+                ? `${MIN_PASSWORD_LENGTH}+ characters, with a letter and a number`
+                : "Your password"
+            }
             className="min-h-12 rounded-xl"
           />
         </div>
@@ -165,7 +180,7 @@ export function AuthForm({ mode }: AuthFormProps) {
               type="password"
               autoComplete="new-password"
               required
-              minLength={6}
+              minLength={MIN_PASSWORD_LENGTH}
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               placeholder="Re-enter your password"

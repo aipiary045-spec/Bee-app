@@ -4,13 +4,19 @@ import type { Database } from "@/types/database";
 import { env } from "@/lib/env";
 
 const PUBLIC_PATHS = ["/login", "/signup", "/welcome"];
+const SETUP_PATHS = ["/signup/details"];
 
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request });
   const { pathname } = request.nextUrl;
-  const isPublicPath = PUBLIC_PATHS.some(
+  const isSetupPath = SETUP_PATHS.some(
     (path) => pathname === path || pathname.startsWith(`${path}/`)
   );
+  const isPublicPath =
+    !isSetupPath &&
+    PUBLIC_PATHS.some(
+      (path) => pathname === path || pathname.startsWith(`${path}/`)
+    );
 
   if (!env.isSupabaseConfigured()) {
     if (!isPublicPath) {
@@ -45,6 +51,12 @@ export async function updateSession(request: NextRequest) {
   const {
     data: { user },
   } = await supabase.auth.getUser();
+
+  if (!user && isSetupPath) {
+    const url = request.nextUrl.clone();
+    url.pathname = "/signup";
+    return NextResponse.redirect(url);
+  }
 
   if (!user && !isPublicPath) {
     const url = request.nextUrl.clone();
