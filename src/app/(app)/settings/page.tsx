@@ -1,8 +1,6 @@
-import Link from "next/link";
-import { Hexagon, MapPin, Moon, QrCode, User } from "lucide-react";
+import { MapPin, Moon, User } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { SignOutButton } from "@/components/auth/sign-out-button";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { createClient } from "@/lib/supabase/server";
@@ -24,7 +22,7 @@ export default async function SettingsPage() {
     <div className="mx-auto max-w-2xl px-4 py-6 sm:px-6">
       <PageHeader
         title="Settings"
-        description="Your account, how the app looks at the stand, and this yard."
+        description="Your account, how the app looks at the stand, and the yard."
       />
 
       <div className="space-y-4">
@@ -86,26 +84,6 @@ export default async function SettingsPage() {
           </CardContent>
         </Card>
 
-        <Card id="tags" className="fade-up-delay-2">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <QrCode className="h-5 w-5 text-honey-600" />
-              Hive tags
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <p className="text-sm leading-relaxed text-hive-600">
-              Each hive has a QR you can print and stick on the box. Scan it
-              with your phone to open Quick Log for that colony.
-            </p>
-            <Button variant="outline" asChild>
-              <Link href="/hives">
-                <Hexagon className="h-4 w-4" />
-                Open hives
-              </Link>
-            </Button>
-          </CardContent>
-        </Card>
       </div>
     </div>
   );
