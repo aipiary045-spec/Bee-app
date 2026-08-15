@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Fraunces, Nunito } from "next/font/google";
 import { Providers } from "@/components/providers";
+import { LivingBackdrop } from "@/components/motion/living-backdrop";
 import { THEME_INIT_SCRIPT } from "@/lib/theme";
 import "./globals.css";
 
@@ -39,7 +40,10 @@ export default function RootLayout({
       <body
         className={`${fraunces.variable} ${nunito.variable} honeycomb-bg min-h-screen`}
       >
-        <Providers>{children}</Providers>
+        <LivingBackdrop />
+        <div className="relative z-10">
+          <Providers>{children}</Providers>
+        </div>
       </body>
     </html>
   );

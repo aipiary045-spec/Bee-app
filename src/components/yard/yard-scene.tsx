@@ -42,6 +42,10 @@ export function YardScene({
         )}
       />
       <div
+        className="sun-rays pointer-events-none absolute -right-10 -top-10 h-44 w-44"
+        aria-hidden
+      />
+      <div
         className="sun-pulse pointer-events-none absolute -right-4 top-5 h-16 w-16 rounded-full bg-[#ffe27a] shadow-[0_0_40px_12px_rgba(255,226,122,0.45)] dark:bg-[#f3ead8] dark:shadow-[0_0_28px_8px_rgba(243,234,216,0.2)]"
         aria-hidden
       />
@@ -52,6 +56,25 @@ export function YardScene({
       <div
         className="cloud-drift pointer-events-none absolute left-[28%] top-14 h-8 w-16 rounded-full bg-white/55 dark:bg-white/10"
         style={{ animationDelay: "1.4s" }}
+        aria-hidden
+      />
+      <div
+        className="cloud-drift pointer-events-none absolute left-[58%] top-7 h-7 w-14 rounded-full bg-white/45 dark:bg-white/10"
+        style={{ animationDelay: "2.8s" }}
+        aria-hidden
+      />
+      <span
+        className="pollen-drift pointer-events-none absolute left-[22%] top-[18%] h-1.5 w-1.5 rounded-full bg-[#ffe27a]/80"
+        aria-hidden
+      />
+      <span
+        className="pollen-drift pointer-events-none absolute left-[46%] top-[28%] h-1 w-1 rounded-full bg-white/80"
+        style={{ animationDelay: "1.6s" }}
+        aria-hidden
+      />
+      <span
+        className="pollen-drift pointer-events-none absolute left-[70%] top-[16%] h-1.5 w-1.5 rounded-full bg-[#ffe27a]/70"
+        style={{ animationDelay: "3.2s" }}
         aria-hidden
       />
       <div
