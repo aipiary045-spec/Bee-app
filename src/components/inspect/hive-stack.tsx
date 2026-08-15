@@ -86,7 +86,7 @@ export function HiveStack({
       )}
 
       <div
-        className="h-3.5 w-[10.25rem] rounded-t-lg border border-hive-800/70 bg-gradient-to-b from-hive-700 to-hive-900 shadow-sm"
+        className="h-3.5 w-[10.25rem] rounded-t-lg border border-[#2a1c10] bg-gradient-to-b from-[#5a3d22] to-[#2a1a10] shadow-sm"
         aria-hidden
       />
 
@@ -98,11 +98,11 @@ export function HiveStack({
         ))
       )}
 
-      <div className="flex h-12 w-[9.5rem] items-center justify-center rounded-md border border-hive-800/40 bg-gradient-to-b from-hive-600 to-hive-800 text-[11px] font-semibold tracking-wide text-white shadow-sm">
+      <div className="flex h-12 w-[9.5rem] items-center justify-center rounded-md border border-[#2a1c10]/40 bg-gradient-to-b from-[#5a3d22] to-[#2a1a10] text-[11px] font-semibold tracking-wide text-white shadow-sm">
         Brood box
       </div>
       <div
-        className="h-2 w-[10.25rem] rounded-b-md border border-hive-800/50 bg-hive-800"
+        className="h-2 w-[10.25rem] rounded-b-md border border-[#2a1c10]/50 bg-[#2a1a10]"
         aria-hidden
       />
 
