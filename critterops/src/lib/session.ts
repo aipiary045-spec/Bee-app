@@ -1,7 +1,9 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
 import { cookies } from "next/headers";
 
-const COOKIE = "critterops_session";
+export const SESSION_COOKIE = "critterops_session";
+
+const COOKIE = SESSION_COOKIE;
 
 export type SessionUser = {
   userId: string;
