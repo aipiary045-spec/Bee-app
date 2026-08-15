@@ -2,7 +2,6 @@ import Link from "next/link";
 import { PageHeader } from "@/components/layout/page-header";
 import { GetAroundStrip } from "@/components/layout/get-around";
 import { SummaryCards } from "@/components/dashboard/summary-cards";
-import { WeatherWidget } from "@/components/dashboard/weather-widget";
 import { PriorityAlertsBar } from "@/components/dashboard/priority-alerts";
 import { YardScene } from "@/components/yard/yard-scene";
 import { BrandLogo } from "@/components/brand/brand-logo";
@@ -109,6 +108,8 @@ export default async function DashboardPage() {
 
         <YardScene
           hives={hives}
+          weather={weather}
+          showWeather
           empty={
             <div className="text-center">
               <div className="mx-auto mb-4 flex justify-center">
@@ -128,15 +129,12 @@ export default async function DashboardPage() {
         />
       </section>
 
-      <div className="fade-up-delay-3 mb-6 grid gap-6 lg:grid-cols-3">
-        <div className="lg:col-span-2">
-          <SummaryCards
-            activeHives={activeHives}
-            totalHives={hives.length}
-            attentionCount={attentionCount}
-          />
-        </div>
-        <WeatherWidget weather={weather} />
+      <div className="fade-up-delay-3 mb-6">
+        <SummaryCards
+          activeHives={activeHives}
+          totalHives={hives.length}
+          attentionCount={attentionCount}
+        />
       </div>
     </div>
   );

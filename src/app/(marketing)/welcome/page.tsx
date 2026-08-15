@@ -135,7 +135,19 @@ export default function WelcomePage() {
           </div>
 
           <div className="fade-up-delay-2 hidden sm:block">
-            <YardScene hives={demoHives} interactive={false} />
+            <YardScene
+              hives={demoHives}
+              interactive={false}
+              showWeather
+              weather={{
+                condition: "Sunny",
+                temperatureF: 78,
+                windSpeedMph: 8,
+                humidity: 42,
+                location: "Your town",
+                observedAt: "2026-08-15T14:00",
+              }}
+            />
           </div>
         </div>
       </section>
