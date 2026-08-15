@@ -7,9 +7,11 @@ import {
   Crown,
   FlaskConical,
   Hexagon,
+  Layers,
   QrCode,
 } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
+import { HiveStackEditor } from "@/components/hives/hive-stack-editor";
 import { LogHarvestDialog } from "@/components/hives/log-harvest-dialog";
 import { StartTreatmentDialog } from "@/components/hives/start-treatment-dialog";
 import { CompleteTreatmentButton } from "@/components/hives/complete-treatment-button";
@@ -214,6 +216,18 @@ export default async function HiveDetailPage({ params }: HiveDetailPageProps) {
         <Badge variant="default">{hive.frame_count} frames</Badge>
         <Badge variant="default">{formatSuperInventory(inventory)}</Badge>
       </div>
+
+      <Card className="fade-up-delay-1 mb-6">
+        <CardHeader className="pb-2">
+          <CardTitle className="flex items-center gap-2 text-base">
+            <Layers className="h-4 w-4 text-honey-700" />
+            Supers
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <HiveStackEditor hive={hive} />
+        </CardContent>
+      </Card>
 
       {alerts.length > 0 && (
         <div className="fade-up-delay-1 mb-6">

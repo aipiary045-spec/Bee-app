@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ClipboardList, Hexagon, QrCode } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { HiveStackEditor } from "@/components/hives/hive-stack-editor";
 import { formatSuperInventory, hiveSuperInventory } from "@/lib/supers";
 import { cn } from "@/lib/utils";
 import type { Hive } from "@/lib/hives";
@@ -58,6 +59,9 @@ export function HiveCard({ hive, className }: HiveCardProps) {
           <Badge variant="default">{formatSuperInventory(hiveSuperInventory(hive))}</Badge>
         </div>
       </Link>
+      <div className="border-t border-wax-300/50 px-3 py-3">
+        <HiveStackEditor hive={hive} compact />
+      </div>
       <div className="grid grid-cols-3 border-t border-wax-300/50">
         <Link
           href={`/hives/${hive.id}`}

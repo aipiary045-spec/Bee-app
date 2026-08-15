@@ -11,6 +11,7 @@ interface HiveStackProps {
   change: SuperVisitChange;
   next: SuperInventory;
   hiveName?: string;
+  showAfterLabel?: boolean;
   className?: string;
 }
 
@@ -63,6 +64,7 @@ export function HiveStack({
   change,
   next,
   hiveName,
+  showAfterLabel = true,
   className,
 }: HiveStackProps) {
   const remainingMedium = current.medium - change.mediumRemoved;
@@ -106,9 +108,11 @@ export function HiveStack({
         aria-hidden
       />
 
-      <p className="mt-1 text-xs font-medium text-hive-700">
-        After this visit: {formatSuperInventory(next)}
-      </p>
+      {showAfterLabel && (
+        <p className="mt-1 text-xs font-medium text-hive-700">
+          After this visit: {formatSuperInventory(next)}
+        </p>
+      )}
     </div>
   );
 }

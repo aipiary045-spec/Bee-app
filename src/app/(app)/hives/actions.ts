@@ -3,6 +3,12 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { getOrCreateDefaultApiary } from "@/lib/hives";
+import {
+  applyTypedSuperChange,
+  emptySuperChange,
+  hiveSuperInventory,
+  type SuperType,
+} from "@/lib/supers";
 import type { Enums } from "@/types/database";
 
 export type CreateHiveInput = {
@@ -85,6 +91,95 @@ export async function createHiveAction(
         ok: false,
         error:
           "Database tables missing. Run the SQL migration in the Supabase SQL Editor first.",
+      };
+    }
+    return { ok: false, error: message };
+  }
+}
+
+export async function adjustHiveSupersAction(input: {
+  hiveId: string;
+  type: SuperType;
+  direction: "add" | "remove";
+}): Promise<ActionResult> {
+  if (!input.hiveId) {
+    return { ok: false, error: "Select a hive." };
+  }
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { ok: false, error: "You must be signed in to change supers." };
+  }
+
+  try {
+    const { data: hive, error: hiveError } = await supabase
+      .from("hives")
+      .select("id, super_count, medium_count, shallow_count")
+      .eq("id", input.hiveId)
+      .maybeSingle();
+
+    if (hiveError || !hive) {
+      return { ok: false, error: hiveError?.message ?? "Hive not found." };
+    }
+
+    const change = emptySuperChange();
+    if (input.type === "medium" && input.direction === "add") change.mediumAdded = 1;
+    if (input.type === "medium" && input.direction === "remove") change.mediumRemoved = 1;
+    if (input.type === "shallow" && input.direction === "add") change.shallowAdded = 1;
+    if (input.type === "shallow" && input.direction === "remove") {
+      change.shallowRemoved = 1;
+    }
+
+    const result = applyTypedSuperChange(hiveSuperInventory(hive), change);
+    if (!result.ok) {
+      return { ok: false, error: result.error };
+    }
+
+    const { error: updateError } = await supabase
+      .from("hives")
+      .update({
+        medium_count: result.next.medium,
+        shallow_count: result.next.shallow,
+        super_count: result.total,
+      })
+      .eq("id", input.hiveId);
+
+    if (updateError) {
+      return { ok: false, error: updateError.message };
+    }
+
+    const today = new Date().toISOString().slice(0, 10);
+    await supabase.from("inspections").insert({
+      hive_id: input.hiveId,
+      date: today,
+      created_by: user.id,
+      medium_added: change.mediumAdded,
+      medium_removed: change.mediumRemoved,
+      shallow_added: change.shallowAdded,
+      shallow_removed: change.shallowRemoved,
+      supers_added: change.mediumAdded + change.shallowAdded,
+      supers_removed: change.mediumRemoved + change.shallowRemoved,
+      super_count_after: result.total,
+      notes: "Stack updated from hive page",
+    });
+
+    revalidatePath("/");
+    revalidatePath("/hives");
+    revalidatePath(`/hives/${input.hiveId}`);
+    revalidatePath("/inspect");
+    return { ok: true, hiveId: input.hiveId };
+  } catch (err) {
+    const message =
+      err instanceof Error ? err.message : "Failed to update supers.";
+    if (/relation .* does not exist|Could not find the table|column .* does not exist/i.test(message)) {
+      return {
+        ok: false,
+        error:
+          "Database is missing super-type columns. Run supabase/migrations/20260815000000_super_types.sql, then try again.",
       };
     }
     return { ok: false, error: message };
