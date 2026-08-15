@@ -4,8 +4,18 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { getExpenseCatalogItem } from "@/lib/expense-catalog";
 import {
+  hiveHasSuperColumns,
+  insertInspectionCompat,
+  persistHiveSuperInventory,
+} from "@/lib/hives";
+import {
+  parseHiveStacksFromDescription,
+  resolveHiveInventory,
+} from "@/lib/hive-stack-store";
+import {
   applyTypedSuperChange,
-  hiveSuperInventory,
+  formatSuperInventory,
+  formatTypedSuperChange,
   type SuperVisitChange,
 } from "@/lib/supers";
 import type { Enums, TablesInsert } from "@/types/database";
@@ -121,21 +131,25 @@ export async function createInspectionAction(
   try {
     const { data: hive, error: hiveError } = await supabase
       .from("hives")
-      .select("id, apiary_id, super_count, medium_count, shallow_count")
+      .select("*")
       .eq("id", input.hiveId)
       .maybeSingle();
 
     if (hiveError || !hive) {
-      const raw = hiveError?.message ?? "Hive not found.";
-      if (/column .* does not exist/i.test(raw)) {
-        return {
-          ok: false,
-          error:
-            "The yard still needs a one-time database update before supers can be saved. In Supabase → SQL Editor, run supabase/migrations/20260815120000_ensure_supers.sql, then try again.",
-        };
-      }
-      return { ok: false, error: raw };
+      return { ok: false, error: hiveError?.message ?? "Hive not found." };
     }
+
+    const { data: apiary } = await supabase
+      .from("apiaries")
+      .select("description")
+      .eq("id", hive.apiary_id)
+      .maybeSingle();
+
+    const sidecar = parseHiveStacksFromDescription(apiary?.description).stacks[
+      hive.id
+    ];
+    const current = resolveHiveInventory(hive, sidecar);
+    const columnsAvailable = hiveHasSuperColumns(hive);
 
     const change: SuperVisitChange = {
       mediumAdded: input.mediumAdded,
@@ -143,7 +157,6 @@ export async function createInspectionAction(
       shallowAdded: input.shallowAdded,
       shallowRemoved: input.shallowRemoved,
     };
-    const current = hiveSuperInventory(hive);
     const superResult = applyTypedSuperChange(current, change);
     if (!superResult.ok) {
       return { ok: false, error: superResult.error };
@@ -151,58 +164,61 @@ export async function createInspectionAction(
     const supersAdded = change.mediumAdded + change.shallowAdded;
     const supersRemoved = change.mediumRemoved + change.shallowRemoved;
 
-    const { data: inspection, error: inspectionError } = await supabase
-      .from("inspections")
-      .insert({
-        hive_id: input.hiveId,
-        date: input.date,
-        inspection_time: input.inspectionTime || null,
-        weather: input.weather || null,
-        temperature_f: temp,
-        queen_sighted: input.queenSighted,
-        queen_spotted: input.queenSighted === "yes",
-        queen_mark_color: input.queenMarkColor,
-        eggs_larvae: input.eggsLarvae,
-        brood_pattern: input.broodPattern,
-        temperament: input.temperament,
-        honey_stores: input.honeyStores,
-        pollen_stores: input.pollenStores,
-        mite_count_per_100: miteCount,
-        pests_diseases: input.pestsDiseases,
-        action_fed: input.actionFed,
-        action_super: supersAdded > 0,
-        action_split: input.actionSplit,
-        action_treatment: input.actionTreatment,
-        supers_added: supersAdded,
-        supers_removed: supersRemoved,
-        super_count_after: superResult.total,
-        medium_added: change.mediumAdded,
-        medium_removed: change.mediumRemoved,
-        shallow_added: change.shallowAdded,
-        shallow_removed: change.shallowRemoved,
-        notes: input.notes.trim() || null,
-        created_by: user.id,
-      })
-      .select("id")
-      .single();
+    const typedChange = formatTypedSuperChange(change);
+    const noteParts = [
+      input.notes.trim(),
+      typedChange !== "No super change"
+        ? `${typedChange} · now ${formatSuperInventory(superResult.next)}`
+        : "",
+    ].filter(Boolean);
 
-    if (inspectionError) {
-      return { ok: false, error: inspectionError.message };
+    const { data: inspection, error: inspectionError } =
+      await insertInspectionCompat(
+        supabase,
+        {
+          hive_id: input.hiveId,
+          date: input.date,
+          inspection_time: input.inspectionTime || null,
+          weather: input.weather || null,
+          temperature_f: temp,
+          queen_sighted: input.queenSighted,
+          queen_spotted: input.queenSighted === "yes",
+          queen_mark_color: input.queenMarkColor,
+          eggs_larvae: input.eggsLarvae,
+          brood_pattern: input.broodPattern,
+          temperament: input.temperament,
+          honey_stores: input.honeyStores,
+          pollen_stores: input.pollenStores,
+          mite_count_per_100: miteCount,
+          pests_diseases: input.pestsDiseases,
+          action_fed: input.actionFed,
+          action_super: supersAdded > 0,
+          action_split: input.actionSplit,
+          action_treatment: input.actionTreatment,
+          supers_added: supersAdded,
+          supers_removed: supersRemoved,
+          super_count_after: superResult.total,
+          medium_added: change.mediumAdded,
+          medium_removed: change.mediumRemoved,
+          shallow_added: change.shallowAdded,
+          shallow_removed: change.shallowRemoved,
+          notes: noteParts.length > 0 ? noteParts.join(" · ") : null,
+          created_by: user.id,
+        },
+        { columnsAvailable }
+      );
+
+    if (inspectionError || !inspection) {
+      return { ok: false, error: inspectionError?.message ?? "Failed to save inspection." };
     }
 
     if (supersAdded > 0 || supersRemoved > 0) {
-      const { error: hiveUpdateError } = await supabase
-        .from("hives")
-        .update({
-          medium_count: superResult.next.medium,
-          shallow_count: superResult.next.shallow,
-          super_count: superResult.total,
-        })
-        .eq("id", input.hiveId);
-
-      if (hiveUpdateError) {
-        return { ok: false, error: hiveUpdateError.message };
-      }
+      await persistHiveSuperInventory(supabase, {
+        hiveId: input.hiveId,
+        apiaryId: hive.apiary_id,
+        inventory: superResult.next,
+        columnsAvailable,
+      });
     }
 
     if (miteCount !== null) {
@@ -267,11 +283,10 @@ export async function createInspectionAction(
   } catch (err) {
     const message =
       err instanceof Error ? err.message : "Failed to save inspection.";
-    if (/relation .* does not exist|Could not find the table|column .* does not exist/i.test(message)) {
+    if (/relation .* does not exist|Could not find the table/i.test(message)) {
       return {
         ok: false,
-        error:
-          "Database is missing required tables/columns. Run the SQL migrations in the Supabase SQL Editor, then try again.",
+        error: "Could not save this visit. Try again in a moment.",
       };
     }
     return { ok: false, error: message };

@@ -2,11 +2,23 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
-import { getOrCreateDefaultApiary } from "@/lib/hives";
+import {
+  getOrCreateDefaultApiary,
+  hiveHasSuperColumns,
+  insertInspectionCompat,
+  persistHiveSuperInventory,
+  saveHiveStackSidecar,
+} from "@/lib/hives";
+import {
+  isMissingColumnError,
+  parseHiveStacksFromDescription,
+  resolveHiveInventory,
+} from "@/lib/hive-stack-store";
 import {
   applyTypedSuperChange,
   emptySuperChange,
-  hiveSuperInventory,
+  formatSuperInventory,
+  formatTypedSuperChange,
   type SuperType,
 } from "@/lib/supers";
 import type { Enums } from "@/types/database";
@@ -59,7 +71,7 @@ export async function createHiveAction(
   try {
     const apiary = await getOrCreateDefaultApiary(user.id);
 
-    const { data, error } = await supabase
+    const fullInsert = await supabase
       .from("hives")
       .insert({
         apiary_id: apiary.id,
@@ -73,11 +85,39 @@ export async function createHiveAction(
       .select("id")
       .single();
 
+    let data = fullInsert.data;
+    let error = fullInsert.error;
+
+    if (error && isMissingColumnError(error)) {
+      const slimInsert = await supabase
+        .from("hives")
+        .insert({
+          apiary_id: apiary.id,
+          name,
+          status: input.status ?? "active",
+          frame_count: frameCount,
+        })
+        .select("id")
+        .single();
+      data = slimInsert.data;
+      error = slimInsert.error;
+      if (!error && data && (mediumCount > 0 || shallowCount > 0)) {
+        await saveHiveStackSidecar(supabase, apiary.id, data.id, {
+          medium: mediumCount,
+          shallow: shallowCount,
+        });
+      }
+    }
+
     if (error) {
       if (error.code === "23505") {
         return { ok: false, error: "A hive with that name already exists." };
       }
       return { ok: false, error: error.message };
+    }
+
+    if (!data) {
+      return { ok: false, error: "Failed to create hive." };
     }
 
     revalidatePath("/hives");
@@ -118,21 +158,25 @@ export async function adjustHiveSupersAction(input: {
   try {
     const { data: hive, error: hiveError } = await supabase
       .from("hives")
-      .select("id, super_count, medium_count, shallow_count")
+      .select("*")
       .eq("id", input.hiveId)
       .maybeSingle();
 
     if (hiveError || !hive) {
-      const raw = hiveError?.message ?? "Hive not found.";
-      if (/column .* does not exist/i.test(raw)) {
-        return {
-          ok: false,
-          error:
-            "The yard still needs a one-time database update before supers can be saved. In Supabase → SQL Editor, run supabase/migrations/20260815120000_ensure_supers.sql, then try again.",
-        };
-      }
-      return { ok: false, error: raw };
+      return { ok: false, error: hiveError?.message ?? "Hive not found." };
     }
+
+    const { data: apiary } = await supabase
+      .from("apiaries")
+      .select("description")
+      .eq("id", hive.apiary_id)
+      .maybeSingle();
+
+    const sidecar = parseHiveStacksFromDescription(apiary?.description).stacks[
+      hive.id
+    ];
+    const current = resolveHiveInventory(hive, sidecar);
+    const columnsAvailable = hiveHasSuperColumns(hive);
 
     const change = emptySuperChange();
     if (input.type === "medium" && input.direction === "add") change.mediumAdded = 1;
@@ -142,38 +186,41 @@ export async function adjustHiveSupersAction(input: {
       change.shallowRemoved = 1;
     }
 
-    const result = applyTypedSuperChange(hiveSuperInventory(hive), change);
+    const result = applyTypedSuperChange(current, change);
     if (!result.ok) {
       return { ok: false, error: result.error };
     }
 
-    const { error: updateError } = await supabase
-      .from("hives")
-      .update({
-        medium_count: result.next.medium,
-        shallow_count: result.next.shallow,
-        super_count: result.total,
-      })
-      .eq("id", input.hiveId);
-
-    if (updateError) {
-      return { ok: false, error: updateError.message };
-    }
+    await persistHiveSuperInventory(supabase, {
+      hiveId: input.hiveId,
+      apiaryId: hive.apiary_id,
+      inventory: result.next,
+      columnsAvailable,
+    });
 
     const today = new Date().toISOString().slice(0, 10);
-    await supabase.from("inspections").insert({
-      hive_id: input.hiveId,
-      date: today,
-      created_by: user.id,
-      medium_added: change.mediumAdded,
-      medium_removed: change.mediumRemoved,
-      shallow_added: change.shallowAdded,
-      shallow_removed: change.shallowRemoved,
-      supers_added: change.mediumAdded + change.shallowAdded,
-      supers_removed: change.mediumRemoved + change.shallowRemoved,
-      super_count_after: result.total,
-      notes: "Stack updated from hive page",
-    });
+    const stackNote = [
+      "Stack updated from hive page",
+      formatTypedSuperChange(change),
+      `now ${formatSuperInventory(result.next)}`,
+    ].join(" · ");
+    await insertInspectionCompat(
+      supabase,
+      {
+        hive_id: input.hiveId,
+        date: today,
+        created_by: user.id,
+        medium_added: change.mediumAdded,
+        medium_removed: change.mediumRemoved,
+        shallow_added: change.shallowAdded,
+        shallow_removed: change.shallowRemoved,
+        supers_added: change.mediumAdded + change.shallowAdded,
+        supers_removed: change.mediumRemoved + change.shallowRemoved,
+        super_count_after: result.total,
+        notes: stackNote,
+      },
+      { columnsAvailable }
+    );
 
     revalidatePath("/");
     revalidatePath("/hives");
@@ -183,11 +230,10 @@ export async function adjustHiveSupersAction(input: {
   } catch (err) {
     const message =
       err instanceof Error ? err.message : "Failed to update supers.";
-    if (/relation .* does not exist|Could not find the table|column .* does not exist/i.test(message)) {
+    if (/relation .* does not exist|Could not find the table/i.test(message)) {
       return {
         ok: false,
-        error:
-          "Database is missing super-type columns. Run supabase/migrations/20260815000000_super_types.sql, then try again.",
+        error: "Could not save the hive stack. Try again in a moment.",
       };
     }
     return { ok: false, error: message };

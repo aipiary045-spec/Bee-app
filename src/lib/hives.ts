@@ -1,6 +1,13 @@
 import { createClient } from "@/lib/supabase/server";
 import type { AlertInspection } from "@/lib/alerts";
-import type { Tables } from "@/types/database";
+import {
+  attachStacksToHives,
+  isMissingColumnError,
+  parseHiveStacksFromDescription,
+  writeHiveStacksToDescription,
+} from "@/lib/hive-stack-store";
+import type { SuperInventory } from "@/lib/supers";
+import type { Tables, TablesInsert } from "@/types/database";
 
 export type Apiary = Tables<"apiaries">;
 export type Hive = Tables<"hives">;
@@ -64,7 +71,7 @@ export async function listHivesForUser(userId: string): Promise<{
     throw new Error(error.message);
   }
 
-  return { apiary, hives: hives ?? [] };
+  return { apiary, hives: attachStacksToHives(apiary, hives ?? []) };
 }
 
 export async function getHiveById(
@@ -90,7 +97,128 @@ export async function getHiveById(
     .eq("id", hive.apiary_id)
     .maybeSingle();
 
-  return { ...hive, apiary: apiary ?? null };
+  const [resolved] = attachStacksToHives(apiary ?? { description: null }, [hive]);
+  return { ...resolved, apiary: apiary ?? null };
+}
+
+type ServerClient = Awaited<ReturnType<typeof createClient>>;
+
+export async function saveHiveStackSidecar(
+  supabase: ServerClient,
+  apiaryId: string,
+  hiveId: string,
+  inventory: SuperInventory
+): Promise<void> {
+  const { data, error } = await supabase
+    .from("apiaries")
+    .select("id, description")
+    .eq("id", apiaryId)
+    .maybeSingle();
+
+  if (error || !data) {
+    throw new Error(error?.message ?? "Yard not found.");
+  }
+
+  const parsed = parseHiveStacksFromDescription(data.description);
+  const description = writeHiveStacksToDescription(parsed.text, {
+    ...parsed.stacks,
+    [hiveId]: {
+      medium: inventory.medium,
+      shallow: inventory.shallow,
+    },
+  });
+
+  const { error: updateError } = await supabase
+    .from("apiaries")
+    .update({ description })
+    .eq("id", apiaryId);
+
+  if (updateError) {
+    throw new Error(updateError.message);
+  }
+}
+
+export function hiveHasSuperColumns(hive: {
+  super_count?: number | null;
+  medium_count?: number | null;
+  shallow_count?: number | null;
+}): boolean {
+  return (
+    typeof hive.medium_count === "number" &&
+    typeof hive.shallow_count === "number"
+  );
+}
+
+export async function persistHiveSuperInventory(
+  supabase: ServerClient,
+  input: {
+    hiveId: string;
+    apiaryId: string;
+    inventory: SuperInventory;
+    columnsAvailable?: boolean;
+  }
+): Promise<void> {
+  if (input.columnsAvailable !== false) {
+    const { error } = await supabase
+      .from("hives")
+      .update({
+        medium_count: input.inventory.medium,
+        shallow_count: input.inventory.shallow,
+        super_count: input.inventory.medium + input.inventory.shallow,
+      })
+      .eq("id", input.hiveId);
+
+    if (!error) return;
+    if (!isMissingColumnError(error)) {
+      throw new Error(error.message);
+    }
+  }
+
+  await saveHiveStackSidecar(
+    supabase,
+    input.apiaryId,
+    input.hiveId,
+    input.inventory
+  );
+}
+
+function withoutSuperInspectionColumns(
+  row: TablesInsert<"inspections">
+): TablesInsert<"inspections"> {
+  const compat: TablesInsert<"inspections"> = { ...row };
+  delete compat.supers_added;
+  delete compat.supers_removed;
+  delete compat.super_count_after;
+  delete compat.medium_added;
+  delete compat.medium_removed;
+  delete compat.shallow_added;
+  delete compat.shallow_removed;
+  return compat;
+}
+
+export async function insertInspectionCompat(
+  supabase: ServerClient,
+  row: TablesInsert<"inspections">,
+  options?: { columnsAvailable?: boolean }
+) {
+  const payload =
+    options?.columnsAvailable === false
+      ? withoutSuperInspectionColumns(row)
+      : row;
+  const first = await supabase
+    .from("inspections")
+    .insert(payload)
+    .select("id")
+    .single();
+  if (!first.error || !isMissingColumnError(first.error)) {
+    return first;
+  }
+
+  return supabase
+    .from("inspections")
+    .insert(withoutSuperInspectionColumns(row))
+    .select("id")
+    .single();
 }
 
 export async function listInspectionsForHive(
