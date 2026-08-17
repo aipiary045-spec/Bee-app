@@ -2,10 +2,14 @@ import { prisma } from "@/lib/db";
 import { trapNeedsCheck } from "@/lib/traps";
 import { StatusPill } from "@/components/status-pill";
 import { TrapCheckButton } from "@/components/trap-check-button";
+import { formatDateTime } from "@/lib/utils";
 
 export default async function TrapsPage() {
   const traps = await prisma.trap.findMany({
-    include: { property: { include: { client: true } }, events: { orderBy: { at: "desc" }, take: 3 } },
+    include: {
+      property: { include: { client: true } },
+      events: { include: { user: true }, orderBy: { at: "desc" } },
+    },
     orderBy: { serialNumber: "asc" },
   });
 
@@ -36,6 +40,24 @@ export default async function TrapsPage() {
                 <p className="mt-2 text-sm text-muted">In the shop</p>
               )}
               <TrapCheckButton trapId={trap.id} />
+              <section className="mt-4 border-t border-line pt-3">
+                <h3 className="text-sm font-semibold">Check log</h3>
+                {trap.events.length === 0 ? (
+                  <p className="mt-2 text-sm text-muted">No checks recorded yet.</p>
+                ) : (
+                  <ul className="mt-2 space-y-2">
+                    {trap.events.map((event) => (
+                      <li key={event.id} className="text-sm">
+                        <p>
+                          {formatDateTime(event.at)} · {event.type.replaceAll("_", " ")}
+                          {event.user ? ` · ${event.user.name}` : ""}
+                        </p>
+                        <p className="text-muted">{event.notes ?? "—"}</p>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </section>
             </article>
           );
         })}

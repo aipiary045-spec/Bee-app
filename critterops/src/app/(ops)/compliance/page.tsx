@@ -1,11 +1,13 @@
 import { prisma } from "@/lib/db";
+import { LogFieldList } from "@/components/log-field-list";
+import { chemicalLogEntry } from "@/lib/field-logs";
 import { formatDate } from "@/lib/utils";
 
 export default async function CompliancePage() {
   const [forms, chemicals] = await Promise.all([
     prisma.complianceForm.findMany({ orderBy: { submittedAt: "desc" } }),
     prisma.chemicalApplication.findMany({
-      include: { property: true, applicator: true },
+      include: { property: { include: { client: true } }, applicator: true, job: true },
       orderBy: { appliedAt: "desc" },
     }),
   ]);
@@ -33,14 +35,7 @@ export default async function CompliancePage() {
       <section className="space-y-3">
         <h2 className="text-xl font-semibold">Pesticide / rodenticide applications</h2>
         {chemicals.map((row) => (
-          <article key={row.id} className="rounded-2xl border border-line bg-card p-5">
-            <h3 className="font-semibold">{row.productName}</h3>
-            <p className="text-sm text-muted">EPA {row.epaRegNumber}</p>
-            <p className="mt-2 text-sm">
-              Target {row.targetPest} · {row.applicationRate} · used {row.amountUsed}
-            </p>
-            <p className="mt-1 text-sm text-muted">{row.siteDescription}</p>
-          </article>
+          <LogFieldList key={row.id} entry={chemicalLogEntry(row)} />
         ))}
       </section>
     </div>

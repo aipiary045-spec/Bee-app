@@ -28,7 +28,7 @@ const items = [
   { href: "/invoices", label: "Invoices", icon: Receipt },
   { href: "/clients", label: "Clients", icon: Users },
   { href: "/traps", label: "Traps", icon: PawPrint },
-  { href: "/captures", label: "Captures", icon: ClipboardList },
+  { href: "/captures", label: "Logs", icon: ClipboardList },
   { href: "/compliance", label: "Compliance", icon: Shield },
   { href: "/photos", label: "Photos", icon: Camera },
 ];
