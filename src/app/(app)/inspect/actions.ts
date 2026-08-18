@@ -18,7 +18,12 @@ import {
   formatTypedSuperChange,
   type SuperVisitChange,
 } from "@/lib/supers";
-import type { Enums, TablesInsert } from "@/types/database";
+import {
+  miteCountSyncPlan,
+  parseInspectionNumbers,
+  shouldKeepQueenLog,
+} from "@/lib/inspection-log";
+import type { Enums, TablesInsert, TablesUpdate } from "@/types/database";
 
 export type QuickLogExpenseInput = {
   catalogId: string;
@@ -262,12 +267,7 @@ export async function createInspectionAction(
       }
     }
 
-    revalidatePath("/");
-    revalidatePath("/inspect");
-    revalidatePath("/hives");
-    revalidatePath(`/hives/${input.hiveId}`);
-    revalidatePath("/finances");
-    revalidatePath("/expenses");
+    revalidateInspectionPaths(input.hiveId);
 
     return {
       ok: true,
@@ -352,10 +352,8 @@ export async function deleteInspectionAction(
       return { ok: false, error: error.message };
     }
 
-    revalidatePath("/");
-    revalidatePath("/inspect");
-    revalidatePath("/hives");
-    revalidatePath(`/hives/${inspection.hive_id}`);
+    revalidateInspectionPaths(inspection.hive_id);
+    revalidatePath(`/logs/${inspectionId}`);
 
     return { ok: true, hiveId: inspection.hive_id };
   } catch (err) {
@@ -364,4 +362,251 @@ export async function deleteInspectionAction(
       error: err instanceof Error ? err.message : "Failed to remove that visit.",
     };
   }
+}
+
+export type UpdateInspectionInput = {
+  inspectionId: string;
+  hiveId: string;
+  date: string;
+  inspectionTime: string;
+  weather: string;
+  temperatureF: string;
+  queenSighted: Enums<"queen_sighted">;
+  queenMarkColor: Enums<"queen_mark_color">;
+  eggsLarvae: Enums<"eggs_larvae_status">;
+  broodPattern: Enums<"brood_pattern">;
+  temperament: Enums<"temperament">;
+  honeyStores: Enums<"store_level">;
+  pollenStores: Enums<"store_level">;
+  miteCountPer100: string;
+  pestsDiseases: Enums<"pest_disease">;
+  actionFed: boolean;
+  mediumAdded: string;
+  mediumRemoved: string;
+  shallowAdded: string;
+  shallowRemoved: string;
+  actionSplit: boolean;
+  actionTreatment: boolean;
+  notes: string;
+};
+
+export type UpdateInspectionResult =
+  | { ok: true; inspectionId: string; hiveId: string }
+  | { ok: false; error: string };
+
+export async function updateInspectionAction(
+  input: UpdateInspectionInput
+): Promise<UpdateInspectionResult> {
+  if (!input.inspectionId) {
+    return { ok: false, error: "Choose a visit to edit." };
+  }
+  if (!input.hiveId) {
+    return { ok: false, error: "Select a hive." };
+  }
+  if (!input.date) {
+    return { ok: false, error: "Inspection date is required." };
+  }
+
+  const parsed = parseInspectionNumbers({
+    temperatureF: input.temperatureF,
+    miteCountPer100: input.miteCountPer100,
+    mediumAdded: input.mediumAdded,
+    mediumRemoved: input.mediumRemoved,
+    shallowAdded: input.shallowAdded,
+    shallowRemoved: input.shallowRemoved,
+  });
+  if (!parsed.ok) {
+    return { ok: false, error: parsed.error };
+  }
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { ok: false, error: "You must be signed in to edit a visit." };
+  }
+
+  try {
+    const { data: inspection, error: loadError } = await supabase
+      .from("inspections")
+      .select("id, hive_id")
+      .eq("id", input.inspectionId)
+      .maybeSingle();
+
+    if (loadError) {
+      return { ok: false, error: loadError.message };
+    }
+    if (!inspection) {
+      return { ok: false, error: "That visit was not found." };
+    }
+
+    const { data: hive, error: hiveError } = await supabase
+      .from("hives")
+      .select("id")
+      .eq("id", input.hiveId)
+      .maybeSingle();
+
+    if (hiveError || !hive) {
+      return { ok: false, error: hiveError?.message ?? "Hive not found." };
+    }
+
+    const supersAdded = parsed.mediumAdded + parsed.shallowAdded;
+    const supersRemoved = parsed.mediumRemoved + parsed.shallowRemoved;
+
+    const patch: TablesUpdate<"inspections"> = {
+      hive_id: input.hiveId,
+      date: input.date,
+      inspection_time: input.inspectionTime || null,
+      weather: input.weather || null,
+      temperature_f: parsed.temperatureF,
+      queen_sighted: input.queenSighted,
+      queen_spotted: input.queenSighted === "yes",
+      queen_mark_color: input.queenMarkColor,
+      eggs_larvae: input.eggsLarvae,
+      brood_pattern: input.broodPattern,
+      temperament: input.temperament,
+      honey_stores: input.honeyStores,
+      pollen_stores: input.pollenStores,
+      mite_count_per_100: parsed.miteCountPer100,
+      pests_diseases: input.pestsDiseases,
+      action_fed: input.actionFed,
+      action_super: supersAdded > 0,
+      action_split: input.actionSplit,
+      action_treatment: input.actionTreatment,
+      supers_added: supersAdded,
+      supers_removed: supersRemoved,
+      medium_added: parsed.mediumAdded,
+      medium_removed: parsed.mediumRemoved,
+      shallow_added: parsed.shallowAdded,
+      shallow_removed: parsed.shallowRemoved,
+      notes: input.notes.trim() || null,
+    };
+
+    const { error: updateError } = await supabase
+      .from("inspections")
+      .update(patch)
+      .eq("id", input.inspectionId);
+
+    if (updateError) {
+      return { ok: false, error: updateError.message };
+    }
+
+    const { data: miteRows, error: miteLoadError } = await supabase
+      .from("mite_counts")
+      .select("id")
+      .eq("inspection_id", input.inspectionId)
+      .limit(1);
+
+    if (miteLoadError) {
+      return { ok: false, error: miteLoadError.message };
+    }
+
+    const mitePlan = miteCountSyncPlan({
+      nextCount: parsed.miteCountPer100,
+      date: input.date,
+      hasLinkedRow: (miteRows?.length ?? 0) > 0,
+    });
+
+    if (mitePlan.type === "delete") {
+      const { error } = await supabase
+        .from("mite_counts")
+        .delete()
+        .eq("inspection_id", input.inspectionId);
+      if (error) return { ok: false, error: error.message };
+    } else if (mitePlan.type === "update") {
+      const { error } = await supabase
+        .from("mite_counts")
+        .update({
+          hive_id: input.hiveId,
+          count: mitePlan.count,
+          date: mitePlan.date,
+        })
+        .eq("inspection_id", input.inspectionId);
+      if (error) return { ok: false, error: error.message };
+    } else if (mitePlan.type === "insert") {
+      const { error } = await supabase.from("mite_counts").insert({
+        hive_id: input.hiveId,
+        inspection_id: input.inspectionId,
+        method: "alcohol_wash",
+        count: mitePlan.count,
+        date: mitePlan.date,
+      });
+      if (error) return { ok: false, error: error.message };
+    } else if (inspection.hive_id !== input.hiveId) {
+      await supabase
+        .from("mite_counts")
+        .update({ hive_id: input.hiveId })
+        .eq("inspection_id", input.inspectionId);
+    }
+
+    const keepQueen = shouldKeepQueenLog(
+      input.queenSighted,
+      input.queenMarkColor
+    );
+    const { data: queenRows, error: queenLoadError } = await supabase
+      .from("queen_logs")
+      .select("id")
+      .eq("inspection_id", input.inspectionId)
+      .limit(1);
+
+    if (queenLoadError) {
+      return { ok: false, error: queenLoadError.message };
+    }
+
+    if (!keepQueen) {
+      const { error } = await supabase
+        .from("queen_logs")
+        .delete()
+        .eq("inspection_id", input.inspectionId);
+      if (error) return { ok: false, error: error.message };
+    } else if ((queenRows?.length ?? 0) > 0) {
+      const { error } = await supabase
+        .from("queen_logs")
+        .update({
+          hive_id: input.hiveId,
+          mark_color: input.queenMarkColor,
+          status: "laying",
+        })
+        .eq("inspection_id", input.inspectionId);
+      if (error) return { ok: false, error: error.message };
+    } else {
+      const { error } = await supabase.from("queen_logs").insert({
+        hive_id: input.hiveId,
+        inspection_id: input.inspectionId,
+        status: "laying",
+        mark_color: input.queenMarkColor,
+        notes: null,
+      });
+      if (error) return { ok: false, error: error.message };
+    }
+
+    revalidateInspectionPaths(inspection.hive_id);
+    if (inspection.hive_id !== input.hiveId) {
+      revalidateInspectionPaths(input.hiveId);
+    }
+    revalidatePath(`/logs/${input.inspectionId}`);
+
+    return {
+      ok: true,
+      inspectionId: input.inspectionId,
+      hiveId: input.hiveId,
+    };
+  } catch (err) {
+    return {
+      ok: false,
+      error: err instanceof Error ? err.message : "Failed to save that visit.",
+    };
+  }
+}
+
+function revalidateInspectionPaths(hiveId: string) {
+  revalidatePath("/");
+  revalidatePath("/inspect");
+  revalidatePath("/logs");
+  revalidatePath("/hives");
+  revalidatePath(`/hives/${hiveId}`);
+  revalidatePath("/finances");
+  revalidatePath("/expenses");
 }

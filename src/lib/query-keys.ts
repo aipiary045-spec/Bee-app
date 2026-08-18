@@ -9,7 +9,9 @@ export const queryKeys = {
     detail: (id: string) => ["hives", id] as const,
   },
   inspections: {
+    all: ["inspections"] as const,
     byHive: (hiveId: string) => ["inspections", "hive", hiveId] as const,
+    detail: (id: string) => ["inspections", id] as const,
   },
   miteCounts: {
     byHive: (hiveId: string) => ["mite-counts", "hive", hiveId] as const,

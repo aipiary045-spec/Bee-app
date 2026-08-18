@@ -7,6 +7,7 @@ import {
   DollarSign,
   Hexagon,
   LayoutDashboard,
+  ScrollText,
   Settings,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -20,6 +21,7 @@ const navItems = [
   { href: "/", label: "Home", icon: LayoutDashboard },
   { href: "/hives", label: "Hives", icon: Hexagon },
   { href: "/inspect", label: "Quick Log", icon: ClipboardList },
+  { href: "/logs", label: "Logs", icon: ScrollText },
   { href: "/finances", label: "Finances", icon: DollarSign },
   { href: "/settings", label: "Settings", icon: Settings },
 ];
@@ -118,7 +120,7 @@ export function MobileNav() {
               key={href}
               href={href}
               className={cn(
-                "nav-pop flex min-w-[3.6rem] flex-col items-center gap-1 rounded-xl px-1.5 py-1 text-[10px] font-semibold tracking-wide transition-all",
+                "nav-pop flex min-w-[3.1rem] flex-col items-center gap-1 rounded-xl px-1 py-1 text-[10px] font-semibold tracking-wide transition-all",
                 active ? "bg-honey-500/15 text-honey-800" : "text-hive-500"
               )}
             >

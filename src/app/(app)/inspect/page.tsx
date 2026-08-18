@@ -1,6 +1,9 @@
+import Link from "next/link";
+import { ScrollText } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
 import { YardLede } from "@/components/yards/yard-lede";
 import { QuickLogForm } from "@/components/inspect/quick-log-form";
+import { Button } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase/server";
 import { listHivesForUser } from "@/lib/hives";
 import { fetchLocalWeather, type LocalWeather } from "@/lib/weather";
@@ -71,6 +74,14 @@ export default async function InspectPage({ searchParams }: InspectPageProps) {
         eyebrow={<YardLede />}
         title="Quick Log"
         description="Pick a hive, pull and replace supers, then tap through queen, health, and notes."
+        actions={
+          <Button variant="outline" size="sm" asChild>
+            <Link href={initialHiveId ? `/logs?hive=${initialHiveId}` : "/logs"}>
+              <ScrollText className="h-4 w-4" />
+              All logs
+            </Link>
+          </Button>
+        }
       />
 
       {loadError && (

@@ -1,9 +1,10 @@
 import Link from "next/link";
-import { ClipboardList, DollarSign, Settings } from "lucide-react";
+import { ClipboardList, DollarSign, ScrollText, Settings } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const items = [
   { href: "/inspect", label: "Quick Log", icon: ClipboardList, featured: true },
+  { href: "/logs", label: "Logs", icon: ScrollText },
   { href: "/finances", label: "Finances", icon: DollarSign },
   { href: "/settings", label: "Settings", icon: Settings },
 ];

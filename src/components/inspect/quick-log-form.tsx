@@ -16,13 +16,28 @@ import {
 } from "lucide-react";
 import { createInspectionAction } from "@/app/(app)/inspect/actions";
 import { HiveStack } from "@/components/inspect/hive-stack";
+import {
+  SectionCard,
+  Segmented,
+  inspectionFieldClass,
+} from "@/components/inspect/log-controls";
 import { YardPicker } from "@/components/yard/yard-scene";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { cn, formatCurrency } from "@/lib/utils";
 import { EXPENSE_CATALOG, EXPENSE_CATEGORY_LABELS } from "@/lib/expense-catalog";
+import {
+  BROOD_OPTIONS,
+  EGGS_LARVAE_OPTIONS,
+  PEST_OPTIONS,
+  QUEEN_MARK_OPTIONS,
+  QUEEN_SIGHTED_OPTIONS,
+  STORE_OPTIONS,
+  TEMPERAMENT_OPTIONS,
+  weatherSelectOptions,
+} from "@/lib/inspection-log";
 import {
   canAddSuper,
   canRemoveSuper,
@@ -38,78 +53,7 @@ import type { Hive } from "@/lib/hives";
 import type { Enums } from "@/types/database";
 import type { LocalWeather } from "@/lib/weather";
 
-const weatherOptions = [
-  "Sunny",
-  "Partly Cloudy",
-  "Cloudy",
-  "Windy",
-  "Light Rain",
-  "Overcast",
-];
-
-const queenSightedOptions: {
-  value: Enums<"queen_sighted">;
-  label: string;
-}[] = [
-  { value: "yes", label: "Yes" },
-  { value: "no", label: "No" },
-  { value: "uncertain", label: "Uncertain" },
-];
-
-const markColors: { value: Enums<"queen_mark_color">; label: string }[] = [
-  { value: "unmarked", label: "Unmarked" },
-  { value: "white", label: "White" },
-  { value: "yellow", label: "Yellow" },
-  { value: "red", label: "Red" },
-  { value: "green", label: "Green" },
-  { value: "blue", label: "Blue" },
-];
-
-const eggsLarvaeOptions: {
-  value: Enums<"eggs_larvae_status">;
-  label: string;
-}[] = [
-  { value: "eggs_and_larvae", label: "Eggs & Larvae" },
-  { value: "eggs_only", label: "Eggs Only" },
-  { value: "larvae_only", label: "Larvae Only" },
-  { value: "none_observed", label: "None Seen" },
-];
-
-const broodOptions: { value: Enums<"brood_pattern">; label: string }[] = [
-  { value: "excellent", label: "Excellent" },
-  { value: "good", label: "Good" },
-  { value: "fair", label: "Fair" },
-  { value: "spotty", label: "Spotty" },
-  { value: "poor", label: "Poor" },
-  { value: "none", label: "None" },
-];
-
-const temperamentOptions: { value: Enums<"temperament">; label: string }[] = [
-  { value: "calm", label: "Calm" },
-  { value: "defensive", label: "Nervous" },
-  { value: "aggressive", label: "Aggressive" },
-];
-
-const storeOptions: { value: Enums<"store_level">; label: string }[] = [
-  { value: "empty", label: "Empty" },
-  { value: "low", label: "Low" },
-  { value: "moderate", label: "Moderate" },
-  { value: "good", label: "Good" },
-  { value: "full", label: "Full" },
-];
-
-const pestOptions: { value: Enums<"pest_disease">; label: string }[] = [
-  { value: "none", label: "None" },
-  { value: "varroa", label: "Varroa" },
-  { value: "chalkbrood", label: "Chalkbrood" },
-  { value: "foulbrood_suspect", label: "Foulbrood?" },
-  { value: "wax_moth", label: "Wax Moth" },
-  { value: "ants", label: "Ants" },
-  { value: "other", label: "Other" },
-];
-
-const fieldClass =
-  "flex h-11 w-full rounded-xl border border-wax-300/80 bg-wax-50/95 px-3 text-sm text-hive-900 shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-honey-500/40 dark:bg-[#1c1610] dark:border-honey-400/25";
+const weatherOptions = weatherSelectOptions(undefined);
 
 function todayISO() {
   return new Date().toISOString().slice(0, 10);
@@ -118,60 +62,6 @@ function todayISO() {
 function nowTime() {
   const d = new Date();
   return d.toTimeString().slice(0, 5);
-}
-
-function Segmented<T extends string>({
-  value,
-  options,
-  onChange,
-}: {
-  value: T;
-  options: { value: T; label: string }[];
-  onChange: (value: T) => void;
-}) {
-  return (
-    <div className="flex flex-wrap gap-1.5">
-      {options.map((opt) => (
-        <button
-          key={opt.value}
-          type="button"
-          onClick={() => onChange(opt.value)}
-          className={cn(
-            "min-h-10 rounded-xl border px-3 py-2 text-sm font-medium transition-colors",
-            value === opt.value
-              ? "border-honey-500 bg-honey-500/20 text-hive-900"
-              : "border-wax-300/70 bg-wax-50 text-hive-600 hover:border-honey-400/50"
-          )}
-        >
-          {opt.label}
-        </button>
-      ))}
-    </div>
-  );
-}
-
-function SectionCard({
-  icon: Icon,
-  title,
-  children,
-  className,
-}: {
-  icon: React.ComponentType<{ className?: string }>;
-  title: string;
-  children: React.ReactNode;
-  className?: string;
-}) {
-  return (
-    <Card className={cn("h-full", className)}>
-      <CardHeader className="space-y-0 p-4 pb-2">
-        <CardTitle className="flex items-center gap-2 text-sm font-semibold text-honey-800">
-          <Icon className="h-4 w-4" />
-          {title}
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-3 p-4 pt-2">{children}</CardContent>
-    </Card>
-  );
 }
 
 export type QuickLogHive = Pick<
@@ -553,7 +443,7 @@ export function QuickLogForm({
                   id="weather"
                   value={weather}
                   onChange={(e) => setWeather(e.target.value)}
-                  className={fieldClass}
+                  className={inspectionFieldClass}
                 >
                   {[
                     ...weatherOptions,
@@ -593,7 +483,7 @@ export function QuickLogForm({
             <Label className="text-xs">Queen sighted?</Label>
             <Segmented
               value={queenSighted}
-              options={queenSightedOptions}
+              options={QUEEN_SIGHTED_OPTIONS}
               onChange={setQueenSighted}
             />
           </div>
@@ -607,9 +497,9 @@ export function QuickLogForm({
               onChange={(e) =>
                 setQueenMarkColor(e.target.value as Enums<"queen_mark_color">)
               }
-              className={fieldClass}
+              className={inspectionFieldClass}
             >
-              {markColors.map((opt) => (
+              {QUEEN_MARK_OPTIONS.map((opt) => (
                 <option key={opt.value} value={opt.value}>
                   {opt.label}
                 </option>
@@ -626,9 +516,9 @@ export function QuickLogForm({
               onChange={(e) =>
                 setEggsLarvae(e.target.value as Enums<"eggs_larvae_status">)
               }
-              className={fieldClass}
+              className={inspectionFieldClass}
             >
-              {eggsLarvaeOptions.map((opt) => (
+              {EGGS_LARVAE_OPTIONS.map((opt) => (
                 <option key={opt.value} value={opt.value}>
                   {opt.label}
                 </option>
@@ -645,9 +535,9 @@ export function QuickLogForm({
               onChange={(e) =>
                 setBroodPattern(e.target.value as Enums<"brood_pattern">)
               }
-              className={fieldClass}
+              className={inspectionFieldClass}
             >
-              {broodOptions.map((opt) => (
+              {BROOD_OPTIONS.map((opt) => (
                 <option key={opt.value} value={opt.value}>
                   {opt.label}
                 </option>
@@ -661,7 +551,7 @@ export function QuickLogForm({
             <Label className="text-xs">Temperament</Label>
             <Segmented
               value={temperament}
-              options={temperamentOptions}
+              options={TEMPERAMENT_OPTIONS}
               onChange={setTemperament}
             />
           </div>
@@ -676,9 +566,9 @@ export function QuickLogForm({
                 onChange={(e) =>
                   setHoneyStores(e.target.value as Enums<"store_level">)
                 }
-                className={fieldClass}
+                className={inspectionFieldClass}
               >
-                {storeOptions.map((opt) => (
+                {STORE_OPTIONS.map((opt) => (
                   <option key={opt.value} value={opt.value}>
                     {opt.label}
                   </option>
@@ -695,9 +585,9 @@ export function QuickLogForm({
                 onChange={(e) =>
                   setPollenStores(e.target.value as Enums<"store_level">)
                 }
-                className={fieldClass}
+                className={inspectionFieldClass}
               >
-                {storeOptions.map((opt) => (
+                {STORE_OPTIONS.map((opt) => (
                   <option key={opt.value} value={opt.value}>
                     {opt.label}
                   </option>
@@ -730,9 +620,9 @@ export function QuickLogForm({
                 onChange={(e) =>
                   setPestsDiseases(e.target.value as Enums<"pest_disease">)
                 }
-                className={fieldClass}
+                className={inspectionFieldClass}
               >
-                {pestOptions.map((opt) => (
+                {PEST_OPTIONS.map((opt) => (
                   <option key={opt.value} value={opt.value}>
                     {opt.label}
                   </option>

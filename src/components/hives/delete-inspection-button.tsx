@@ -9,11 +9,13 @@ import { Button } from "@/components/ui/button";
 interface DeleteInspectionButtonProps {
   inspectionId: string;
   dateLabel: string;
+  redirectTo?: string;
 }
 
 export function DeleteInspectionButton({
   inspectionId,
   dateLabel,
+  redirectTo,
 }: DeleteInspectionButtonProps) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
@@ -33,6 +35,11 @@ export function DeleteInspectionButton({
       const result = await deleteInspectionAction(inspectionId);
       if (!result.ok) {
         setError(result.error);
+        return;
+      }
+      if (redirectTo) {
+        router.push(redirectTo);
+        router.refresh();
         return;
       }
       router.refresh();

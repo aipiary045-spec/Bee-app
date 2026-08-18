@@ -8,6 +8,7 @@ import {
   FlaskConical,
   Hexagon,
   Layers,
+  Pencil,
   QrCode,
 } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
@@ -38,12 +39,10 @@ import {
   mergeAlerts,
   MITE_THRESHOLD_PER_100,
 } from "@/lib/alerts";
+import { inspectionSummary } from "@/lib/inspection-log";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import {
-  formatSuperChange,
-  formatSuperCount,
   formatSuperInventory,
-  formatTypedSuperChange,
   hiveSuperInventory,
 } from "@/lib/supers";
 import { broodScore } from "@/lib/health";
@@ -52,39 +51,6 @@ import type { Inspection, MiteCount } from "@/lib/hives";
 
 interface HiveDetailPageProps {
   params: Promise<{ id: string }>;
-}
-
-function inspectionSummary(inspection: Inspection) {
-  const parts: string[] = [];
-  const typed = formatTypedSuperChange({
-    mediumAdded: inspection.medium_added ?? 0,
-    mediumRemoved: inspection.medium_removed ?? 0,
-    shallowAdded: inspection.shallow_added ?? 0,
-    shallowRemoved: inspection.shallow_removed ?? 0,
-  });
-  if (typed !== "No super change") {
-    parts.push(typed);
-    if (inspection.super_count_after != null) {
-      parts.push(`now ${formatSuperCount(inspection.super_count_after)}`);
-    }
-  } else {
-    const added = inspection.supers_added ?? 0;
-    const removed = inspection.supers_removed ?? 0;
-    if (added > 0 || removed > 0) {
-      parts.push(formatSuperChange(added, removed));
-      if (inspection.super_count_after != null) {
-        parts.push(`now ${formatSuperCount(inspection.super_count_after)}`);
-      }
-    }
-  }
-  if (inspection.action_fed) parts.push("Fed");
-  if (inspection.action_split) parts.push("Split");
-  if (inspection.action_treatment) parts.push("Treated");
-  if (inspection.queen_sighted === "yes") parts.push("Queen seen");
-  if (inspection.mite_count_per_100 != null) {
-    parts.push(`${inspection.mite_count_per_100} mites / 100`);
-  }
-  return parts.length > 0 ? parts.join(" · ") : "Inspection logged";
 }
 
 function miteReadings(counts: MiteCount[], inspections: Inspection[]) {
@@ -126,7 +92,7 @@ export default async function HiveDetailPage({ params }: HiveDetailPageProps) {
   if (!hive) notFound();
 
   const [inspections, miteCounts, yields, sales, treatments] = await Promise.all([
-    listInspectionsForHive(id, 24).catch(() => []),
+    listInspectionsForHive(id, 8).catch(() => []),
     listMiteCountsForHive(id).catch(() => []),
     listHoneyYieldsForHive(id).catch(() => []),
     listHoneySalesForHive(id).catch(() => []),
@@ -239,12 +205,12 @@ export default async function HiveDetailPage({ params }: HiveDetailPageProps) {
           featured
         />
         <NavCard
-          href="#inspections"
-          title="Inspections"
+          href={`/logs?hive=${hive.id}`}
+          title="Logs"
           description={
             inspections.length === 0
               ? "No visits yet — start with Quick Log."
-              : `${inspections.length} recent visit${inspections.length === 1 ? "" : "s"} on file.`
+              : "Open every visit for this hive to edit or delete it."
           }
           icon={Hexagon}
         />
@@ -296,14 +262,19 @@ export default async function HiveDetailPage({ params }: HiveDetailPageProps) {
       <div className="fade-up-delay-2 mb-8 space-y-4">
           <Card id="inspections">
             <CardHeader className="pb-2">
-              <CardTitle className="flex items-center justify-between gap-2 text-base">
+              <CardTitle className="flex flex-wrap items-center justify-between gap-2 text-base">
                 <span className="flex items-center gap-2">
                   <Hexagon className="h-4 w-4 text-honey-700" />
-                  Inspections
+                  Recent visits
                 </span>
-                <Button variant="outline" size="sm" asChild>
-                  <Link href={`/inspect?hive=${hive.id}`}>Log visit</Link>
-                </Button>
+                <div className="flex flex-wrap gap-2">
+                  <Button variant="outline" size="sm" asChild>
+                    <Link href={`/logs?hive=${hive.id}`}>All logs</Link>
+                  </Button>
+                  <Button variant="outline" size="sm" asChild>
+                    <Link href={`/inspect?hive=${hive.id}`}>Log visit</Link>
+                  </Button>
+                </div>
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -322,9 +293,12 @@ export default async function HiveDetailPage({ params }: HiveDetailPageProps) {
                       className="flex items-start justify-between gap-3 py-3 first:pt-0 last:pb-0"
                     >
                       <div className="min-w-0">
-                        <p className="text-sm font-medium text-hive-900">
+                        <Link
+                          href={`/logs/${inspection.id}`}
+                          className="text-sm font-medium text-hive-900 hover:text-honey-800"
+                        >
                           {formatDate(inspection.date)}
-                        </p>
+                        </Link>
                         <p className="text-sm text-hive-600">
                           {inspectionSummary(inspection)}
                         </p>
@@ -334,10 +308,18 @@ export default async function HiveDetailPage({ params }: HiveDetailPageProps) {
                           </p>
                         )}
                       </div>
-                      <DeleteInspectionButton
-                        inspectionId={inspection.id}
-                        dateLabel={formatDate(inspection.date)}
-                      />
+                      <div className="flex shrink-0 flex-col items-end gap-1">
+                        <Button variant="outline" size="sm" asChild>
+                          <Link href={`/logs/${inspection.id}`}>
+                            <Pencil className="h-3.5 w-3.5" />
+                            Edit
+                          </Link>
+                        </Button>
+                        <DeleteInspectionButton
+                          inspectionId={inspection.id}
+                          dateLabel={formatDate(inspection.date)}
+                        />
+                      </div>
                     </li>
                   ))}
                 </ul>
