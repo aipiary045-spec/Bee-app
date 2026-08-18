@@ -20,6 +20,7 @@ import {
   SectionCard,
   Segmented,
   inspectionFieldClass,
+  MiteCheckFields,
 } from "@/components/inspect/log-controls";
 import {
   BROOD_OPTIONS,
@@ -30,6 +31,7 @@ import {
   STORE_OPTIONS,
   TEMPERAMENT_OPTIONS,
   formatInspectionTime,
+  miteCountFromCheck,
   resolveQueenSighted,
   weatherSelectOptions,
 } from "@/lib/inspection-log";
@@ -90,6 +92,9 @@ export function EditInspectionForm({
   const [pollenStores, setPollenStores] = useState<Enums<"store_level">>(
     inspection.pollen_stores ?? "moderate"
   );
+  const [miteChecked, setMiteChecked] = useState(
+    inspection.mite_count_per_100 != null
+  );
   const [miteCountPer100, setMiteCountPer100] = useState(
     inspection.mite_count_per_100 == null
       ? ""
@@ -125,6 +130,12 @@ export function EditInspectionForm({
     setSuccess(null);
 
     startTransition(async () => {
+      const mite = miteCountFromCheck(miteChecked, miteCountPer100);
+      if (!mite.ok) {
+        setError(mite.error);
+        return;
+      }
+
       const result = await updateInspectionAction({
         inspectionId: inspection.id,
         hiveId,
@@ -139,7 +150,7 @@ export function EditInspectionForm({
         temperament,
         honeyStores,
         pollenStores,
-        miteCountPer100,
+        miteCountPer100: mite.value,
         pestsDiseases,
         actionFed,
         mediumAdded,
@@ -425,40 +436,30 @@ export function EditInspectionForm({
               </select>
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1.5">
-              <Label htmlFor="mites" className="text-xs">
-                Mites / 100
-              </Label>
-              <Input
-                id="mites"
-                type="number"
-                min={0}
-                step="0.1"
-                value={miteCountPer100}
-                onChange={(e) => setMiteCountPer100(e.target.value)}
-                className="h-11"
-              />
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="pests" className="text-xs">
-                Pests / disease
-              </Label>
-              <select
-                id="pests"
-                value={pestsDiseases}
-                onChange={(e) =>
-                  setPestsDiseases(e.target.value as Enums<"pest_disease">)
-                }
-                className={inspectionFieldClass}
-              >
-                {PEST_OPTIONS.map((opt) => (
-                  <option key={opt.value} value={opt.value}>
-                    {opt.label}
-                  </option>
-                ))}
-              </select>
-            </div>
+          <MiteCheckFields
+            checked={miteChecked}
+            count={miteCountPer100}
+            onCheckedChange={setMiteChecked}
+            onCountChange={setMiteCountPer100}
+          />
+          <div className="space-y-1.5">
+            <Label htmlFor="pests" className="text-xs">
+              Pests / disease
+            </Label>
+            <select
+              id="pests"
+              value={pestsDiseases}
+              onChange={(e) =>
+                setPestsDiseases(e.target.value as Enums<"pest_disease">)
+              }
+              className={inspectionFieldClass}
+            >
+              {PEST_OPTIONS.map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
+                </option>
+              ))}
+            </select>
           </div>
         </SectionCard>
 

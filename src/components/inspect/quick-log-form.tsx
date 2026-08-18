@@ -20,6 +20,7 @@ import {
   SectionCard,
   Segmented,
   inspectionFieldClass,
+  MiteCheckFields,
 } from "@/components/inspect/log-controls";
 import { YardPicker } from "@/components/yard/yard-scene";
 import { Button } from "@/components/ui/button";
@@ -37,6 +38,7 @@ import {
   STORE_OPTIONS,
   TEMPERAMENT_OPTIONS,
   weatherSelectOptions,
+  miteCountFromCheck,
 } from "@/lib/inspection-log";
 import {
   canAddSuper,
@@ -127,7 +129,8 @@ export function QuickLogForm({
     useState<Enums<"store_level">>("moderate");
   const [pollenStores, setPollenStores] =
     useState<Enums<"store_level">>("moderate");
-  const [miteCountPer100, setMiteCountPer100] = useState("0");
+  const [miteChecked, setMiteChecked] = useState(false);
+  const [miteCountPer100, setMiteCountPer100] = useState("");
   const [pestsDiseases, setPestsDiseases] =
     useState<Enums<"pest_disease">>("none");
 
@@ -196,6 +199,12 @@ export function QuickLogForm({
     setSuccess(null);
 
     startTransition(async () => {
+      const mite = miteCountFromCheck(miteChecked, miteCountPer100);
+      if (!mite.ok) {
+        setError(mite.error);
+        return;
+      }
+
       const result = await createInspectionAction({
         hiveId,
         date,
@@ -209,7 +218,7 @@ export function QuickLogForm({
         temperament,
         honeyStores,
         pollenStores,
-        miteCountPer100,
+        miteCountPer100: mite.value,
         pestsDiseases,
         actionFed,
         mediumAdded: superChange.mediumAdded,
@@ -256,7 +265,8 @@ export function QuickLogForm({
       setSuperChange(emptySuperChange());
       setActionSplit(false);
       setActionTreatment(false);
-      setMiteCountPer100("0");
+      setMiteChecked(false);
+      setMiteCountPer100("");
       setLogExpenses(false);
       setSelectedExpenseIds([]);
       setExpenseAmounts({});
@@ -595,40 +605,30 @@ export function QuickLogForm({
               </select>
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1.5">
-              <Label htmlFor="mites" className="text-xs">
-                Mites / 100
-              </Label>
-              <Input
-                id="mites"
-                type="number"
-                min={0}
-                step="0.1"
-                value={miteCountPer100}
-                onChange={(e) => setMiteCountPer100(e.target.value)}
-                className="h-11"
-              />
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="pests" className="text-xs">
-                Pests / disease
-              </Label>
-              <select
-                id="pests"
-                value={pestsDiseases}
-                onChange={(e) =>
-                  setPestsDiseases(e.target.value as Enums<"pest_disease">)
-                }
-                className={inspectionFieldClass}
-              >
-                {PEST_OPTIONS.map((opt) => (
-                  <option key={opt.value} value={opt.value}>
-                    {opt.label}
-                  </option>
-                ))}
-              </select>
-            </div>
+          <MiteCheckFields
+            checked={miteChecked}
+            count={miteCountPer100}
+            onCheckedChange={setMiteChecked}
+            onCountChange={setMiteCountPer100}
+          />
+          <div className="space-y-1.5">
+            <Label htmlFor="pests" className="text-xs">
+              Pests / disease
+            </Label>
+            <select
+              id="pests"
+              value={pestsDiseases}
+              onChange={(e) =>
+                setPestsDiseases(e.target.value as Enums<"pest_disease">)
+              }
+              className={inspectionFieldClass}
+            >
+              {PEST_OPTIONS.map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
+                </option>
+              ))}
+            </select>
           </div>
         </SectionCard>
 

@@ -5,6 +5,7 @@ import {
   formatInspectionTime,
   groupLogsByDate,
   inspectionSummary,
+  miteCountFromCheck,
   miteCountSyncPlan,
   optionLabel,
   parseInspectionNumbers,
@@ -141,6 +142,29 @@ describe("parseInspectionNumbers", () => {
     if (!parsed.ok) {
       assert.match(parsed.error, /mite count/i);
     }
+  });
+});
+
+describe("miteCountFromCheck", () => {
+  it("skips a count when mites were not checked", () => {
+    assert.deepEqual(miteCountFromCheck(false, "4"), { ok: true, value: "" });
+    assert.deepEqual(miteCountFromCheck(false, ""), { ok: true, value: "" });
+  });
+
+  it("requires a count when mites were checked", () => {
+    const empty = miteCountFromCheck(true, "  ");
+    assert.equal(empty.ok, false);
+    if (!empty.ok) {
+      assert.match(empty.error, /mite count per 100/i);
+    }
+  });
+
+  it("keeps a zero count as a real wash result", () => {
+    assert.deepEqual(miteCountFromCheck(true, "0"), { ok: true, value: "0" });
+    assert.deepEqual(miteCountFromCheck(true, "1.5"), {
+      ok: true,
+      value: "1.5",
+    });
   });
 });
 

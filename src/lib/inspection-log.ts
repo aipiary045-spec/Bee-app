@@ -285,6 +285,22 @@ export function parseInspectionNumbers(input: {
   };
 }
 
+export function miteCountFromCheck(
+  checked: boolean,
+  count: string
+): { ok: true; value: string } | { ok: false; error: string } {
+  if (!checked) return { ok: true, value: "" };
+  const trimmed = count.trim();
+  if (trimmed === "") {
+    return { ok: false, error: "Enter the mite count per 100 bees." };
+  }
+  const parsed = Number(trimmed);
+  if (Number.isNaN(parsed) || parsed < 0) {
+    return { ok: false, error: "Enter a valid mite count (0 or greater)." };
+  }
+  return { ok: true, value: trimmed };
+}
+
 export function miteCountSyncPlan(input: {
   nextCount: number | null;
   date: string;
