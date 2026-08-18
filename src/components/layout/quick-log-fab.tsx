@@ -13,8 +13,9 @@ function inspectHref(pathname: string) {
 export function QuickLogFab() {
   const pathname = usePathname();
   const onInspect = pathname.startsWith("/inspect");
+  const onLogEdit = /^\/logs\/[^/]+$/.test(pathname);
   const onSettings = pathname.startsWith("/settings");
-  if (onInspect || onSettings) return null;
+  if (onInspect || onLogEdit || onSettings) return null;
 
   return (
     <Link

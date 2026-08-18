@@ -300,6 +300,56 @@ export async function listInspectionsForHive(
   return data ?? [];
 }
 
+export async function listInspectionsForHives(
+  hiveIds: string[]
+): Promise<Inspection[]> {
+  if (hiveIds.length === 0) return [];
+
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("inspections")
+    .select("*")
+    .in("hive_id", hiveIds)
+    .order("date", { ascending: false })
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  return data ?? [];
+}
+
+export async function getInspectionById(inspectionId: string): Promise<{
+  inspection: Inspection;
+  hive: Hive;
+} | null> {
+  const supabase = await createClient();
+  const { data: inspection, error } = await supabase
+    .from("inspections")
+    .select("*")
+    .eq("id", inspectionId)
+    .maybeSingle();
+
+  if (error) {
+    throw new Error(error.message);
+  }
+  if (!inspection) return null;
+
+  const { data: hive, error: hiveError } = await supabase
+    .from("hives")
+    .select("*")
+    .eq("id", inspection.hive_id)
+    .maybeSingle();
+
+  if (hiveError) {
+    throw new Error(hiveError.message);
+  }
+  if (!hive) return null;
+
+  return { inspection, hive };
+}
+
 export async function listRecentInspectionsForHives(
   hiveIds: string[]
 ): Promise<AlertInspection[]> {
