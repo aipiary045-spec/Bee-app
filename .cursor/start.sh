@@ -6,6 +6,7 @@ set -euo pipefail
 
 REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$REPO_DIR"
+DOCKER_UP="${REPO_DIR}/.cursor/docker-up.sh"
 
 log() {
   echo "==> $*"
@@ -37,21 +38,24 @@ hosted_ready() {
   return 0
 }
 
+ensure_local_supabase() {
+  bash "${DOCKER_UP}"
+  if supabase status >/dev/null 2>&1; then
+    log "Supabase already running"
+    return 0
+  fi
+  supabase stop --no-backup >/dev/null 2>&1 || true
+  supabase start
+}
+
 if hosted_ready; then
   write_env_local "${NEXT_PUBLIC_SUPABASE_URL}" "${NEXT_PUBLIC_SUPABASE_ANON_KEY}"
   log "Wrote .env.local from hosted Supabase secrets. Skipping local Docker stack."
   exit 0
 fi
 
-log "Hosted secrets not set. Ensuring Docker is running"
-bash "${REPO_DIR}/.cursor/docker-up.sh"
-
-log "Ensuring the local Supabase stack is running"
-if supabase status >/dev/null 2>&1; then
-  log "Supabase already running"
-else
-  supabase start
-fi
+log "Hosted secrets not set. Starting local Supabase."
+ensure_local_supabase
 
 log "Writing .env.local from the running local Supabase stack"
 eval "$(supabase status -o env)"

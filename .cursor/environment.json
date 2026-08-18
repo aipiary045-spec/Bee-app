@@ -1,6 +1,6 @@
 {
   "name": "Apiary App",
-  "install": "bash .cursor/install.sh",
+  "install": "npm ci",
   "start": "bash .cursor/start.sh",
   "terminals": [
     {
