@@ -3,6 +3,8 @@ import { PageHeader } from "@/components/layout/page-header";
 import { YardLede } from "@/components/yards/yard-lede";
 import { SummaryCards } from "@/components/dashboard/summary-cards";
 import { PriorityAlertsBar } from "@/components/dashboard/priority-alerts";
+import { TreatmentCalendar } from "@/components/dashboard/treatment-calendar";
+import { HarvestSummary } from "@/components/dashboard/harvest-summary";
 import { YardScene } from "@/components/yard/yard-scene";
 import { BrandLogo } from "@/components/brand/brand-logo";
 import { Button } from "@/components/ui/button";
@@ -11,6 +13,7 @@ import {
   listHivesForUser,
   listOpenTreatmentsForHives,
   listRecentInspectionsForHives,
+  getHarvestSummaryForHives,
 } from "@/lib/hives";
 import {
   buildHiveAlerts,
@@ -18,6 +21,7 @@ import {
   mergeAlerts,
   uniqueHiveCount,
 } from "@/lib/alerts";
+import { hiveHealthForYard } from "@/lib/hive-health";
 import { fetchLocalWeather, type LocalWeather } from "@/lib/weather";
 import type { Hive } from "@/lib/hives";
 import type { HiveAlert } from "@/lib/alerts";
@@ -31,6 +35,21 @@ export default async function DashboardPage() {
   let alerts: HiveAlert[] = [];
   let yardLocation = "";
   let weather: LocalWeather | null = null;
+  let treatmentCalendar: {
+    id: string;
+    hiveId: string;
+    hiveName: string;
+    productName: string;
+    startDate: string;
+    endDate: string | null;
+    status: "planned" | "in_progress" | "completed";
+  }[] = [];
+  let harvestSummary = {
+    totalLbs: 0,
+    pullCount: 0,
+    hiveCount: 0,
+  };
+  let hiveHealth: ReturnType<typeof hiveHealthForYard> = {};
 
   if (user) {
     try {
@@ -58,6 +77,20 @@ export default async function DashboardPage() {
           }))
         )
       );
+      hiveHealth = hiveHealthForYard(hives, alerts);
+      const hiveNames = new Map(hives.map((hive) => [hive.id, hive.name]));
+      treatmentCalendar = treatments.map((row) => ({
+        id: row.id,
+        hiveId: row.hive_id,
+        hiveName: hiveNames.get(row.hive_id) ?? "Hive",
+        productName: row.product_name,
+        startDate: row.start_date,
+        endDate: row.end_date,
+        status: row.status,
+      }));
+      harvestSummary = await getHarvestSummaryForHives(
+        hives.map((hive) => ({ id: hive.id, name: hive.name }))
+      );
     } catch {
       hives = [];
       alerts = [];
@@ -78,6 +111,9 @@ export default async function DashboardPage() {
       <div className="fade-up-delay-1 mb-6">
         <PriorityAlertsBar alerts={alerts} />
       </div>
+
+      <TreatmentCalendar treatments={treatmentCalendar} />
+      <HarvestSummary summary={harvestSummary} />
 
       <p className="fade-up-delay-1 mb-6 text-sm text-hive-600">
         {hives.length === 0
@@ -108,6 +144,7 @@ export default async function DashboardPage() {
           weather={weather}
           yardLocation={user ? yardLocation : undefined}
           showWeather
+          hiveHealth={hiveHealth}
           empty={
             <div className="text-center">
               <div className="mx-auto mb-4 flex justify-center">

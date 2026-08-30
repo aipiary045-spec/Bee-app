@@ -82,3 +82,16 @@ Sign up at `/signup`, sign in at `/login`. Protected routes redirect to login wh
 3. Authentication → Providers → Email (optionally disable Confirm email for local testing)
 4. Restart `npm run dev` and create an account
 
+## Rollback to the classic app
+
+The last version **before** these enhancements lives on branch `cursor/apiary-app-foundation`, tagged as `classic-view`. To go back:
+
+```bash
+git fetch origin
+git checkout classic-view   # detached HEAD at the pre-enhancement commit
+# or stay on a branch:
+git checkout cursor/apiary-app-foundation
+```
+
+The enhanced version is on branch `cursor/enhanced-features-eba4`.
+

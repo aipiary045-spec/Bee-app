@@ -8,6 +8,7 @@ import { YardSlideDots, useYardSlide } from "@/components/yard/yard-slide-dots";
 import { YardWeather } from "@/components/yard/yard-weather";
 import { cn } from "@/lib/utils";
 import { yardSkyClass } from "@/lib/yards";
+import type { HiveHealthTone } from "@/lib/hive-health";
 import type { LocalWeather } from "@/lib/weather";
 
 interface YardSceneProps {
@@ -18,6 +19,7 @@ interface YardSceneProps {
   weather?: LocalWeather | null;
   yardLocation?: string | null;
   showWeather?: boolean;
+  hiveHealth?: Record<string, HiveHealthTone>;
 }
 
 export function YardScene({
@@ -28,6 +30,7 @@ export function YardScene({
   weather = null,
   yardLocation,
   showWeather = false,
+  hiveHealth = {},
 }: YardSceneProps) {
   const { scrollerRef, itemRefs, activeIndex, canSlide, hint, scrollToIndex } =
     useYardSlide(hives.length);
@@ -111,10 +114,12 @@ export function YardScene({
             )}
           >
             {hives.map((hive, index) => {
+              const healthTone = hiveHealth[hive.id];
               const stack = (
                 <YardHive
                   hive={hive}
                   size="md"
+                  healthTone={healthTone}
                   className="hive-bob"
                   style={{ animationDelay: `${index * 0.35}s` }}
                 />
@@ -131,7 +136,9 @@ export function YardScene({
                     <Link
                       href={`/hives/${hive.id}`}
                       className="rounded-xl outline-none ring-honey-400/50 transition-transform duration-300 hover:-translate-y-1 focus-visible:ring-2"
-                      aria-label={`${hive.name}, ${hive.status}`}
+                      aria-label={`${hive.name}, ${hive.status}${
+                        healthTone ? `, ${healthTone}` : ""
+                      }`}
                     >
                       {stack}
                     </Link>

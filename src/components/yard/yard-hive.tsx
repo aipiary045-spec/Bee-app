@@ -5,6 +5,8 @@ import {
   hiveSuperInventory,
   type SuperInventory,
 } from "@/lib/supers";
+import type { HiveHealthTone } from "@/lib/hive-health";
+import { hiveHealthToneClass } from "@/lib/hive-health";
 import type { Hive } from "@/lib/hives";
 
 export type YardHiveData = Pick<
@@ -75,6 +77,7 @@ interface YardHiveProps {
   selected?: boolean;
   size?: "sm" | "md";
   showLabel?: boolean;
+  healthTone?: HiveHealthTone;
   className?: string;
   style?: CSSProperties;
 }
@@ -85,6 +88,7 @@ export function YardHive({
   selected = false,
   size = "md",
   showLabel = true,
+  healthTone,
   className,
   style,
 }: YardHiveProps) {
@@ -96,7 +100,8 @@ export function YardHive({
   return (
     <div
       className={cn(
-        "flex flex-col items-center justify-end gap-2",
+        "flex flex-col items-center justify-end gap-2 rounded-xl",
+        healthTone && hiveHealthToneClass(healthTone),
         className
       )}
       style={style}
