@@ -172,3 +172,12 @@ export function formatInspectionLogLines(inspection: Inspection): string[] {
 
   return lines;
 }
+
+export function formatInspectionLogPreview(inspection: Inspection): string {
+  const lines = formatInspectionLogLines(inspection);
+  const preview = lines.slice(0, 2).join(" · ");
+  if (lines.length > 2 || inspection.notes?.trim()) {
+    return `${preview} · tap to view`;
+  }
+  return preview;
+}
