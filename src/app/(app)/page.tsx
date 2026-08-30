@@ -22,6 +22,7 @@ import {
   getHarvestSummaryForHives,
   listSplitInspectionsForHives,
   getSeasonSnapshotDataForHives,
+  getMonthlySeasonActivityForHives,
 } from "@/lib/hives";
 import {
   buildHiveAlerts,
@@ -34,6 +35,10 @@ import { buildPostTreatmentMiteAlerts } from "@/lib/treatment-followup";
 import { buildSplitFollowupAlerts } from "@/lib/split-followup";
 import { buildSeasonSnapshot } from "@/lib/season-snapshot";
 import { SeasonSnapshotCard } from "@/components/dashboard/season-snapshot";
+import { SeasonMonthlyChart } from "@/components/dashboard/season-monthly-chart";
+import {
+  buildMonthlySeasonPoints,
+} from "@/lib/season-monthly";
 import { hiveHealthForYard } from "@/lib/hive-health";
 import { buildYardWalkChecklist } from "@/lib/yard-walk-checklist";
 import { fetchLocalWeather, type LocalWeather } from "@/lib/weather";
@@ -73,6 +78,8 @@ export default async function DashboardPage() {
     harvestLbs: 0,
     miteReadings: [],
   });
+  let priorSeasonSnapshot: ReturnType<typeof buildSeasonSnapshot> | null = null;
+  let monthlySeasonPoints = buildMonthlySeasonPoints([], []);
 
   if (user) {
     try {
@@ -84,7 +91,8 @@ export default async function DashboardPage() {
         location: yardLocation,
       });
       const hiveIds = hives.map((hive) => hive.id);
-      const [inspections, treatments, lastMiteDates, miteRetests, splitRows, seasonData] =
+      const currentYear = new Date().getFullYear();
+      const [inspections, treatments, lastMiteDates, miteRetests, splitRows, seasonData, priorSeasonData, monthlyActivity] =
         await Promise.all([
         listRecentInspectionsForHives(hiveIds),
         listOpenTreatmentsForHives(hiveIds).catch(() => []),
@@ -93,15 +101,36 @@ export default async function DashboardPage() {
         listSplitInspectionsForHives(
           hives.map((hive) => ({ id: hive.id, name: hive.name }))
         ).catch(() => []),
-        getSeasonSnapshotDataForHives(hiveIds).catch(() => ({
+        getSeasonSnapshotDataForHives(hiveIds, currentYear).catch(() => ({
           inspectionCount: 0,
           treatmentCount: 0,
           splitCount: 0,
           harvestLbs: 0,
           miteReadings: [],
         })),
+        getSeasonSnapshotDataForHives(hiveIds, currentYear - 1).catch(
+          () => ({
+            inspectionCount: 0,
+            treatmentCount: 0,
+            splitCount: 0,
+            harvestLbs: 0,
+            miteReadings: [],
+          })
+        ),
+        getMonthlySeasonActivityForHives(hiveIds, currentYear).catch(() => ({
+          visits: Array.from({ length: 12 }, () => 0),
+          harvestLbs: Array.from({ length: 12 }, () => 0),
+        })),
       ]);
-      seasonSnapshot = buildSeasonSnapshot(seasonData);
+      seasonSnapshot = buildSeasonSnapshot(seasonData, currentYear);
+      priorSeasonSnapshot = buildSeasonSnapshot(
+        priorSeasonData,
+        currentYear - 1
+      );
+      monthlySeasonPoints = buildMonthlySeasonPoints(
+        monthlyActivity.visits,
+        monthlyActivity.harvestLbs
+      );
       const intervalDays = apiary?.mite_check_interval_days ?? undefined;
       const hiveNames = new Map(hives.map((hive) => [hive.id, hive.name]));
       alerts = mergeAlerts(
@@ -189,7 +218,11 @@ export default async function DashboardPage() {
 
       <SeasonalAdvice />
       <SwarmRiskSummary highRiskCount={swarmRiskCount} />
-      <SeasonSnapshotCard snapshot={seasonSnapshot} />
+      <SeasonSnapshotCard
+        snapshot={seasonSnapshot}
+        priorSnapshot={priorSeasonSnapshot}
+      />
+      <SeasonMonthlyChart year={seasonSnapshot.year} points={monthlySeasonPoints} />
       {apiary?.id ? (
         <MiteIntervalEditor
           apiaryId={apiary.id}
