@@ -42,51 +42,19 @@ import {
 } from "@/lib/alerts";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import {
-  formatSuperChange,
-  formatSuperCount,
   formatSuperInventory,
-  formatTypedSuperChange,
   hiveSuperInventory,
 } from "@/lib/supers";
 import { broodScore } from "@/lib/health";
+import {
+  formatInspectionLogLines,
+  formatVisitTime,
+} from "@/lib/inspection-log";
 import { isTreatmentOverdue } from "@/lib/treatments";
 import type { Inspection, MiteCount } from "@/lib/hives";
 
 interface HiveDetailPageProps {
   params: Promise<{ id: string }>;
-}
-
-function inspectionSummary(inspection: Inspection) {
-  const parts: string[] = [];
-  const typed = formatTypedSuperChange({
-    mediumAdded: inspection.medium_added ?? 0,
-    mediumRemoved: inspection.medium_removed ?? 0,
-    shallowAdded: inspection.shallow_added ?? 0,
-    shallowRemoved: inspection.shallow_removed ?? 0,
-  });
-  if (typed !== "No super change") {
-    parts.push(typed);
-    if (inspection.super_count_after != null) {
-      parts.push(`now ${formatSuperCount(inspection.super_count_after)}`);
-    }
-  } else {
-    const added = inspection.supers_added ?? 0;
-    const removed = inspection.supers_removed ?? 0;
-    if (added > 0 || removed > 0) {
-      parts.push(formatSuperChange(added, removed));
-      if (inspection.super_count_after != null) {
-        parts.push(`now ${formatSuperCount(inspection.super_count_after)}`);
-      }
-    }
-  }
-  if (inspection.action_fed) parts.push("Fed");
-  if (inspection.action_split) parts.push("Split");
-  if (inspection.action_treatment) parts.push("Treated");
-  if (inspection.queen_sighted === "yes") parts.push("Queen seen");
-  if (inspection.mite_count_per_100 != null) {
-    parts.push(`${inspection.mite_count_per_100} mites / 100`);
-  }
-  return parts.length > 0 ? parts.join(" · ") : "Inspection logged";
 }
 
 function miteReadings(counts: MiteCount[], inspections: Inspection[]) {
@@ -331,20 +299,35 @@ export default async function HiveDetailPage({ params }: HiveDetailPageProps) {
                 </Link>
               ) : (
                 <ul className="divide-y divide-wax-300/60">
-                  {inspections.map((inspection) => (
+                  {inspections.map((inspection) => {
+                    const logLines = formatInspectionLogLines(inspection);
+                    return (
                     <li
                       key={inspection.id}
-                      className="flex items-start justify-between gap-3 py-3 first:pt-0 last:pb-0"
+                      className="flex items-start justify-between gap-3 py-4 first:pt-0 last:pb-0"
                     >
-                      <div className="min-w-0">
+                      <div className="min-w-0 flex-1">
                         <p className="text-sm font-medium text-hive-900">
                           {formatDate(inspection.date)}
+                          {formatVisitTime(inspection.inspection_time) && (
+                            <span className="font-normal text-hive-500">
+                              {" "}
+                              · {formatVisitTime(inspection.inspection_time)}
+                            </span>
+                          )}
                         </p>
-                        <p className="text-sm text-hive-600">
-                          {inspectionSummary(inspection)}
-                        </p>
+                        <ul className="mt-2 space-y-1">
+                          {logLines.map((line, index) => (
+                            <li
+                              key={`${inspection.id}-${index}`}
+                              className="text-sm leading-relaxed text-hive-600"
+                            >
+                              {line}
+                            </li>
+                          ))}
+                        </ul>
                         {inspection.notes && (
-                          <p className="mt-1 max-w-md truncate text-xs text-hive-500">
+                          <p className="mt-3 whitespace-pre-wrap break-words rounded-xl border border-wax-300/60 bg-wax-50/70 px-3 py-2 text-sm leading-relaxed text-hive-700">
                             {inspection.notes}
                           </p>
                         )}
@@ -354,7 +337,8 @@ export default async function HiveDetailPage({ params }: HiveDetailPageProps) {
                         dateLabel={formatDate(inspection.date)}
                       />
                     </li>
-                  ))}
+                    );
+                  })}
                 </ul>
               )}
             </CardContent>
