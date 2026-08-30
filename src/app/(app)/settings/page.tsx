@@ -6,6 +6,7 @@ import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { YardForm } from "@/components/settings/yard-form";
 import { AddYardForm } from "@/components/settings/add-yard-form";
 import { YardSwitcher } from "@/components/yards/yard-switcher";
+import { MiteIntervalEditor } from "@/components/dashboard/mite-interval-editor";
 import { createClient } from "@/lib/supabase/server";
 import { getYardsAndActive } from "@/lib/hives";
 import { toYardChoice } from "@/lib/yards";
@@ -17,6 +18,7 @@ export default async function SettingsPage() {
   let activeId = "";
   let yardName = "My Apiary";
   let yardLocation = "";
+  let miteIntervalDays: number | null = null;
 
   if (env.isSupabaseConfigured()) {
     const supabase = await createClient();
@@ -31,6 +33,10 @@ export default async function SettingsPage() {
         activeId = active.id;
         yardName = active.name;
         yardLocation = active.location?.trim() ?? "";
+        miteIntervalDays =
+          active.mite_check_interval_days != null
+            ? Number(active.mite_check_interval_days)
+            : null;
       } catch {
         // Keep the friendly defaults if the yard row is not ready yet.
       }
@@ -109,6 +115,13 @@ export default async function SettingsPage() {
             </div>
           </CardContent>
         </Card>
+
+        {activeId ? (
+          <MiteIntervalEditor
+            apiaryId={activeId}
+            intervalDays={miteIntervalDays}
+          />
+        ) : null}
       </div>
     </div>
   );

@@ -16,19 +16,10 @@ export function YardWalkChecklist({ items }: YardWalkChecklistProps) {
 
   if (items.length === 0) {
     return (
-      <Card className="fade-up-delay-1 mb-6 border-meadow-400/30 bg-gradient-to-br from-meadow-100/30 to-wax-50">
-        <CardHeader className="pb-2">
-          <CardTitle className="flex items-center gap-2 text-base">
-            <ClipboardList className="h-4 w-4 text-meadow-800" />
-            Yard walk checklist
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-sm text-hive-500">
-            Nothing flagged — your yard looks ready for a routine walk.
-          </p>
-        </CardContent>
-      </Card>
+      <p className="fade-up-delay-1 mb-6 flex items-center gap-2 text-sm text-hive-600">
+        <ClipboardList className="h-4 w-4 text-meadow-800" />
+        Yard looks steady — nothing flagged for today.
+      </p>
     );
   }
 
@@ -40,7 +31,7 @@ export function YardWalkChecklist({ items }: YardWalkChecklistProps) {
         <CardTitle className="flex items-center justify-between gap-2 text-base">
           <span className="flex items-center gap-2">
             <ClipboardList className="h-4 w-4 text-honey-700" />
-            Yard walk checklist
+            Today
           </span>
           <span className="text-xs font-normal text-hive-500">
             {doneCount}/{items.length} done

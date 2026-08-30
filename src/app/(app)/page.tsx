@@ -1,17 +1,15 @@
 import Link from "next/link";
 import { PageHeader } from "@/components/layout/page-header";
 import { YardLede } from "@/components/yards/yard-lede";
-import { SummaryCards } from "@/components/dashboard/summary-cards";
-import { PriorityAlertsBar } from "@/components/dashboard/priority-alerts";
 import { HarvestSummary } from "@/components/dashboard/harvest-summary";
 import { SeasonalAdvice } from "@/components/dashboard/seasonal-advice";
-import { MiteIntervalEditor } from "@/components/dashboard/mite-interval-editor";
 import { SwarmRiskSummary } from "@/components/dashboard/swarm-risk-summary";
 import { YardWalkChecklist } from "@/components/dashboard/yard-walk-checklist";
 import { TreatmentCalendar } from "@/components/dashboard/treatment-calendar";
 import { YardScene } from "@/components/yard/yard-scene";
 import { BrandLogo } from "@/components/brand/brand-logo";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import { createClient } from "@/lib/supabase/server";
 import {
   listHivesForUser,
@@ -28,7 +26,6 @@ import {
   buildHiveAlerts,
   buildTreatmentAlerts,
   mergeAlerts,
-  uniqueHiveCount,
 } from "@/lib/alerts";
 import { buildMiteDueAlerts } from "@/lib/mite-interval";
 import { buildPostTreatmentMiteAlerts } from "@/lib/treatment-followup";
@@ -36,9 +33,7 @@ import { buildSplitFollowupAlerts } from "@/lib/split-followup";
 import { buildSeasonSnapshot } from "@/lib/season-snapshot";
 import { SeasonSnapshotCard } from "@/components/dashboard/season-snapshot";
 import { SeasonMonthlyChart } from "@/components/dashboard/season-monthly-chart";
-import {
-  buildMonthlySeasonPoints,
-} from "@/lib/season-monthly";
+import { buildMonthlySeasonPoints } from "@/lib/season-monthly";
 import { hiveHealthForYard } from "@/lib/hive-health";
 import { buildYardWalkChecklist } from "@/lib/yard-walk-checklist";
 import { fetchLocalWeather, type LocalWeather } from "@/lib/weather";
@@ -200,8 +195,6 @@ export default async function DashboardPage() {
     }
   }
 
-  const activeHives = hives.filter((hive) => hive.status === "active").length;
-  const attentionCount = uniqueHiveCount(alerts);
   const swarmRiskCount = alerts.filter((alert) => alert.kind === "swarm_risk").length;
 
   return (
@@ -212,48 +205,10 @@ export default async function DashboardPage() {
         description="Walk the stand. Tap a hive to open it, or Log to record a visit."
       />
 
-      <div className="fade-up-delay-1 mb-6">
-        <PriorityAlertsBar alerts={alerts} />
-      </div>
-
       <SeasonalAdvice />
       <SwarmRiskSummary highRiskCount={swarmRiskCount} />
-      <SeasonSnapshotCard
-        snapshot={seasonSnapshot}
-        priorSnapshot={priorSeasonSnapshot}
-      />
-      <SeasonMonthlyChart year={seasonSnapshot.year} points={monthlySeasonPoints} />
-      {apiary?.id ? (
-        <MiteIntervalEditor
-          apiaryId={apiary.id}
-          intervalDays={
-            apiary.mite_check_interval_days != null
-              ? Number(apiary.mite_check_interval_days)
-              : null
-          }
-        />
-      ) : null}
 
-      <YardWalkChecklist items={yardWalkItems} />
-
-      <TreatmentCalendar treatments={treatmentCalendar} />
-      <HarvestSummary
-        summary={harvestSummary}
-        goalLbs={
-          apiary?.harvest_goal_lbs != null
-            ? Number(apiary.harvest_goal_lbs)
-            : null
-        }
-        apiaryId={apiary?.id ?? ""}
-      />
-
-      <p className="fade-up-delay-1 mb-6 text-sm text-hive-600">
-        {hives.length === 0
-          ? "Add a colony to start the yard."
-          : `${activeHives} active · ${attentionCount} need a look`}
-      </p>
-
-      <section className="fade-up-delay-2 mb-10">
+      <section className="fade-up-delay-1 mb-8">
         <div className="mb-3 flex items-end justify-between gap-3">
           <div>
             <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-honey-700">
@@ -296,13 +251,36 @@ export default async function DashboardPage() {
         />
       </section>
 
-      <div className="fade-up-delay-3 mb-6">
-        <SummaryCards
-          activeHives={activeHives}
-          totalHives={hives.length}
-          attentionCount={attentionCount}
-        />
-      </div>
+      <YardWalkChecklist items={yardWalkItems} />
+
+      <Card className="fade-up-delay-2 mb-6">
+        <CardContent className="space-y-6 p-5 sm:p-6">
+          <SeasonSnapshotCard
+            snapshot={seasonSnapshot}
+            priorSnapshot={priorSeasonSnapshot}
+            embedded
+          />
+          <SeasonMonthlyChart
+            year={seasonSnapshot.year}
+            points={monthlySeasonPoints}
+            embedded
+          />
+          {apiary?.id ? (
+            <HarvestSummary
+              summary={harvestSummary}
+              goalLbs={
+                apiary.harvest_goal_lbs != null
+                  ? Number(apiary.harvest_goal_lbs)
+                  : null
+              }
+              apiaryId={apiary.id}
+              compact
+            />
+          ) : null}
+        </CardContent>
+      </Card>
+
+      <TreatmentCalendar treatments={treatmentCalendar} />
     </div>
   );
 }

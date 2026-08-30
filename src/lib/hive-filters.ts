@@ -35,6 +35,14 @@ export const HIVE_FILTER_OPTIONS: { key: HiveFilterKey; label: string }[] = [
   { key: "deadout", label: "Deadout" },
 ];
 
+export const PRIMARY_HIVE_FILTERS: HiveFilterKey[] = [
+  "all",
+  "attention",
+  "steady",
+  "overdue",
+  "mites",
+];
+
 export function groupAlertsByHiveId(
   alerts: HiveAlert[]
 ): Map<string, HiveAlert[]> {

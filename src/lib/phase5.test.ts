@@ -3,6 +3,7 @@ import { describe, it } from "node:test";
 import {
   buildSeasonComparison,
   formatSeasonDelta,
+  hasMeaningfulPriorSeason,
 } from "./season-compare.ts";
 import {
   buildMonthlySeasonPoints,
@@ -43,6 +44,22 @@ describe("season compare", () => {
     assert.equal(mites?.improved, null);
     assert.equal(formatSeasonDelta(4), "+4");
     assert.equal(formatSeasonDelta(-2), "-2");
+    assert.equal(hasMeaningfulPriorSeason(prior), true);
+    assert.equal(
+      hasMeaningfulPriorSeason(
+        buildSeasonSnapshot(
+          {
+            inspectionCount: 0,
+            treatmentCount: 0,
+            splitCount: 0,
+            harvestLbs: 0,
+            miteReadings: [],
+          },
+          2025
+        )
+      ),
+      false
+    );
   });
 });
 

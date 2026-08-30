@@ -16,6 +16,7 @@ import { peakMonth } from "@/lib/season-monthly";
 interface SeasonMonthlyChartProps {
   year: number;
   points: MonthlySeasonPoint[];
+  embedded?: boolean;
 }
 
 function ChartTooltip({
@@ -36,53 +37,68 @@ function ChartTooltip({
   );
 }
 
-export function SeasonMonthlyChart({ year, points }: SeasonMonthlyChartProps) {
+export function SeasonMonthlyChart({
+  year,
+  points,
+  embedded = false,
+}: SeasonMonthlyChartProps) {
   const busiest = peakMonth(points, "visits");
   const bestHarvest = peakMonth(points, "harvestLbs");
   const hasActivity = points.some(
     (point) => point.visits > 0 || point.harvestLbs > 0
   );
 
-  return (
-    <Card className="fade-up-delay-2 mb-6 border-wax-300/60">
-      <CardHeader className="pb-2">
-        <CardTitle className="text-base">{year} yard rhythm</CardTitle>
+  const body = (
+    <>
+      <div className="mb-3">
+        <h3 className="font-display text-base font-semibold text-hive-900">
+          {year} yard rhythm
+        </h3>
         <p className="text-sm text-hive-600">
           Visits by month
           {busiest ? ` · busiest ${busiest.label}` : ""}
           {bestHarvest ? ` · top pull ${bestHarvest.label}` : ""}
         </p>
+      </div>
+      {!hasActivity ? (
+        <div className="flex h-36 items-center justify-center rounded-xl border border-dashed border-wax-300/70 bg-white/60 text-sm text-hive-500">
+          Log a few visits and harvests to see your season shape.
+        </div>
+      ) : (
+        <div className="h-40">
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={points} margin={{ top: 8, right: 8, left: -18, bottom: 0 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="rgba(212,184,120,0.35)" />
+              <XAxis
+                dataKey="label"
+                tick={{ fontSize: 11, fill: "#8a7a64" }}
+              />
+              <YAxis
+                allowDecimals={false}
+                tick={{ fontSize: 11, fill: "#8a7a64" }}
+              />
+              <Tooltip content={<ChartTooltip />} />
+              <Bar
+                dataKey="visits"
+                fill="#d4921c"
+                radius={[4, 4, 0, 0]}
+                maxBarSize={28}
+              />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      )}
+    </>
+  );
+
+  if (embedded) return <div>{body}</div>;
+
+  return (
+    <Card className="fade-up-delay-2 mb-6">
+      <CardHeader className="pb-2">
+        <CardTitle className="sr-only">{year} yard rhythm</CardTitle>
       </CardHeader>
-      <CardContent>
-        {!hasActivity ? (
-          <div className="flex h-44 items-center justify-center rounded-xl border border-dashed border-wax-300/70 bg-wax-50/40 text-sm text-hive-500">
-            Log a few visits and harvests to see your season shape.
-          </div>
-        ) : (
-          <div className="h-44">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={points} margin={{ top: 8, right: 8, left: -18, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(212,184,120,0.35)" />
-                <XAxis
-                  dataKey="label"
-                  tick={{ fontSize: 11, fill: "#8a7a64" }}
-                />
-                <YAxis
-                  allowDecimals={false}
-                  tick={{ fontSize: 11, fill: "#8a7a64" }}
-                />
-                <Tooltip content={<ChartTooltip />} />
-                <Bar
-                  dataKey="visits"
-                  fill="#d4921c"
-                  radius={[4, 4, 0, 0]}
-                  maxBarSize={28}
-                />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        )}
-      </CardContent>
+      <CardContent>{body}</CardContent>
     </Card>
   );
 }

@@ -63,3 +63,16 @@ export function formatSeasonDelta(delta: number | null): string {
   if (delta > 0) return `+${delta}`;
   return String(delta);
 }
+
+export function hasMeaningfulPriorSeason(
+  prior: SeasonSnapshot | null | undefined
+): boolean {
+  if (!prior) return false;
+  return (
+    prior.inspectionCount > 0 ||
+    prior.treatmentCount > 0 ||
+    prior.splitCount > 0 ||
+    prior.harvestLbs > 0 ||
+    prior.avgMitePer100 != null
+  );
+}

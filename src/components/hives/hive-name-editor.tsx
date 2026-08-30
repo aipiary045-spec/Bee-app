@@ -12,9 +12,14 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 interface HiveNameEditorProps {
   hiveId: string;
   name: string;
+  embedded?: boolean;
 }
 
-export function HiveNameEditor({ hiveId, name }: HiveNameEditorProps) {
+export function HiveNameEditor({
+  hiveId,
+  name,
+  embedded = false,
+}: HiveNameEditorProps) {
   const router = useRouter();
   const [value, setValue] = useState(name);
   const [pending, startTransition] = useTransition();
@@ -38,6 +43,40 @@ export function HiveNameEditor({ hiveId, name }: HiveNameEditorProps) {
     });
   }
 
+  const fields = (
+    <div className="space-y-3">
+      <div className="space-y-2">
+        <Label htmlFor="hive-name" className="text-xs text-hive-500">
+          Name or number on the yard stand
+        </Label>
+        <Input
+          id="hive-name"
+          value={value}
+          onChange={(event) => {
+            setValue(event.target.value);
+            setSaved(false);
+          }}
+          placeholder="North 3, Victory, Roger Woods South…"
+          autoComplete="off"
+        />
+      </div>
+      <div className="flex items-center gap-3">
+        <Button
+          type="button"
+          size="sm"
+          onClick={onSave}
+          disabled={pending || value.trim() === name.trim()}
+        >
+          {pending ? <Loader2 className="h-4 w-4 animate-spin" /> : "Save name"}
+        </Button>
+        {saved && <p className="text-xs text-meadow-800">Saved</p>}
+        {error && <p className="text-xs text-crimson-600">{error}</p>}
+      </div>
+    </div>
+  );
+
+  if (embedded) return fields;
+
   return (
     <Card className="fade-up-delay-1 mb-6">
       <CardHeader className="pb-2">
@@ -46,35 +85,7 @@ export function HiveNameEditor({ hiveId, name }: HiveNameEditorProps) {
           Hive name
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-3">
-        <div className="space-y-2">
-          <Label htmlFor="hive-name" className="text-xs text-hive-500">
-            Name or number on the yard stand
-          </Label>
-          <Input
-            id="hive-name"
-            value={value}
-            onChange={(event) => {
-              setValue(event.target.value);
-              setSaved(false);
-            }}
-            placeholder="North 3, Victory, Roger Woods South…"
-            autoComplete="off"
-          />
-        </div>
-        <div className="flex items-center gap-3">
-          <Button
-            type="button"
-            size="sm"
-            onClick={onSave}
-            disabled={pending || value.trim() === name.trim()}
-          >
-            {pending ? <Loader2 className="h-4 w-4 animate-spin" /> : "Save name"}
-          </Button>
-          {saved && <p className="text-xs text-meadow-800">Saved</p>}
-          {error && <p className="text-xs text-crimson-600">{error}</p>}
-        </div>
-      </CardContent>
+      <CardContent>{fields}</CardContent>
     </Card>
   );
 }
