@@ -674,3 +674,48 @@ export async function getSeasonSnapshotDataForHives(
     miteReadings: [...miteFromInspections, ...miteFromWashes],
   };
 }
+
+export async function getMonthlySeasonActivityForHives(
+  hiveIds: string[],
+  year = new Date().getFullYear()
+) {
+  const visits = Array.from({ length: 12 }, () => 0);
+  const harvestLbs = Array.from({ length: 12 }, () => 0);
+
+  if (hiveIds.length === 0) {
+    return { visits, harvestLbs };
+  }
+
+  const supabase = await createClient();
+  const start = `${year}-01-01`;
+  const end = `${year}-12-31`;
+
+  const [inspections, harvest] = await Promise.all([
+    supabase
+      .from("inspections")
+      .select("date")
+      .in("hive_id", hiveIds)
+      .gte("date", start)
+      .lte("date", end),
+    supabase
+      .from("honey_yields")
+      .select("harvest_date, weight_lbs")
+      .in("hive_id", hiveIds)
+      .gte("harvest_date", start)
+      .lte("harvest_date", end),
+  ]);
+
+  for (const row of inspections.data ?? []) {
+    const month = Number(row.date?.slice(5, 7));
+    if (month >= 1 && month <= 12) visits[month - 1] += 1;
+  }
+
+  for (const row of harvest.data ?? []) {
+    const month = Number(row.harvest_date?.slice(5, 7));
+    if (month >= 1 && month <= 12) {
+      harvestLbs[month - 1] += Number(row.weight_lbs);
+    }
+  }
+
+  return { visits, harvestLbs };
+}
