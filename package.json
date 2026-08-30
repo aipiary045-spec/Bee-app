@@ -9,7 +9,8 @@
     "lint": "next lint",
     "test": "node --experimental-strip-types --test src/lib/*.test.ts",
     "db:types": "supabase gen types typescript --local > src/types/database.ts",
-    "db:migrate": "node scripts/run-migrations.mjs"
+    "db:migrate": "node scripts/run-migrations.mjs",
+    "db:restore-supers": "node scripts/restore-legacy-supers.mjs"
   },
   "dependencies": {
     "@radix-ui/react-dialog": "^1.1.6",
@@ -42,6 +43,7 @@
     "eslint": "^9.22.0",
     "eslint-config-next": "^15.2.1",
     "tailwindcss": "^4.0.12",
-    "typescript": "^5.8.2"
+    "typescript": "^5.8.2",
+    "vercel": "^59.10.0"
   }
 }

@@ -11,6 +11,9 @@ const UA =
   "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36";
 
 const PENDING = [
+  "20260814000000_hive_supers.sql",
+  "20260815000000_super_types.sql",
+  "20260815120000_ensure_supers.sql",
   "20260830100000_phase1_features.sql",
   "20260831100000_phase2_field_workflow.sql",
   "20260901100000_phase3_lifecycle_reminders.sql",
@@ -42,6 +45,7 @@ async function runViaManagementApi(token, projectRef, files) {
 
 async function verify(token, projectRef) {
   const checks = [
+    "SELECT column_name FROM information_schema.columns WHERE table_name='hives' AND column_name='medium_count'",
     "SELECT column_name FROM information_schema.columns WHERE table_name='hives' AND column_name='notes'",
     "SELECT column_name FROM information_schema.columns WHERE table_name='inspections' AND column_name='split_type'",
     "SELECT column_name FROM information_schema.columns WHERE table_name='hives' AND column_name='queen_introduced_date'",
