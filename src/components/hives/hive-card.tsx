@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ClipboardList, QrCode } from "lucide-react";
+import { ClipboardList } from "lucide-react";
 import { YardHive } from "@/components/yard/yard-hive";
 import { formatSuperInventory, hiveSuperInventory } from "@/lib/supers";
 import { hiveHealthToneClass } from "@/lib/hive-health";
@@ -40,13 +40,13 @@ export function HiveCard({ hive, healthTone, className }: HiveCardProps) {
         className
       )}
     >
-      <Link href={`/hives/${hive.id}`} className="flex flex-1 flex-col p-4">
+      <Link href={`/hives/${hive.id}`} className="flex flex-1 flex-col p-3">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
-            <p className="font-display text-lg font-semibold text-hive-900">
+            <p className="font-display text-base font-semibold text-hive-900">
               {hive.name}
             </p>
-            <p className="mt-1 text-sm text-hive-600">
+            <p className="mt-0.5 text-xs text-hive-600">
               <span className="capitalize">{hive.status}</span>
               <span className="mx-1.5 text-hive-400">·</span>
               {formatSuperInventory(inventory)}
@@ -61,17 +61,10 @@ export function HiveCard({ hive, healthTone, className }: HiveCardProps) {
           </div>
         </div>
       </Link>
-      <div className="grid grid-cols-2 border-t border-wax-300/50">
-        <Link
-          href={`/hives/${hive.id}/qr`}
-          className="inline-flex items-center justify-center gap-1 px-2 py-2.5 text-center text-xs font-semibold text-hive-700 transition-colors hover:bg-honey-50/80 hover:text-honey-800"
-        >
-          <QrCode className="h-3.5 w-3.5" />
-          Tag
-        </Link>
+      <div className="border-t border-wax-300/50">
         <Link
           href={`/inspect?hive=${hive.id}`}
-          className="inline-flex items-center justify-center gap-1 border-l border-wax-300/50 bg-honey-500/10 px-2 py-2.5 text-center text-xs font-semibold text-honey-800 transition-colors hover:bg-honey-500/20"
+          className="inline-flex w-full items-center justify-center gap-1 bg-honey-500/10 px-2 py-2 text-center text-xs font-semibold text-honey-800 transition-colors hover:bg-honey-500/20"
         >
           <ClipboardList className="h-3.5 w-3.5" />
           Log

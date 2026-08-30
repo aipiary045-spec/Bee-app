@@ -12,9 +12,12 @@ function inspectHref(pathname: string) {
 
 export function QuickLogFab() {
   const pathname = usePathname();
-  const onInspect = pathname.startsWith("/inspect");
-  const onSettings = pathname.startsWith("/settings");
-  if (onInspect || onSettings) return null;
+  const hideOn =
+    pathname === "/" ||
+    pathname === "/hives" ||
+    pathname.startsWith("/inspect") ||
+    pathname.startsWith("/settings");
+  if (hideOn) return null;
 
   return (
     <Link

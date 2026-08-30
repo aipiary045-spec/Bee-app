@@ -1,8 +1,7 @@
-import { MapPin, Moon, User } from "lucide-react";
+import { MapPin, User } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { SignOutButton } from "@/components/auth/sign-out-button";
-import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { YardForm } from "@/components/settings/yard-form";
 import { AddYardForm } from "@/components/settings/add-yard-form";
 import { YardSwitcher } from "@/components/yards/yard-switcher";
@@ -45,10 +44,7 @@ export default async function SettingsPage() {
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-6 sm:px-6">
-      <PageHeader
-        title="Settings"
-        description="Your account, how the app looks at the stand, and every yard you keep."
-      />
+      <PageHeader title="Settings" />
 
       <div className="stagger-in space-y-4">
         <Card id="account">
@@ -66,27 +62,6 @@ export default async function SettingsPage() {
               </span>
             </div>
             <SignOutButton className="w-full sm:w-auto" />
-          </CardContent>
-        </Card>
-
-        <Card id="look">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Moon className="h-5 w-5 text-honey-600" />
-              Look
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <div>
-                <p className="text-sm font-medium text-hive-900">Field dark</p>
-                <p className="mt-1 text-sm text-hive-600">
-                  Bigger type and higher contrast for the stand. Honey and wax
-                  stay the usual look until you switch.
-                </p>
-              </div>
-              <ThemeToggle className="shrink-0" />
-            </div>
           </CardContent>
         </Card>
 

@@ -1,6 +1,9 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { buildYardWalkChecklist } from "./yard-walk-checklist.ts";
+import {
+  buildYardWalkChecklist,
+  groupYardWalkByHive,
+} from "./yard-walk-checklist.ts";
 import type { HiveAlert } from "./alerts.ts";
 
 describe("buildYardWalkChecklist", () => {
@@ -54,5 +57,66 @@ describe("buildYardWalkChecklist", () => {
     );
     assert.equal(items.length, 1);
     assert.match(items[0]?.message ?? "", /pull due today/);
+  });
+});
+
+describe("groupYardWalkByHive", () => {
+  it("groups flags for the same hive into one row", () => {
+    const groups = groupYardWalkByHive([
+      {
+        id: "a-overdue",
+        hiveId: "a",
+        hiveName: "Roger Woods North",
+        message: "Overdue for a look",
+        severity: "warning",
+        href: "/inspect?hive=a",
+      },
+      {
+        id: "a-treat",
+        hiveId: "a",
+        hiveName: "Roger Woods North",
+        message: "Apiguard pull due today",
+        severity: "warning",
+        href: "/hives/a#treatments",
+      },
+      {
+        id: "b-mites",
+        hiveId: "b",
+        hiveName: "Victory",
+        message: "Mites high",
+        severity: "danger",
+        href: "/hives/b#mites",
+      },
+    ]);
+
+    assert.equal(groups.length, 2);
+    assert.equal(groups[0]?.hiveName, "Roger Woods North");
+    assert.equal(groups[0]?.items.length, 2);
+    assert.equal(groups[1]?.hiveName, "Victory");
+    assert.equal(groups[1]?.items.length, 1);
+  });
+
+  it("raises the group to danger when any flag is danger", () => {
+    const groups = groupYardWalkByHive([
+      {
+        id: "a-overdue",
+        hiveId: "a",
+        hiveName: "Hive A",
+        message: "Overdue",
+        severity: "warning",
+        href: "/hives/a",
+      },
+      {
+        id: "a-mites",
+        hiveId: "a",
+        hiveName: "Hive A",
+        message: "Mites high",
+        severity: "danger",
+        href: "/hives/a#mites",
+      },
+    ]);
+
+    assert.equal(groups.length, 1);
+    assert.equal(groups[0]?.severity, "danger");
   });
 });

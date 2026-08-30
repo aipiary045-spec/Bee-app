@@ -17,6 +17,7 @@ import { LogHarvestDialog } from "@/components/hives/log-harvest-dialog";
 import { StartTreatmentDialog } from "@/components/hives/start-treatment-dialog";
 import { CompleteTreatmentButton } from "@/components/hives/complete-treatment-button";
 import { ColonyCard } from "@/components/hives/colony-card";
+import { RecordsAccordion } from "@/components/hives/records-accordion";
 import { InspectionList } from "@/components/hives/inspection-list";
 import { HealthCharts } from "@/components/hives/health-charts";
 import { QueenTimeline } from "@/components/hives/queen-timeline";
@@ -285,6 +286,7 @@ export default async function HiveDetailPage({ params }: HiveDetailPageProps) {
             }))}
           />
 
+        <RecordsAccordion>
           <Card id="inspections">
             <CardHeader className="pb-2">
               <CardTitle className="flex items-center justify-between gap-2 text-base">
@@ -508,6 +510,7 @@ export default async function HiveDetailPage({ params }: HiveDetailPageProps) {
               )}
             </CardContent>
           </Card>
+        </RecordsAccordion>
       </div>
     </div>
   );

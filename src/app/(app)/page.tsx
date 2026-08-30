@@ -9,7 +9,7 @@ import { TreatmentCalendar } from "@/components/dashboard/treatment-calendar";
 import { YardScene } from "@/components/yard/yard-scene";
 import { BrandLogo } from "@/components/brand/brand-logo";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { SeasonPanel } from "@/components/dashboard/season-panel";
 import { createClient } from "@/lib/supabase/server";
 import {
   listHivesForUser,
@@ -202,85 +202,81 @@ export default async function DashboardPage() {
       <PageHeader
         eyebrow={<YardLede />}
         title="Home"
-        description="Walk the stand. Tap a hive to open it, or Log to record a visit."
-      />
-
-      <SeasonalAdvice />
-      <SwarmRiskSummary highRiskCount={swarmRiskCount} />
-
-      <section className="fade-up-delay-1 mb-8">
-        <div className="mb-3 flex items-end justify-between gap-3">
-          <div>
-            <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-honey-700">
-              The stand
-            </p>
-            <h2 className="font-display mt-1 text-2xl font-semibold text-hive-900">
-              Yard
-            </h2>
-          </div>
+        actions={
           <Link
             href="/hives"
             className="text-sm font-semibold text-honey-700 transition-colors hover:text-honey-600"
           >
             Manage →
           </Link>
+        }
+      />
+
+      <SeasonalAdvice />
+      <SwarmRiskSummary highRiskCount={swarmRiskCount} />
+
+      <div className="lg:grid lg:grid-cols-2 lg:items-start lg:gap-6">
+        <div>
+          <section className="fade-up-delay-1 mb-6">
+            <YardScene
+              hives={hives}
+              weather={weather}
+              yardLocation={user ? yardLocation : undefined}
+              showWeather
+              hiveHealth={hiveHealth}
+              empty={
+                <div className="text-center">
+                  <div className="mx-auto mb-4 flex justify-center">
+                    <BrandLogo size={64} className="h-14 w-14" />
+                  </div>
+                  <p className="font-display text-lg font-semibold text-hive-900">
+                    Empty stand
+                  </p>
+                  <p className="mx-auto mt-2 max-w-md text-sm text-hive-700">
+                    Add a colony and it will show up here with the supers on it.
+                  </p>
+                  <Button className="mt-5" asChild>
+                    <Link href="/hives">Add a hive</Link>
+                  </Button>
+                </div>
+              }
+            />
+          </section>
+
+          <YardWalkChecklist items={yardWalkItems} />
         </div>
 
-        <YardScene
-          hives={hives}
-          weather={weather}
-          yardLocation={user ? yardLocation : undefined}
-          showWeather
-          hiveHealth={hiveHealth}
-          empty={
-            <div className="text-center">
-              <div className="mx-auto mb-4 flex justify-center">
-                <BrandLogo size={64} className="h-14 w-14" />
-              </div>
-              <p className="font-display text-lg font-semibold text-hive-900">
-                Empty stand
-              </p>
-              <p className="mx-auto mt-2 max-w-md text-sm text-hive-700">
-                Add a colony and it will show up here with the supers on it.
-              </p>
-              <Button className="mt-5" asChild>
-                <Link href="/hives">Add a hive</Link>
-              </Button>
-            </div>
-          }
-        />
-      </section>
-
-      <YardWalkChecklist items={yardWalkItems} />
-
-      <Card className="fade-up-delay-2 mb-6">
-        <CardContent className="space-y-6 p-5 sm:p-6">
-          <SeasonSnapshotCard
-            snapshot={seasonSnapshot}
-            priorSnapshot={priorSeasonSnapshot}
-            embedded
-          />
-          <SeasonMonthlyChart
-            year={seasonSnapshot.year}
-            points={monthlySeasonPoints}
-            embedded
-          />
-          {apiary?.id ? (
-            <HarvestSummary
-              summary={harvestSummary}
-              goalLbs={
-                apiary.harvest_goal_lbs != null
-                  ? Number(apiary.harvest_goal_lbs)
-                  : null
-              }
-              apiaryId={apiary.id}
-              compact
+        <div>
+          <SeasonPanel
+            summary={`${seasonSnapshot.year} · ${seasonSnapshot.inspectionCount} visits · ${seasonSnapshot.harvestLbs} lbs`}
+          >
+            <SeasonSnapshotCard
+              snapshot={seasonSnapshot}
+              priorSnapshot={priorSeasonSnapshot}
+              embedded
             />
-          ) : null}
-        </CardContent>
-      </Card>
+            <SeasonMonthlyChart
+              year={seasonSnapshot.year}
+              points={monthlySeasonPoints}
+              embedded
+            />
+            {apiary?.id ? (
+              <HarvestSummary
+                summary={harvestSummary}
+                goalLbs={
+                  apiary.harvest_goal_lbs != null
+                    ? Number(apiary.harvest_goal_lbs)
+                    : null
+                }
+                apiaryId={apiary.id}
+                compact
+              />
+            ) : null}
+          </SeasonPanel>
 
-      <TreatmentCalendar treatments={treatmentCalendar} />
+          <TreatmentCalendar treatments={treatmentCalendar} />
+        </div>
+      </div>
     </div>
   );
 }

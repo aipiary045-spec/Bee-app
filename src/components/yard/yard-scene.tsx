@@ -145,19 +145,23 @@ export function YardScene({
                   ) : (
                     <div>{stack}</div>
                   )}
-                  {interactive ? (
-                    <Link
-                      href={`/inspect?hive=${hive.id}`}
-                      className="inline-flex items-center gap-1 rounded-full border border-honey-500/40 bg-wax-50/80 px-2.5 py-1 text-[11px] font-semibold text-honey-800 backdrop-blur-sm hover:bg-honey-100"
-                    >
-                      <ClipboardList className="h-3 w-3" />
-                      Log
-                    </Link>
+                  {index === activeIndex ? (
+                    interactive ? (
+                      <Link
+                        href={`/inspect?hive=${hive.id}`}
+                        className="inline-flex items-center gap-1 rounded-full border border-honey-500/40 bg-wax-50/80 px-2.5 py-1 text-[11px] font-semibold text-honey-800 backdrop-blur-sm hover:bg-honey-100"
+                      >
+                        <ClipboardList className="h-3 w-3" />
+                        Log
+                      </Link>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 rounded-full border border-honey-500/40 bg-wax-50/80 px-2.5 py-1 text-[11px] font-semibold text-honey-800">
+                        <ClipboardList className="h-3 w-3" />
+                        Log
+                      </span>
+                    )
                   ) : (
-                    <span className="inline-flex items-center gap-1 rounded-full border border-honey-500/40 bg-wax-50/80 px-2.5 py-1 text-[11px] font-semibold text-honey-800">
-                      <ClipboardList className="h-3 w-3" />
-                      Log
-                    </span>
+                    <span className="h-6" aria-hidden />
                   )}
                 </div>
               );
