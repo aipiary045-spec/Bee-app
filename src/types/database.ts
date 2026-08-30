@@ -17,6 +17,7 @@ export type Database = {
           location: string;
           description: string | null;
           harvest_goal_lbs: number | null;
+          mite_check_interval_days: number | null;
           created_at: string;
           updated_at: string;
         };
@@ -27,6 +28,7 @@ export type Database = {
           location?: string;
           description?: string | null;
           harvest_goal_lbs?: number | null;
+          mite_check_interval_days?: number | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -37,6 +39,7 @@ export type Database = {
           location?: string;
           description?: string | null;
           harvest_goal_lbs?: number | null;
+          mite_check_interval_days?: number | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -53,6 +56,7 @@ export type Database = {
           medium_count: number;
           shallow_count: number;
           notes: string | null;
+          queen_introduced_date: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -66,6 +70,7 @@ export type Database = {
           medium_count?: number;
           shallow_count?: number;
           notes?: string | null;
+          queen_introduced_date?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -79,6 +84,7 @@ export type Database = {
           medium_count?: number;
           shallow_count?: number;
           notes?: string | null;
+          queen_introduced_date?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -121,6 +127,7 @@ export type Database = {
           action_treatment: boolean;
           split_type: Database["public"]["Enums"]["split_type"] | null;
           split_destination: string | null;
+          queen_cells_seen: boolean;
           supers_added: number;
           supers_removed: number;
           super_count_after: number | null;
@@ -157,6 +164,7 @@ export type Database = {
           action_treatment?: boolean;
           split_type?: Database["public"]["Enums"]["split_type"] | null;
           split_destination?: string | null;
+          queen_cells_seen?: boolean;
           supers_added?: number;
           supers_removed?: number;
           super_count_after?: number | null;
@@ -193,6 +201,7 @@ export type Database = {
           action_treatment?: boolean;
           split_type?: Database["public"]["Enums"]["split_type"] | null;
           split_destination?: string | null;
+          queen_cells_seen?: boolean;
           supers_added?: number;
           supers_removed?: number;
           super_count_after?: number | null;
@@ -219,6 +228,7 @@ export type Database = {
           status: Database["public"]["Enums"]["queen_status"];
           mark_color: Database["public"]["Enums"]["queen_mark_color"] | null;
           notes: string | null;
+          event_date: string;
           created_at: string;
         };
         Insert: {
@@ -228,6 +238,7 @@ export type Database = {
           status: Database["public"]["Enums"]["queen_status"];
           mark_color?: Database["public"]["Enums"]["queen_mark_color"] | null;
           notes?: string | null;
+          event_date?: string;
           created_at?: string;
         };
         Update: {
@@ -237,6 +248,7 @@ export type Database = {
           status?: Database["public"]["Enums"]["queen_status"];
           mark_color?: Database["public"]["Enums"]["queen_mark_color"] | null;
           notes?: string | null;
+          event_date?: string;
           created_at?: string;
         };
         Relationships: [
@@ -307,6 +319,8 @@ export type Database = {
           dosage: string | null;
           status: Database["public"]["Enums"]["treatment_status"];
           notes: string | null;
+          completed_at: string | null;
+          mite_retest_due_date: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -319,6 +333,8 @@ export type Database = {
           dosage?: string | null;
           status?: Database["public"]["Enums"]["treatment_status"];
           notes?: string | null;
+          completed_at?: string | null;
+          mite_retest_due_date?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -331,6 +347,8 @@ export type Database = {
           dosage?: string | null;
           status?: Database["public"]["Enums"]["treatment_status"];
           notes?: string | null;
+          completed_at?: string | null;
+          mite_retest_due_date?: string | null;
           created_at?: string;
           updated_at?: string;
         };

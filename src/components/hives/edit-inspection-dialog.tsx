@@ -70,6 +70,9 @@ export function EditInspectionDialog({
   const [splitDestination, setSplitDestination] = useState(
     inspection.split_destination ?? ""
   );
+  const [queenCellsSeen, setQueenCellsSeen] = useState(
+    inspection.queen_cells_seen ?? false
+  );
   const [notes, setNotes] = useState(inspection.notes ?? "");
 
   function onSubmit(e: React.FormEvent) {
@@ -91,6 +94,7 @@ export function EditInspectionDialog({
         actionSplit: inspection.action_split,
         splitType: splitType || null,
         splitDestination,
+        queenCellsSeen,
         notes,
       });
       if (!result.ok) {
@@ -211,6 +215,15 @@ export function EditInspectionDialog({
               </select>
             </div>
           </div>
+          <label className="flex items-center gap-2 text-sm text-hive-700">
+            <input
+              type="checkbox"
+              checked={queenCellsSeen}
+              onChange={(event) => setQueenCellsSeen(event.target.checked)}
+              className="h-4 w-4 rounded border-wax-400"
+            />
+            Queen cells seen
+          </label>
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <Label htmlFor="edit-mite-method" className="text-xs">

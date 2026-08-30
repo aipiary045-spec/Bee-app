@@ -65,6 +65,17 @@ const queenSightedOptions: {
   { value: "uncertain", label: "Uncertain" },
 ];
 
+const queenStatusOptions: {
+  value: Enums<"queen_status">;
+  label: string;
+}[] = [
+  { value: "laying", label: "Laying" },
+  { value: "marked", label: "Marked" },
+  { value: "virgin", label: "Virgin" },
+  { value: "cell_check", label: "Cells checked" },
+  { value: "replaced", label: "Replaced" },
+];
+
 const markColors: { value: Enums<"queen_mark_color">; label: string }[] = [
   { value: "unmarked", label: "Unmarked" },
   { value: "white", label: "White" },
@@ -233,8 +244,11 @@ export function QuickLogForm({
 
   const [queenSighted, setQueenSighted] =
     useState<Enums<"queen_sighted">>("yes");
+  const [queenStatus, setQueenStatus] =
+    useState<Enums<"queen_status">>("laying");
   const [queenMarkColor, setQueenMarkColor] =
     useState<Enums<"queen_mark_color">>("unmarked");
+  const [queenCellsSeen, setQueenCellsSeen] = useState(false);
   const [eggsLarvae, setEggsLarvae] =
     useState<Enums<"eggs_larvae_status">>("eggs_and_larvae");
   const [broodPattern, setBroodPattern] =
@@ -351,7 +365,9 @@ export function QuickLogForm({
         weather,
         temperatureF,
         queenSighted,
+        queenStatus,
         queenMarkColor,
+        queenCellsSeen,
         eggsLarvae,
         broodPattern,
         temperament,
@@ -669,6 +685,23 @@ export function QuickLogForm({
               ))}
             </select>
           </div>
+          <div className="space-y-1.5">
+            <Label className="text-xs">Queen status</Label>
+            <Segmented
+              value={queenStatus}
+              options={queenStatusOptions}
+              onChange={setQueenStatus}
+            />
+          </div>
+          <label className="flex items-center gap-2 text-sm text-hive-700">
+            <input
+              type="checkbox"
+              checked={queenCellsSeen}
+              onChange={(event) => setQueenCellsSeen(event.target.checked)}
+              className="h-4 w-4 rounded border-wax-400"
+            />
+            Queen cells seen
+          </label>
           <div className="space-y-1.5">
             <Label htmlFor="eggs" className="text-xs">
               Eggs & larvae

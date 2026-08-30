@@ -20,6 +20,7 @@ import {
 } from "@/lib/supers";
 import { isMissingColumnError } from "@/lib/hive-stack-store";
 import { getTreatmentCatalogItem } from "@/lib/treatments";
+import { shouldUpdateQueenIntroduced } from "@/lib/queen-lifecycle";
 import type { Enums, TablesInsert, TablesUpdate } from "@/types/database";
 
 export type QuickLogExpenseInput = {
@@ -34,7 +35,9 @@ export type QuickLogInput = {
   weather: string;
   temperatureF: string;
   queenSighted: Enums<"queen_sighted">;
+  queenStatus: Enums<"queen_status">;
   queenMarkColor: Enums<"queen_mark_color">;
+  queenCellsSeen: boolean;
   eggsLarvae: Enums<"eggs_larvae_status">;
   broodPattern: Enums<"brood_pattern">;
   temperament: Enums<"temperament">;
@@ -224,6 +227,7 @@ export async function createInspectionAction(
         input.actionSplit && input.splitDestination.trim()
           ? input.splitDestination.trim()
           : null,
+      queen_cells_seen: input.queenCellsSeen,
       action_treatment: treatmentStarted || input.actionTreatment,
       supers_added: supersAdded,
       supers_removed: supersRemoved,
@@ -283,13 +287,23 @@ export async function createInspectionAction(
     }
 
     if (input.queenSighted === "yes" || input.queenMarkColor !== "unmarked") {
+      const queenStatus =
+        input.queenSighted === "yes" ? input.queenStatus : "cell_check";
       await supabase.from("queen_logs").insert({
         hive_id: input.hiveId,
         inspection_id: inspection.id,
-        status: "laying",
+        status: queenStatus,
         mark_color: input.queenMarkColor,
+        event_date: input.date,
         notes: null,
       });
+
+      if (shouldUpdateQueenIntroduced(queenStatus)) {
+        await supabase
+          .from("hives")
+          .update({ queen_introduced_date: input.date })
+          .eq("id", input.hiveId);
+      }
     }
 
     if (parsedExpenses.length > 0) {
@@ -359,6 +373,7 @@ export type UpdateInspectionInput = {
   actionSplit: boolean;
   splitType: Enums<"split_type"> | null;
   splitDestination: string;
+  queenCellsSeen: boolean;
   notes: string;
 };
 
@@ -415,6 +430,7 @@ export async function updateInspectionAction(
       input.actionSplit && input.splitDestination.trim()
         ? input.splitDestination.trim()
         : null,
+    queen_cells_seen: input.queenCellsSeen,
     notes: input.notes.trim() || null,
   };
 

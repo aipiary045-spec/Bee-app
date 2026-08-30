@@ -165,6 +165,10 @@ export function formatInspectionLogLines(inspection: Inspection): string[] {
     lines.push(pestLabels[inspection.pests_diseases]);
   }
 
+  if (inspection.queen_cells_seen) {
+    lines.push("Queen cells seen");
+  }
+
   const splitLine = formatSplitLog(
     inspection.split_type,
     inspection.split_destination

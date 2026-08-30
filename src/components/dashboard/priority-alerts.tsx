@@ -8,6 +8,7 @@ import {
   Crown,
   FlaskConical,
   ShieldAlert,
+  Timer,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import type { HiveAlert } from "@/lib/alerts";
@@ -15,8 +16,12 @@ import type { HiveAlert } from "@/lib/alerts";
 const icons = {
   deadout: ShieldAlert,
   mites: Bug,
+  mite_due: Bug,
+  mite_retest: Timer,
   disease: ShieldAlert,
   queen: Crown,
+  queen_age: Crown,
+  swarm_risk: AlertTriangle,
   overdue: AlertTriangle,
   never_inspected: ClipboardList,
   treatment: FlaskConical,

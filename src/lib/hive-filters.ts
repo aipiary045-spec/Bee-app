@@ -7,7 +7,10 @@ export type HiveFilterKey =
   | "deadout"
   | "overdue"
   | "mites"
+  | "mite_due"
   | "queen"
+  | "queen_age"
+  | "swarm"
   | "treatment";
 
 export type HiveFilterInput = {
@@ -22,7 +25,10 @@ export const HIVE_FILTER_OPTIONS: { key: HiveFilterKey; label: string }[] = [
   { key: "steady", label: "Steady" },
   { key: "overdue", label: "Overdue visit" },
   { key: "mites", label: "Mites" },
+  { key: "mite_due", label: "Mite check due" },
   { key: "queen", label: "Queen" },
+  { key: "queen_age", label: "Aging queen" },
+  { key: "swarm", label: "Swarm risk" },
   { key: "treatment", label: "Treatment" },
   { key: "deadout", label: "Deadout" },
 ];
@@ -66,10 +72,16 @@ export function hiveMatchesFilter(
       return kinds.has("overdue") || kinds.has("never_inspected");
     case "mites":
       return kinds.has("mites");
+    case "mite_due":
+      return kinds.has("mite_due") || kinds.has("mite_retest");
     case "queen":
       return kinds.has("queen");
+    case "queen_age":
+      return kinds.has("queen_age");
+    case "swarm":
+      return kinds.has("swarm_risk");
     case "treatment":
-      return kinds.has("treatment");
+      return kinds.has("treatment") || kinds.has("mite_retest");
     default:
       return true;
   }

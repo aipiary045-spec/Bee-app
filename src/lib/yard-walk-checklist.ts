@@ -1,5 +1,5 @@
-import type { HiveAlert } from "./alerts.ts";
-import { daysSince } from "./alerts.ts";
+import type { HiveAlert } from "./alerts";
+import { daysSince } from "./alerts";
 
 export type YardWalkItem = {
   id: string;

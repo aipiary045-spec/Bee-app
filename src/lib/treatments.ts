@@ -3,6 +3,7 @@ export type TreatmentCatalogItem = {
   name: string;
   defaultDays: number;
   dosage: string;
+  postTreatmentMiteCheckDays: number;
 };
 
 export const TREATMENT_CATALOG: TreatmentCatalogItem[] = [
@@ -11,35 +12,47 @@ export const TREATMENT_CATALOG: TreatmentCatalogItem[] = [
     name: "Apivar",
     defaultDays: 42,
     dosage: "2 strips / brood box",
+    postTreatmentMiteCheckDays: 21,
   },
   {
     id: "formic-pro",
     name: "Formic Pro",
     defaultDays: 14,
     dosage: "2 pads, 14-day",
+    postTreatmentMiteCheckDays: 14,
   },
   {
     id: "apiguard",
     name: "Apiguard",
     defaultDays: 28,
     dosage: "50g tray × 2",
+    postTreatmentMiteCheckDays: 21,
   },
   {
     id: "oa-vapor",
     name: "OA vapor",
     defaultDays: 7,
     dosage: "1g / brood box",
+    postTreatmentMiteCheckDays: 14,
   },
   {
     id: "hopguard",
     name: "HopGuard",
     defaultDays: 14,
     dosage: "2 strips / brood box",
+    postTreatmentMiteCheckDays: 14,
   },
 ];
 
 export function getTreatmentCatalogItem(id: string) {
   return TREATMENT_CATALOG.find((item) => item.id === id) ?? null;
+}
+
+export function postTreatmentMiteCheckDays(productName: string): number {
+  const match = TREATMENT_CATALOG.find(
+    (item) => item.name.toLowerCase() === productName.toLowerCase()
+  );
+  return match?.postTreatmentMiteCheckDays ?? 21;
 }
 
 export function addDaysISO(dateISO: string, days: number): string {
