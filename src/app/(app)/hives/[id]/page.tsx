@@ -16,7 +16,7 @@ import { HiveStackEditor } from "@/components/hives/hive-stack-editor";
 import { LogHarvestDialog } from "@/components/hives/log-harvest-dialog";
 import { StartTreatmentDialog } from "@/components/hives/start-treatment-dialog";
 import { CompleteTreatmentButton } from "@/components/hives/complete-treatment-button";
-import { DeleteInspectionButton } from "@/components/hives/delete-inspection-button";
+import { InspectionList } from "@/components/hives/inspection-list";
 import { HealthCharts } from "@/components/hives/health-charts";
 import { QueenTimeline } from "@/components/hives/queen-timeline";
 import { AddRevenueDialog } from "@/components/finances/add-revenue-dialog";
@@ -46,10 +46,6 @@ import {
   hiveSuperInventory,
 } from "@/lib/supers";
 import { broodScore } from "@/lib/health";
-import {
-  formatInspectionLogLines,
-  formatVisitTime,
-} from "@/lib/inspection-log";
 import { isTreatmentOverdue } from "@/lib/treatments";
 import type { Inspection, MiteCount } from "@/lib/hives";
 
@@ -298,48 +294,7 @@ export default async function HiveDetailPage({ params }: HiveDetailPageProps) {
                   No records yet — tap to open Quick Log for this colony.
                 </Link>
               ) : (
-                <ul className="divide-y divide-wax-300/60">
-                  {inspections.map((inspection) => {
-                    const logLines = formatInspectionLogLines(inspection);
-                    return (
-                    <li
-                      key={inspection.id}
-                      className="flex items-start justify-between gap-3 py-4 first:pt-0 last:pb-0"
-                    >
-                      <div className="min-w-0 flex-1">
-                        <p className="text-sm font-medium text-hive-900">
-                          {formatDate(inspection.date)}
-                          {formatVisitTime(inspection.inspection_time) && (
-                            <span className="font-normal text-hive-500">
-                              {" "}
-                              · {formatVisitTime(inspection.inspection_time)}
-                            </span>
-                          )}
-                        </p>
-                        <ul className="mt-2 space-y-1">
-                          {logLines.map((line, index) => (
-                            <li
-                              key={`${inspection.id}-${index}`}
-                              className="text-sm leading-relaxed text-hive-600"
-                            >
-                              {line}
-                            </li>
-                          ))}
-                        </ul>
-                        {inspection.notes && (
-                          <p className="mt-3 whitespace-pre-wrap break-words rounded-xl border border-wax-300/60 bg-wax-50/70 px-3 py-2 text-sm leading-relaxed text-hive-700">
-                            {inspection.notes}
-                          </p>
-                        )}
-                      </div>
-                      <DeleteInspectionButton
-                        inspectionId={inspection.id}
-                        dateLabel={formatDate(inspection.date)}
-                      />
-                    </li>
-                    );
-                  })}
-                </ul>
+                <InspectionList inspections={inspections} />
               )}
             </CardContent>
           </Card>
