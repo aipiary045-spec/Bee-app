@@ -10,7 +10,8 @@
     "test": "node --experimental-strip-types --test src/lib/*.test.ts",
     "db:types": "supabase gen types typescript --local > src/types/database.ts",
     "db:migrate": "node scripts/run-migrations.mjs",
-    "db:restore-supers": "node --experimental-strip-types scripts/restore-legacy-supers.mjs"
+    "db:restore-supers": "node --experimental-strip-types scripts/restore-legacy-supers.mjs",
+    "db:restore-hives": "node --experimental-strip-types scripts/restore-legacy-hives.mjs"
   },
   "dependencies": {
     "@radix-ui/react-dialog": "^1.1.6",
