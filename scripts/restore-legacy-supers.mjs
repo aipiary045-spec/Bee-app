@@ -38,11 +38,25 @@ async function fetchLegacyStacks(url, serviceRole) {
     Authorization: `Bearer ${serviceRole}`,
   };
 
-  const hivesRes = await fetch(`${url}/rest/v1/hives?select=id,name,apiary_id,super_count,medium_count,shallow_count`, {
-    headers,
-  });
+  let hivesRes = await fetch(
+    `${url}/rest/v1/hives?select=id,name,apiary_id,super_count,medium_count,shallow_count`,
+    { headers }
+  );
   if (!hivesRes.ok) {
-    throw new Error(`Legacy hives: HTTP ${hivesRes.status} ${await hivesRes.text()}`);
+    const body = await hivesRes.text();
+    if (/column .* does not exist/i.test(body)) {
+      hivesRes = await fetch(
+        `${url}/rest/v1/hives?select=id,name,apiary_id`,
+        { headers }
+      );
+      if (!hivesRes.ok) {
+        throw new Error(
+          `Legacy hives: HTTP ${hivesRes.status} ${await hivesRes.text()}`
+        );
+      }
+    } else {
+      throw new Error(`Legacy hives: HTTP ${hivesRes.status} ${body}`);
+    }
   }
   const hives = await hivesRes.json();
 
