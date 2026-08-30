@@ -4,8 +4,10 @@ import { Badge } from "@/components/ui/badge";
 import { HiveStackEditor } from "@/components/hives/hive-stack-editor";
 import { YardHive } from "@/components/yard/yard-hive";
 import { formatSuperInventory, hiveSuperInventory } from "@/lib/supers";
+import { hiveHealthToneClass } from "@/lib/hive-health";
 import { cn } from "@/lib/utils";
 import type { Hive } from "@/lib/hives";
+import type { HiveHealthTone } from "@/lib/hive-health";
 
 function statusVariant(status: Hive["status"]) {
   if (status === "active") return "success" as const;
@@ -29,15 +31,18 @@ interface HiveCardProps {
     | "super_count"
     | "medium_count"
     | "shallow_count"
+    | "notes"
   >;
+  healthTone?: HiveHealthTone;
   className?: string;
 }
 
-export function HiveCard({ hive, className }: HiveCardProps) {
+export function HiveCard({ hive, healthTone, className }: HiveCardProps) {
   return (
     <article
       className={cn(
         "lift-card surface-panel flex h-full flex-col overflow-hidden rounded-2xl hover:border-honey-400/50 hover:shadow-[0_18px_40px_-24px_rgba(61,42,20,0.45)]",
+        hiveHealthToneClass(healthTone),
         className
       )}
     >
@@ -52,6 +57,11 @@ export function HiveCard({ hive, className }: HiveCardProps) {
               <Badge variant="default">{hive.frame_count} frames</Badge>
               <Badge variant="default">{formatSuperInventory(hiveSuperInventory(hive))}</Badge>
             </div>
+            {hive.notes?.trim() && (
+              <p className="mt-2 line-clamp-2 text-sm leading-relaxed text-hive-600">
+                {hive.notes.trim()}
+              </p>
+            )}
           </div>
           <div className="relative shrink-0">
             <span

@@ -430,3 +430,119 @@ export async function completeTreatmentAction(input: {
     return { ok: false, error: message };
   }
 }
+
+export async function updateHiveStatusAction(input: {
+  hiveId: string;
+  status: Enums<"hive_status">;
+}): Promise<ActionResult> {
+  if (!input.hiveId) {
+    return { ok: false, error: "Hive is required." };
+  }
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { ok: false, error: "You must be signed in to update a hive." };
+  }
+
+  const { error } = await supabase
+    .from("hives")
+    .update({ status: input.status })
+    .eq("id", input.hiveId);
+
+  if (error) {
+    return { ok: false, error: error.message };
+  }
+
+  revalidatePath("/");
+  revalidatePath("/hives");
+  revalidatePath(`/hives/${input.hiveId}`);
+  return { ok: true, hiveId: input.hiveId };
+}
+
+export async function updateHiveNotesAction(input: {
+  hiveId: string;
+  notes: string;
+}): Promise<ActionResult> {
+  if (!input.hiveId) {
+    return { ok: false, error: "Hive is required." };
+  }
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { ok: false, error: "You must be signed in to update hive notes." };
+  }
+
+  const notes = input.notes.trim();
+  const { error } = await supabase
+    .from("hives")
+    .update({ notes: notes || null })
+    .eq("id", input.hiveId);
+
+  if (error) {
+    if (isMissingColumnError(error)) {
+      return {
+        ok: false,
+        error:
+          "Hive notes need a database update. Run the latest SQL migration in Supabase.",
+      };
+    }
+    return { ok: false, error: error.message };
+  }
+
+  revalidatePath("/hives");
+  revalidatePath(`/hives/${input.hiveId}`);
+  return { ok: true, hiveId: input.hiveId };
+}
+
+export async function updateHarvestGoalAction(input: {
+  apiaryId: string;
+  goalLbs: string;
+}): Promise<ActionResult> {
+  if (!input.apiaryId) {
+    return { ok: false, error: "Yard is required." };
+  }
+
+  const trimmed = input.goalLbs.trim();
+  const goal =
+    trimmed === "" ? null : Number(trimmed);
+
+  if (goal !== null && (Number.isNaN(goal) || goal < 0)) {
+    return { ok: false, error: "Enter a valid goal in pounds, or leave it blank." };
+  }
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { ok: false, error: "You must be signed in to set a harvest goal." };
+  }
+
+  const { error } = await supabase
+    .from("apiaries")
+    .update({ harvest_goal_lbs: goal })
+    .eq("id", input.apiaryId);
+
+  if (error) {
+    if (isMissingColumnError(error)) {
+      return {
+        ok: false,
+        error:
+          "Harvest goals need a database update. Run the latest SQL migration in Supabase.",
+      };
+    }
+    return { ok: false, error: error.message };
+  }
+
+  revalidatePath("/");
+  return { ok: true, hiveId: input.apiaryId };
+}

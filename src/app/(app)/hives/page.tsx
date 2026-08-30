@@ -1,12 +1,23 @@
 import { PageHeader } from "@/components/layout/page-header";
 import { YardLede } from "@/components/yards/yard-lede";
 import { AddHiveDialog } from "@/components/hives/add-hive-dialog";
-import { HiveCard } from "@/components/hives/hive-card";
+import { HiveFilterList } from "@/components/hives/hive-filter-list";
 import { Card, CardContent } from "@/components/ui/card";
 import { BrandLogo } from "@/components/brand/brand-logo";
 import { createClient } from "@/lib/supabase/server";
-import { listHivesForUser } from "@/lib/hives";
+import {
+  listHivesForUser,
+  listOpenTreatmentsForHives,
+  listRecentInspectionsForHives,
+} from "@/lib/hives";
+import {
+  buildHiveAlerts,
+  buildTreatmentAlerts,
+  mergeAlerts,
+} from "@/lib/alerts";
+import { hiveHealthForYard } from "@/lib/hive-health";
 import type { Hive } from "@/lib/hives";
+import type { HiveAlert } from "@/lib/alerts";
 
 export default async function HivesPage() {
   const supabase = await createClient();
@@ -15,12 +26,33 @@ export default async function HivesPage() {
   } = await supabase.auth.getUser();
 
   let hives: Hive[] = [];
+  let alerts: HiveAlert[] = [];
+  let hiveHealth: ReturnType<typeof hiveHealthForYard> = {};
   let loadError: string | null = null;
 
   if (user) {
     try {
       const result = await listHivesForUser(user.id);
       hives = result.hives;
+      const hiveIds = hives.map((hive) => hive.id);
+      const [inspections, treatments] = await Promise.all([
+        listRecentInspectionsForHives(hiveIds),
+        listOpenTreatmentsForHives(hiveIds).catch(() => []),
+      ]);
+      alerts = mergeAlerts(
+        buildHiveAlerts(hives, inspections),
+        buildTreatmentAlerts(
+          hives,
+          treatments.map((row) => ({
+            id: row.id,
+            hiveId: row.hive_id,
+            productName: row.product_name,
+            endDate: row.end_date,
+            status: row.status,
+          }))
+        )
+      );
+      hiveHealth = hiveHealthForYard(hives, alerts);
     } catch (err) {
       loadError =
         err instanceof Error ? err.message : "Failed to load hives.";
@@ -65,11 +97,7 @@ export default async function HivesPage() {
       )}
 
       {hives.length > 0 && (
-        <div className="stagger-in grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {hives.map((hive) => (
-            <HiveCard key={hive.id} hive={hive} />
-          ))}
-        </div>
+        <HiveFilterList hives={hives} alerts={alerts} hiveHealth={hiveHealth} />
       )}
     </div>
   );
