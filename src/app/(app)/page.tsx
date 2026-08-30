@@ -3,8 +3,9 @@ import { PageHeader } from "@/components/layout/page-header";
 import { YardLede } from "@/components/yards/yard-lede";
 import { SummaryCards } from "@/components/dashboard/summary-cards";
 import { PriorityAlertsBar } from "@/components/dashboard/priority-alerts";
-import { TreatmentCalendar } from "@/components/dashboard/treatment-calendar";
 import { HarvestSummary } from "@/components/dashboard/harvest-summary";
+import { SeasonalAdvice } from "@/components/dashboard/seasonal-advice";
+import { TreatmentCalendar } from "@/components/dashboard/treatment-calendar";
 import { YardScene } from "@/components/yard/yard-scene";
 import { BrandLogo } from "@/components/brand/brand-logo";
 import { Button } from "@/components/ui/button";
@@ -23,7 +24,7 @@ import {
 } from "@/lib/alerts";
 import { hiveHealthForYard } from "@/lib/hive-health";
 import { fetchLocalWeather, type LocalWeather } from "@/lib/weather";
-import type { Hive } from "@/lib/hives";
+import type { Hive, Apiary } from "@/lib/hives";
 import type { HiveAlert } from "@/lib/alerts";
 
 export default async function DashboardPage() {
@@ -32,6 +33,7 @@ export default async function DashboardPage() {
   const user = auth.user;
 
   let hives: Hive[] = [];
+  let apiary: Apiary | null = null;
   let alerts: HiveAlert[] = [];
   let yardLocation = "";
   let weather: LocalWeather | null = null;
@@ -55,6 +57,7 @@ export default async function DashboardPage() {
     try {
       const result = await listHivesForUser(user.id);
       hives = result.hives;
+      apiary = result.apiary;
       yardLocation = result.apiary.location?.trim() ?? "";
       weather = await fetchLocalWeather({
         location: yardLocation,
@@ -112,8 +115,18 @@ export default async function DashboardPage() {
         <PriorityAlertsBar alerts={alerts} />
       </div>
 
+      <SeasonalAdvice />
+
       <TreatmentCalendar treatments={treatmentCalendar} />
-      <HarvestSummary summary={harvestSummary} />
+      <HarvestSummary
+        summary={harvestSummary}
+        goalLbs={
+          apiary?.harvest_goal_lbs != null
+            ? Number(apiary.harvest_goal_lbs)
+            : null
+        }
+        apiaryId={apiary?.id ?? ""}
+      />
 
       <p className="fade-up-delay-1 mb-6 text-sm text-hive-600">
         {hives.length === 0

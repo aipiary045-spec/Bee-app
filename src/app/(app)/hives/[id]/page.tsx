@@ -16,6 +16,8 @@ import { HiveStackEditor } from "@/components/hives/hive-stack-editor";
 import { LogHarvestDialog } from "@/components/hives/log-harvest-dialog";
 import { StartTreatmentDialog } from "@/components/hives/start-treatment-dialog";
 import { CompleteTreatmentButton } from "@/components/hives/complete-treatment-button";
+import { HiveStatusPicker } from "@/components/hives/hive-status-picker";
+import { HiveNotesEditor } from "@/components/hives/hive-notes-editor";
 import { InspectionList } from "@/components/hives/inspection-list";
 import { HealthCharts } from "@/components/hives/health-charts";
 import { QueenTimeline } from "@/components/hives/queen-timeline";
@@ -178,6 +180,17 @@ export default async function HiveDetailPage({ params }: HiveDetailPageProps) {
         <Badge variant="default">{hive.frame_count} frames</Badge>
         <Badge variant="default">{formatSuperInventory(inventory)}</Badge>
       </div>
+
+      <Card className="fade-up-delay-1 mb-6">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-base">Colony status</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <HiveStatusPicker hiveId={hive.id} status={hive.status} />
+        </CardContent>
+      </Card>
+
+      <HiveNotesEditor hiveId={hive.id} notes={hive.notes ?? null} />
 
       <Card className="fade-up-delay-1 mb-6">
         <CardHeader className="pb-2">

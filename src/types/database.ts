@@ -16,6 +16,7 @@ export type Database = {
           name: string;
           location: string;
           description: string | null;
+          harvest_goal_lbs: number | null;
           created_at: string;
           updated_at: string;
         };
@@ -25,6 +26,7 @@ export type Database = {
           name: string;
           location?: string;
           description?: string | null;
+          harvest_goal_lbs?: number | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -34,6 +36,7 @@ export type Database = {
           name?: string;
           location?: string;
           description?: string | null;
+          harvest_goal_lbs?: number | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -49,6 +52,7 @@ export type Database = {
           super_count: number;
           medium_count: number;
           shallow_count: number;
+          notes: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -61,6 +65,7 @@ export type Database = {
           super_count?: number;
           medium_count?: number;
           shallow_count?: number;
+          notes?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -73,6 +78,7 @@ export type Database = {
           super_count?: number;
           medium_count?: number;
           shallow_count?: number;
+          notes?: string | null;
           created_at?: string;
           updated_at?: string;
         };
