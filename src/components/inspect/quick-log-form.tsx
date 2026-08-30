@@ -13,6 +13,7 @@ import {
   Minus,
   Plus,
   Wrench,
+  ArrowRight,
 } from "lucide-react";
 import { createInspectionAction } from "@/app/(app)/inspect/actions";
 import { HiveStack } from "@/components/inspect/hive-stack";
@@ -257,6 +258,13 @@ export function QuickLogForm({
   const currentInventory = hiveSuperInventory(selectedHive ?? {});
   const nextSupers = nextInventory(currentInventory, superChange);
 
+  const nextHiveInWalk = useMemo(() => {
+    const active = selectable.filter((hive) => hive.status === "active");
+    const currentIndex = active.findIndex((hive) => hive.id === hiveId);
+    if (currentIndex < 0 || currentIndex >= active.length - 1) return null;
+    return active[currentIndex + 1] ?? null;
+  }, [selectable, hiveId]);
+
   const expenseTotal = useMemo(() => {
     if (!logExpenses) return 0;
     return selectedExpenseIds.reduce((sum, id) => {
@@ -268,6 +276,14 @@ export function QuickLogForm({
   function selectHive(id: string) {
     setHiveId(id);
     setSuperChange(emptySuperChange());
+  }
+
+  function goToNextHive() {
+    if (!nextHiveInWalk) return;
+    selectHive(nextHiveInWalk.id);
+    setSuccess(null);
+    setError(null);
+    window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
   function bumpSuper(type: SuperType, direction: "add" | "remove") {
@@ -906,10 +922,23 @@ export function QuickLogForm({
         </p>
       )}
       {success && (
-        <p className="flex items-center gap-2 rounded-xl border border-meadow-400/30 bg-meadow-100 px-3 py-2 text-sm text-meadow-800">
-          <CheckCircle2 className="h-4 w-4" />
-          {success}
-        </p>
+        <div className="space-y-2">
+          <p className="flex items-center gap-2 rounded-xl border border-meadow-400/30 bg-meadow-100 px-3 py-2 text-sm text-meadow-800">
+            <CheckCircle2 className="h-4 w-4" />
+            {success}
+          </p>
+          {nextHiveInWalk && (
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full sm:w-auto"
+              onClick={goToNextHive}
+            >
+              Log {nextHiveInWalk.name} next
+              <ArrowRight className="h-4 w-4" />
+            </Button>
+          )}
+        </div>
       )}
 
       <div className="pointer-events-none fixed inset-x-0 bottom-0 z-20 px-4 pb-4 sm:px-6">

@@ -9,6 +9,7 @@ import { YardLede } from "@/components/yards/yard-lede";
 import { AddExpenseDialog } from "@/components/expenses/add-expense-dialog";
 import { DeleteExpenseButton } from "@/components/expenses/delete-expense-button";
 import { AddRevenueDialog } from "@/components/finances/add-revenue-dialog";
+import { ExportFinancesButton } from "@/components/finances/export-finances-button";
 import { DeleteRevenueButton } from "@/components/finances/delete-revenue-button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -73,6 +74,7 @@ export default async function FinancesPage() {
         description="Sales and costs for the yard you have open."
         actions={
           <div className="flex flex-wrap gap-2">
+            <ExportFinancesButton activity={summary.activity} />
             <AddRevenueDialog hives={hives} />
             <AddExpenseDialog hives={hives} />
           </div>

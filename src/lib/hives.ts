@@ -417,3 +417,81 @@ export async function listHoneySalesForHive(hiveId: string): Promise<Revenue[]> 
 
   return data ?? [];
 }
+
+export type QueenLog = Tables<"queen_logs">;
+
+export async function listQueenLogsForHive(
+  hiveId: string,
+  limit = 12
+): Promise<QueenLog[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("queen_logs")
+    .select("*")
+    .eq("hive_id", hiveId)
+    .order("created_at", { ascending: false })
+    .limit(limit);
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  return data ?? [];
+}
+
+export type HarvestSummary = {
+  totalLbs: number;
+  pullCount: number;
+  hiveCount: number;
+  topHive?: { id: string; name: string; lbs: number };
+};
+
+export async function getHarvestSummaryForHives(
+  hives: { id: string; name: string }[],
+  year = new Date().getFullYear()
+): Promise<HarvestSummary> {
+  if (hives.length === 0) {
+    return { totalLbs: 0, pullCount: 0, hiveCount: 0 };
+  }
+
+  const supabase = await createClient();
+  const start = `${year}-01-01`;
+  const end = `${year}-12-31`;
+  const hiveIds = hives.map((hive) => hive.id);
+  const names = new Map(hives.map((hive) => [hive.id, hive.name]));
+
+  const { data, error } = await supabase
+    .from("honey_yields")
+    .select("hive_id, weight_lbs")
+    .in("hive_id", hiveIds)
+    .gte("harvest_date", start)
+    .lte("harvest_date", end);
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  const rows = data ?? [];
+  const byHive = new Map<string, number>();
+  let totalLbs = 0;
+
+  for (const row of rows) {
+    const lbs = Number(row.weight_lbs);
+    totalLbs += lbs;
+    byHive.set(row.hive_id, (byHive.get(row.hive_id) ?? 0) + lbs);
+  }
+
+  let topHive: HarvestSummary["topHive"];
+  for (const [hiveId, lbs] of byHive) {
+    if (!topHive || lbs > topHive.lbs) {
+      topHive = { id: hiveId, name: names.get(hiveId) ?? "Hive", lbs };
+    }
+  }
+
+  return {
+    totalLbs: Math.round(totalLbs * 10) / 10,
+    pullCount: rows.length,
+    hiveCount: byHive.size,
+    topHive,
+  };
+}

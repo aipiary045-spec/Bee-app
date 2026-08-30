@@ -18,6 +18,7 @@ import { StartTreatmentDialog } from "@/components/hives/start-treatment-dialog"
 import { CompleteTreatmentButton } from "@/components/hives/complete-treatment-button";
 import { DeleteInspectionButton } from "@/components/hives/delete-inspection-button";
 import { HealthCharts } from "@/components/hives/health-charts";
+import { QueenTimeline } from "@/components/hives/queen-timeline";
 import { AddRevenueDialog } from "@/components/finances/add-revenue-dialog";
 import { NavCard } from "@/components/ui/nav-card";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -31,6 +32,7 @@ import {
   listInspectionsForHive,
   listMiteCountsForHive,
   listTreatmentsForHive,
+  listQueenLogsForHive,
 } from "@/lib/hives";
 import {
   buildHiveAlerts,
@@ -125,12 +127,14 @@ export default async function HiveDetailPage({ params }: HiveDetailPageProps) {
 
   if (!hive) notFound();
 
-  const [inspections, miteCounts, yields, sales, treatments] = await Promise.all([
+  const [inspections, miteCounts, yields, sales, treatments, queenLogs] =
+    await Promise.all([
     listInspectionsForHive(id, 24).catch(() => []),
     listMiteCountsForHive(id).catch(() => []),
     listHoneyYieldsForHive(id).catch(() => []),
     listHoneySalesForHive(id).catch(() => []),
     listTreatmentsForHive(id).catch(() => []),
+    listQueenLogsForHive(id).catch(() => []),
   ]);
 
   const alerts = mergeAlerts(
@@ -294,6 +298,17 @@ export default async function HiveDetailPage({ params }: HiveDetailPageProps) {
       </div>
 
       <div className="fade-up-delay-2 mb-8 space-y-4">
+          <QueenTimeline
+            hiveId={hive.id}
+            entries={queenLogs.map((row) => ({
+              id: row.id,
+              date: row.created_at.slice(0, 10),
+              status: row.status,
+              markColor: row.mark_color,
+              notes: row.notes,
+            }))}
+          />
+
           <Card id="inspections">
             <CardHeader className="pb-2">
               <CardTitle className="flex items-center justify-between gap-2 text-base">
