@@ -87,7 +87,7 @@ export function AddHiveDialog() {
               </DialogDescription>
             </DialogHeader>
 
-            <form onSubmit={onSubmit} className="space-y-4">
+            <form onSubmit={onSubmit} noValidate className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="hive-name">Name / number</Label>
                 <Input

@@ -11,6 +11,7 @@ export type HiveFilterKey =
   | "queen"
   | "queen_age"
   | "swarm"
+  | "split"
   | "treatment";
 
 export type HiveFilterInput = {
@@ -29,6 +30,7 @@ export const HIVE_FILTER_OPTIONS: { key: HiveFilterKey; label: string }[] = [
   { key: "queen", label: "Queen" },
   { key: "queen_age", label: "Aging queen" },
   { key: "swarm", label: "Swarm risk" },
+  { key: "split", label: "Split follow-up" },
   { key: "treatment", label: "Treatment" },
   { key: "deadout", label: "Deadout" },
 ];
@@ -80,6 +82,8 @@ export function hiveMatchesFilter(
       return kinds.has("queen_age");
     case "swarm":
       return kinds.has("swarm_risk");
+    case "split":
+      return kinds.has("split_followup");
     case "treatment":
       return kinds.has("treatment") || kinds.has("mite_retest");
     default:

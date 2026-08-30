@@ -136,6 +136,7 @@ export default async function HiveDetailPage({ params }: HiveDetailPageProps) {
   );
 
   const readings = miteReadings(miteCounts, inspections);
+  const latestQueenLog = queenLogs[0];
   const latestMite = readings[0];
   const harvestLbs = yields.reduce((sum, row) => sum + Number(row.weight_lbs), 0);
   const salesTotal = sales.reduce((sum, row) => sum + Number(row.amount), 0);
@@ -286,6 +287,7 @@ export default async function HiveDetailPage({ params }: HiveDetailPageProps) {
           <QueenLifecycleCard
             hiveId={hive.id}
             introducedDate={hive.queen_introduced_date}
+            markColor={latestQueenLog?.mark_color}
           />
           <QueenTimeline
             hiveId={hive.id}

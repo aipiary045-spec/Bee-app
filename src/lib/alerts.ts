@@ -11,6 +11,7 @@ export type AlertKind =
   | "queen"
   | "queen_age"
   | "swarm_risk"
+  | "split_followup"
   | "overdue"
   | "never_inspected"
   | "treatment";

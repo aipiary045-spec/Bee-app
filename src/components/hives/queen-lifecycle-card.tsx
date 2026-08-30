@@ -11,17 +11,20 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import {
   formatQueenAge,
+  formatQueenMarkYear,
   isQueenAging,
 } from "@/lib/queen-lifecycle";
 
 interface QueenLifecycleCardProps {
   hiveId: string;
   introducedDate: string | null;
+  markColor?: string | null;
 }
 
 export function QueenLifecycleCard({
   hiveId,
   introducedDate,
+  markColor,
 }: QueenLifecycleCardProps) {
   const router = useRouter();
   const [editing, setEditing] = useState(false);
@@ -30,6 +33,10 @@ export function QueenLifecycleCard({
   const [error, setError] = useState<string | null>(null);
 
   const aging = isQueenAging(introducedDate);
+  const markYearLabel =
+    markColor && markColor !== "unmarked"
+      ? formatQueenMarkYear(markColor)
+      : null;
 
   function onSave() {
     setError(null);
@@ -105,6 +112,9 @@ export function QueenLifecycleCard({
             <p className="text-sm text-hive-700">
               Age: <span className="font-medium">{formatQueenAge(introducedDate)}</span>
             </p>
+            {markYearLabel && (
+              <Badge variant="default">{markYearLabel}</Badge>
+            )}
             {aging && <Badge variant="warning">Consider requeening</Badge>}
           </div>
         ) : (

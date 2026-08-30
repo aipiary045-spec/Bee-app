@@ -8,6 +8,7 @@ import {
   Crown,
   FlaskConical,
   ShieldAlert,
+  Split,
   Timer,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -22,6 +23,7 @@ const icons = {
   queen: Crown,
   queen_age: Crown,
   swarm_risk: AlertTriangle,
+  split_followup: Split,
   overdue: AlertTriangle,
   never_inspected: ClipboardList,
   treatment: FlaskConical,
