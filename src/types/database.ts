@@ -113,11 +113,14 @@ export type Database = {
           honey_stores: Database["public"]["Enums"]["store_level"] | null;
           pollen_stores: Database["public"]["Enums"]["store_level"] | null;
           mite_count_per_100: number | null;
+          mite_method: Database["public"]["Enums"]["mite_method"] | null;
           pests_diseases: Database["public"]["Enums"]["pest_disease"] | null;
           action_fed: boolean;
           action_super: boolean;
           action_split: boolean;
           action_treatment: boolean;
+          split_type: Database["public"]["Enums"]["split_type"] | null;
+          split_destination: string | null;
           supers_added: number;
           supers_removed: number;
           super_count_after: number | null;
@@ -146,11 +149,14 @@ export type Database = {
           honey_stores?: Database["public"]["Enums"]["store_level"] | null;
           pollen_stores?: Database["public"]["Enums"]["store_level"] | null;
           mite_count_per_100?: number | null;
+          mite_method?: Database["public"]["Enums"]["mite_method"] | null;
           pests_diseases?: Database["public"]["Enums"]["pest_disease"] | null;
           action_fed?: boolean;
           action_super?: boolean;
           action_split?: boolean;
           action_treatment?: boolean;
+          split_type?: Database["public"]["Enums"]["split_type"] | null;
+          split_destination?: string | null;
           supers_added?: number;
           supers_removed?: number;
           super_count_after?: number | null;
@@ -179,11 +185,14 @@ export type Database = {
           honey_stores?: Database["public"]["Enums"]["store_level"] | null;
           pollen_stores?: Database["public"]["Enums"]["store_level"] | null;
           mite_count_per_100?: number | null;
+          mite_method?: Database["public"]["Enums"]["mite_method"] | null;
           pests_diseases?: Database["public"]["Enums"]["pest_disease"] | null;
           action_fed?: boolean;
           action_super?: boolean;
           action_split?: boolean;
           action_treatment?: boolean;
+          split_type?: Database["public"]["Enums"]["split_type"] | null;
+          split_destination?: string | null;
           supers_added?: number;
           supers_removed?: number;
           super_count_after?: number | null;
@@ -517,6 +526,7 @@ export type Database = {
         | "wax_moth"
         | "ants"
         | "other";
+      split_type: "walk_away" | "nuc" | "combine" | "swarm_caught" | "other";
     };
     CompositeTypes: {
       [_ in never]: never;

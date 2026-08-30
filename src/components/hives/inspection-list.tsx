@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { ChevronDown } from "lucide-react";
 import { DeleteInspectionButton } from "@/components/hives/delete-inspection-button";
+import { EditInspectionDialog } from "@/components/hives/edit-inspection-dialog";
 import {
   formatInspectionLogLines,
   formatInspectionLogPreview,
@@ -87,10 +88,16 @@ export function InspectionList({ inspections }: InspectionListProps) {
                   </div>
                 )}
               </button>
-              <DeleteInspectionButton
-                inspectionId={inspection.id}
-                dateLabel={dateLabel}
-              />
+              <div className="flex flex-col items-end gap-1">
+                <EditInspectionDialog
+                  inspection={inspection}
+                  dateLabel={dateLabel}
+                />
+                <DeleteInspectionButton
+                  inspectionId={inspection.id}
+                  dateLabel={dateLabel}
+                />
+              </div>
             </div>
           </li>
         );

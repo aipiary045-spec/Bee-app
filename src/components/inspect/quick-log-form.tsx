@@ -14,6 +14,7 @@ import {
   Plus,
   Wrench,
   ArrowRight,
+  FlaskConical,
 } from "lucide-react";
 import { createInspectionAction } from "@/app/(app)/inspect/actions";
 import { HiveStack } from "@/components/inspect/hive-stack";
@@ -38,6 +39,13 @@ import {
 import type { Hive } from "@/lib/hives";
 import type { Enums } from "@/types/database";
 import type { LocalWeather } from "@/lib/weather";
+import { MITE_METHOD_OPTIONS } from "@/lib/mite-methods";
+import { SPLIT_TYPE_OPTIONS } from "@/lib/splits";
+import {
+  TREATMENT_CATALOG,
+  addDaysISO,
+  getTreatmentCatalogItem,
+} from "@/lib/treatments";
 
 const weatherOptions = [
   "Sunny",
@@ -239,13 +247,27 @@ export function QuickLogForm({
   const [pollenStores, setPollenStores] =
     useState<Enums<"store_level">>("moderate");
   const [miteCountPer100, setMiteCountPer100] = useState("0");
+  const [miteMethod, setMiteMethod] =
+    useState<Enums<"mite_method">>("alcohol_wash");
   const [pestsDiseases, setPestsDiseases] =
     useState<Enums<"pest_disease">>("none");
 
   const [actionFed, setActionFed] = useState(false);
   const [superChange, setSuperChange] = useState<SuperVisitChange>(emptySuperChange);
   const [actionSplit, setActionSplit] = useState(false);
-  const [actionTreatment, setActionTreatment] = useState(false);
+  const [splitType, setSplitType] = useState<Enums<"split_type"> | "">("");
+  const [splitDestination, setSplitDestination] = useState("");
+  const [startTreatment, setStartTreatment] = useState(false);
+  const [treatmentCatalogId, setTreatmentCatalogId] = useState(
+    TREATMENT_CATALOG[0].id
+  );
+  const [treatmentStartDate, setTreatmentStartDate] = useState(todayISO());
+  const [treatmentEndDate, setTreatmentEndDate] = useState(
+    addDaysISO(todayISO(), TREATMENT_CATALOG[0].defaultDays)
+  );
+  const [treatmentDosage, setTreatmentDosage] = useState(
+    TREATMENT_CATALOG[0].dosage
+  );
   const [notes, setNotes] = useState("");
 
   const [logExpenses, setLogExpenses] = useState(false);
@@ -336,6 +358,7 @@ export function QuickLogForm({
         honeyStores,
         pollenStores,
         miteCountPer100,
+        miteMethod,
         pestsDiseases,
         actionFed,
         mediumAdded: superChange.mediumAdded,
@@ -343,7 +366,14 @@ export function QuickLogForm({
         shallowAdded: superChange.shallowAdded,
         shallowRemoved: superChange.shallowRemoved,
         actionSplit,
-        actionTreatment,
+        splitType: splitType || null,
+        splitDestination,
+        startTreatment,
+        treatmentCatalogId,
+        treatmentStartDate,
+        treatmentEndDate,
+        treatmentDosage,
+        actionTreatment: false,
         notes,
         logExpenses,
         expenses: selectedExpenseIds.map((catalogId) => ({
@@ -381,8 +411,15 @@ export function QuickLogForm({
       setActionFed(false);
       setSuperChange(emptySuperChange());
       setActionSplit(false);
-      setActionTreatment(false);
+      setSplitType("");
+      setSplitDestination("");
+      setStartTreatment(false);
+      setTreatmentCatalogId(TREATMENT_CATALOG[0].id);
+      setTreatmentStartDate(todayISO());
+      setTreatmentEndDate(addDaysISO(todayISO(), TREATMENT_CATALOG[0].defaultDays));
+      setTreatmentDosage(TREATMENT_CATALOG[0].dosage);
       setMiteCountPer100("0");
+      setMiteMethod("alcohol_wash");
       setLogExpenses(false);
       setSelectedExpenseIds([]);
       setExpenseAmounts({});
@@ -721,10 +758,30 @@ export function QuickLogForm({
               </select>
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+            <div className="space-y-1.5 sm:col-span-1">
+              <Label htmlFor="mite-method" className="text-xs">
+                Mite method
+              </Label>
+              <select
+                id="mite-method"
+                value={miteMethod}
+                onChange={(e) =>
+                  setMiteMethod(e.target.value as Enums<"mite_method">)
+                }
+                className={fieldClass}
+              >
+                {MITE_METHOD_OPTIONS.map((opt) => (
+                  <option key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </option>
+                ))}
+              </select>
+            </div>
             <div className="space-y-1.5">
               <Label htmlFor="mites" className="text-xs">
-                Mites / 100
+                {MITE_METHOD_OPTIONS.find((opt) => opt.value === miteMethod)
+                  ?.countLabel ?? "Mite count"}
               </Label>
               <Input
                 id="mites"
@@ -766,13 +823,30 @@ export function QuickLogForm({
                 key: "split",
                 label: "Split / swarm",
                 on: actionSplit,
-                toggle: setActionSplit,
+                toggle: (next: boolean) => {
+                  setActionSplit(next);
+                  if (!next) {
+                    setSplitType("");
+                    setSplitDestination("");
+                  }
+                },
               },
               {
                 key: "treatment",
-                label: "Treated",
-                on: actionTreatment,
-                toggle: setActionTreatment,
+                label: "Start treatment",
+                on: startTreatment,
+                toggle: (next: boolean) => {
+                  setStartTreatment(next);
+                  if (next) {
+                    const item = getTreatmentCatalogItem(treatmentCatalogId);
+                    if (item) {
+                      setTreatmentDosage(item.dosage);
+                      setTreatmentEndDate(
+                        addDaysISO(treatmentStartDate, item.defaultDays)
+                      );
+                    }
+                  }
+                },
               },
             ].map((action) => (
               <button
@@ -790,6 +864,120 @@ export function QuickLogForm({
               </button>
             ))}
           </div>
+
+          {actionSplit && (
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <div className="space-y-1.5">
+                <Label htmlFor="split-type" className="text-xs">
+                  Split / swarm type
+                </Label>
+                <select
+                  id="split-type"
+                  required
+                  value={splitType}
+                  onChange={(e) =>
+                    setSplitType(e.target.value as Enums<"split_type"> | "")
+                  }
+                  className={fieldClass}
+                >
+                  <option value="">Choose type</option>
+                  {SPLIT_TYPE_OPTIONS.map((opt) => (
+                    <option key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="split-dest" className="text-xs">
+                  Destination / notes
+                </Label>
+                <Input
+                  id="split-dest"
+                  value={splitDestination}
+                  onChange={(e) => setSplitDestination(e.target.value)}
+                  placeholder="Nuc name, combine target…"
+                  className="h-11"
+                />
+              </div>
+            </div>
+          )}
+
+          {startTreatment && (
+            <div className="space-y-3 rounded-xl border border-honey-400/30 bg-honey-50/50 p-3">
+              <p className="flex items-center gap-2 text-sm font-medium text-hive-800">
+                <FlaskConical className="h-4 w-4 text-honey-700" />
+                Treatment details
+              </p>
+              <div className="flex flex-wrap gap-1.5">
+                {TREATMENT_CATALOG.map((item) => (
+                  <button
+                    key={item.id}
+                    type="button"
+                    onClick={() => {
+                      setTreatmentCatalogId(item.id);
+                      setTreatmentDosage(item.dosage);
+                      setTreatmentEndDate(
+                        addDaysISO(treatmentStartDate, item.defaultDays)
+                      );
+                    }}
+                    className={cn(
+                      "rounded-full border px-3 py-1.5 text-xs font-medium transition-colors",
+                      treatmentCatalogId === item.id
+                        ? "border-honey-500 bg-honey-500/20 text-hive-900"
+                        : "border-wax-300/70 bg-wax-50 text-hive-600 hover:border-honey-400/50"
+                    )}
+                  >
+                    {item.name}
+                  </button>
+                ))}
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <Label htmlFor="ql-treat-start" className="text-xs">
+                    Start
+                  </Label>
+                  <Input
+                    id="ql-treat-start"
+                    type="date"
+                    required={startTreatment}
+                    value={treatmentStartDate}
+                    onChange={(e) => {
+                      setTreatmentStartDate(e.target.value);
+                      const item = getTreatmentCatalogItem(treatmentCatalogId);
+                      if (item) {
+                        setTreatmentEndDate(
+                          addDaysISO(e.target.value, item.defaultDays)
+                        );
+                      }
+                    }}
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="ql-treat-end" className="text-xs">
+                    Pull by
+                  </Label>
+                  <Input
+                    id="ql-treat-end"
+                    type="date"
+                    required={startTreatment}
+                    value={treatmentEndDate}
+                    onChange={(e) => setTreatmentEndDate(e.target.value)}
+                  />
+                </div>
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="ql-treat-dose" className="text-xs">
+                  Dosage
+                </Label>
+                <Input
+                  id="ql-treat-dose"
+                  value={treatmentDosage}
+                  onChange={(e) => setTreatmentDosage(e.target.value)}
+                />
+              </div>
+            </div>
+          )}
           <div className="space-y-1.5">
             <Label htmlFor="notes" className="text-xs">
               Notes

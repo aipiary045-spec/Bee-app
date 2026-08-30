@@ -4,6 +4,8 @@ import {
   formatSuperCount,
   formatTypedSuperChange,
 } from "@/lib/supers";
+import { formatMiteCountLine } from "@/lib/mite-methods";
+import { formatSplitLog } from "@/lib/splits";
 
 type Inspection = Tables<"inspections">;
 
@@ -151,16 +153,27 @@ export function formatInspectionLogLines(inspection: Inspection): string[] {
   }
 
   if (inspection.mite_count_per_100 != null) {
-    lines.push(`Mites: ${inspection.mite_count_per_100} per 100 bees`);
+    lines.push(
+      formatMiteCountLine(
+        Number(inspection.mite_count_per_100),
+        inspection.mite_method
+      )
+    );
   }
 
   if (inspection.pests_diseases && inspection.pests_diseases !== "none") {
     lines.push(pestLabels[inspection.pests_diseases]);
   }
 
+  const splitLine = formatSplitLog(
+    inspection.split_type,
+    inspection.split_destination
+  );
+  if (splitLine) lines.push(splitLine);
+
   const actions: string[] = [];
   if (inspection.action_fed) actions.push("Fed");
-  if (inspection.action_split) actions.push("Split");
+  if (inspection.action_split && !splitLine) actions.push("Split");
   if (inspection.action_treatment) actions.push("Treated");
   if (actions.length > 0) {
     lines.push(`Actions: ${actions.join(", ")}`);
