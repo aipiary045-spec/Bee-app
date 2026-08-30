@@ -37,3 +37,36 @@ export function shouldUpdateQueenIntroduced(
 ): boolean {
   return status === "replaced" || status === "laying" || status === "marked";
 }
+
+const MARK_YEAR_DIGITS: Record<string, number[]> = {
+  white: [1, 6],
+  yellow: [2, 7],
+  red: [3, 8],
+  green: [4, 9],
+  blue: [5, 0],
+};
+
+export function inferQueenMarkYear(
+  markColor: string,
+  referenceYear: number = new Date().getFullYear()
+): number | null {
+  const digits = MARK_YEAR_DIGITS[markColor];
+  if (!digits) return null;
+
+  let best: number | null = null;
+  for (let year = referenceYear; year >= referenceYear - 9; year -= 1) {
+    if (digits.includes(year % 10)) {
+      best = year;
+      break;
+    }
+  }
+  return best;
+}
+
+export function formatQueenMarkYear(
+  markColor: string,
+  referenceYear?: number
+): string | null {
+  const year = inferQueenMarkYear(markColor, referenceYear);
+  return year ? `Marked for ${year}` : null;
+}

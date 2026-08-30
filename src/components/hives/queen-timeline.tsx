@@ -3,6 +3,7 @@ import { Crown } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { formatDate } from "@/lib/utils";
+import { formatQueenMarkYear } from "@/lib/queen-lifecycle";
 import type { Enums } from "@/types/database";
 
 export type QueenLogEntry = {
@@ -80,7 +81,17 @@ export function QueenTimeline({ entries, hiveId }: QueenTimelineProps) {
                   )}
                 </div>
                 {entry.markColor && entry.markColor !== "unmarked" && (
-                  <Badge variant="default">{markLabels[entry.markColor]}</Badge>
+                  <Badge variant="default">
+                    {[
+                      markLabels[entry.markColor],
+                      formatQueenMarkYear(
+                        entry.markColor,
+                        Number(entry.date.slice(0, 4))
+                      ),
+                    ]
+                      .filter(Boolean)
+                      .join(" · ")}
+                  </Badge>
                 )}
               </li>
             ))}

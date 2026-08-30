@@ -10,6 +10,7 @@ import {
 import type { SuperInventory } from "@/lib/supers";
 import { resolveActiveApiary } from "@/lib/yards";
 import type { Tables, TablesInsert } from "@/types/database";
+import type { Enums } from "@/types/database";
 
 export type Apiary = Tables<"apiaries">;
 export type Hive = Tables<"hives">;
@@ -562,5 +563,114 @@ export async function getHarvestSummaryForHives(
     pullCount: rows.length,
     hiveCount: byHive.size,
     topHive,
+  };
+}
+
+export async function listSplitInspectionsForHives(
+  hives: { id: string; name: string }[],
+  daysBack = 45
+): Promise<
+  {
+    id: string;
+    hive_id: string;
+    date: string;
+    split_type: Enums<"split_type">;
+    split_destination: string | null;
+  }[]
+> {
+  if (hives.length === 0) return [];
+
+  const supabase = await createClient();
+  const hiveIds = hives.map((hive) => hive.id);
+  const start = new Date();
+  start.setDate(start.getDate() - daysBack);
+  const startISO = start.toISOString().slice(0, 10);
+
+  const { data, error } = await supabase
+    .from("inspections")
+    .select("id, hive_id, date, split_type, split_destination")
+    .in("hive_id", hiveIds)
+    .eq("action_split", true)
+    .not("split_type", "is", null)
+    .gte("date", startISO)
+    .order("date", { ascending: false });
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  return (data ?? []).filter(
+    (row): row is {
+      id: string;
+      hive_id: string;
+      date: string;
+      split_type: Enums<"split_type">;
+      split_destination: string | null;
+    } => row.split_type != null
+  );
+}
+
+export async function getSeasonSnapshotDataForHives(
+  hiveIds: string[],
+  year = new Date().getFullYear()
+) {
+  if (hiveIds.length === 0) {
+    return {
+      inspectionCount: 0,
+      treatmentCount: 0,
+      splitCount: 0,
+      harvestLbs: 0,
+      miteReadings: [] as number[],
+    };
+  }
+
+  const supabase = await createClient();
+  const start = `${year}-01-01`;
+  const end = `${year}-12-31`;
+
+  const [inspections, treatments, harvest, miteCounts] = await Promise.all([
+    supabase
+      .from("inspections")
+      .select("id, mite_count_per_100, action_split")
+      .in("hive_id", hiveIds)
+      .gte("date", start)
+      .lte("date", end),
+    supabase
+      .from("treatments")
+      .select("id")
+      .in("hive_id", hiveIds)
+      .gte("start_date", start)
+      .lte("start_date", end),
+    supabase
+      .from("honey_yields")
+      .select("weight_lbs")
+      .in("hive_id", hiveIds)
+      .gte("harvest_date", start)
+      .lte("harvest_date", end),
+    supabase
+      .from("mite_counts")
+      .select("count")
+      .in("hive_id", hiveIds)
+      .gte("date", start)
+      .lte("date", end),
+  ]);
+
+  const inspectionRows = inspections.data ?? [];
+  const miteFromInspections = inspectionRows
+    .map((row) =>
+      row.mite_count_per_100 == null ? null : Number(row.mite_count_per_100)
+    )
+    .filter((value): value is number => value != null);
+  const miteFromWashes = (miteCounts.data ?? []).map((row) => Number(row.count));
+
+  return {
+    inspectionCount: inspectionRows.length,
+    treatmentCount: treatments.data?.length ?? 0,
+    splitCount: inspectionRows.filter((row) => row.action_split).length,
+    harvestLbs: (harvest.data ?? []).reduce(
+      (sum, row) => sum + Number(row.weight_lbs),
+      0
+    ),
+    miteReadings: [...miteFromInspections, ...miteFromWashes],
   };
 }

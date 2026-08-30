@@ -1,5 +1,12 @@
 import type { HiveAlert } from "./alerts";
-import { daysSince } from "./alerts";
+
+function daysSince(dateISO: string, today: Date = new Date()): number {
+  const [year, month, day] = dateISO.split("-").map(Number);
+  if (!year || !month || !day) return 0;
+  const from = new Date(year, month - 1, day);
+  const now = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+  return Math.round((now.getTime() - from.getTime()) / 86_400_000);
+}
 
 export type YardWalkItem = {
   id: string;
