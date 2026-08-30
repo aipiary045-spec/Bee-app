@@ -18,7 +18,7 @@ export function PageHeader({
   return (
     <header
       className={cn(
-        "fade-up mb-4 flex items-center justify-between gap-3",
+        "fade-up mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3",
         className
       )}
     >
@@ -41,7 +41,9 @@ export function PageHeader({
         ) : null}
       </div>
       {actions ? (
-        <div className="flex shrink-0 flex-wrap justify-end gap-2">{actions}</div>
+        <div className="flex w-full flex-wrap gap-2 sm:w-auto sm:justify-end">
+          {actions}
+        </div>
       ) : null}
     </header>
   );

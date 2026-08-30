@@ -33,7 +33,8 @@ export function ExportFinancesButton({ activity }: ExportFinancesButtonProps) {
       disabled={activity.length === 0}
     >
       <Download className="h-4 w-4" />
-      Export CSV
+      <span className="sm:hidden">Export</span>
+      <span className="hidden sm:inline">Export CSV</span>
     </Button>
   );
 }

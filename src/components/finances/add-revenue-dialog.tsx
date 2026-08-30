@@ -28,6 +28,7 @@ type Props = {
   hives: HiveOption[];
   defaultHiveId?: string;
   triggerLabel?: string;
+  triggerSize?: "default" | "sm";
 };
 
 const fieldClass =
@@ -46,6 +47,7 @@ export function AddRevenueDialog({
   hives,
   defaultHiveId = "",
   triggerLabel = "Add Revenue",
+  triggerSize = "default",
 }: Props) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -154,7 +156,7 @@ export function AddRevenueDialog({
       }}
     >
       <DialogTrigger asChild>
-        <Button>
+        <Button size={triggerSize}>
           <Plus className="h-4 w-4" />
           {triggerLabel}
         </Button>

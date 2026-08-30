@@ -26,12 +26,18 @@ type HiveOption = { id: string; name: string };
 
 type Props = {
   hives: HiveOption[];
+  triggerLabel?: string;
+  triggerSize?: "default" | "sm";
 };
 
 const fieldClass =
   "w-full rounded-lg border border-wax-300/80 bg-wax-50/95 px-2.5 py-2 text-sm text-hive-900 shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-honey-500/40";
 
-export function AddExpenseDialog({ hives }: Props) {
+export function AddExpenseDialog({
+  hives,
+  triggerLabel = "Add Expense",
+  triggerSize = "default",
+}: Props) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
@@ -139,9 +145,9 @@ export function AddExpenseDialog({ hives }: Props) {
       }}
     >
       <DialogTrigger asChild>
-        <Button>
+        <Button size={triggerSize}>
           <Plus className="h-4 w-4" />
-          Add Expense
+          {triggerLabel}
         </Button>
       </DialogTrigger>
       <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
