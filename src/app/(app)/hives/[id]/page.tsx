@@ -17,6 +17,7 @@ import { LogHarvestDialog } from "@/components/hives/log-harvest-dialog";
 import { StartTreatmentDialog } from "@/components/hives/start-treatment-dialog";
 import { CompleteTreatmentButton } from "@/components/hives/complete-treatment-button";
 import { HiveStatusPicker } from "@/components/hives/hive-status-picker";
+import { HiveNameEditor } from "@/components/hives/hive-name-editor";
 import { HiveNotesEditor } from "@/components/hives/hive-notes-editor";
 import { InspectionList } from "@/components/hives/inspection-list";
 import { HealthCharts } from "@/components/hives/health-charts";
@@ -198,6 +199,8 @@ export default async function HiveDetailPage({ params }: HiveDetailPageProps) {
           <HiveStatusPicker hiveId={hive.id} status={hive.status} />
         </CardContent>
       </Card>
+
+      <HiveNameEditor hiveId={hive.id} name={hive.name} />
 
       <HiveNotesEditor hiveId={hive.id} notes={hive.notes ?? null} />
 
