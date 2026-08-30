@@ -5,6 +5,7 @@ import { SummaryCards } from "@/components/dashboard/summary-cards";
 import { PriorityAlertsBar } from "@/components/dashboard/priority-alerts";
 import { HarvestSummary } from "@/components/dashboard/harvest-summary";
 import { SeasonalAdvice } from "@/components/dashboard/seasonal-advice";
+import { YardWalkChecklist } from "@/components/dashboard/yard-walk-checklist";
 import { TreatmentCalendar } from "@/components/dashboard/treatment-calendar";
 import { YardScene } from "@/components/yard/yard-scene";
 import { BrandLogo } from "@/components/brand/brand-logo";
@@ -23,6 +24,7 @@ import {
   uniqueHiveCount,
 } from "@/lib/alerts";
 import { hiveHealthForYard } from "@/lib/hive-health";
+import { buildYardWalkChecklist } from "@/lib/yard-walk-checklist";
 import { fetchLocalWeather, type LocalWeather } from "@/lib/weather";
 import type { Hive, Apiary } from "@/lib/hives";
 import type { HiveAlert } from "@/lib/alerts";
@@ -52,6 +54,7 @@ export default async function DashboardPage() {
     hiveCount: 0,
   };
   let hiveHealth: ReturnType<typeof hiveHealthForYard> = {};
+  let yardWalkItems: ReturnType<typeof buildYardWalkChecklist> = [];
 
   if (user) {
     try {
@@ -94,6 +97,11 @@ export default async function DashboardPage() {
       harvestSummary = await getHarvestSummaryForHives(
         hives.map((hive) => ({ id: hive.id, name: hive.name }))
       );
+      yardWalkItems = buildYardWalkChecklist(
+        hives.map((hive) => ({ id: hive.id, name: hive.name })),
+        alerts,
+        treatmentCalendar
+      );
     } catch {
       hives = [];
       alerts = [];
@@ -116,6 +124,8 @@ export default async function DashboardPage() {
       </div>
 
       <SeasonalAdvice />
+
+      <YardWalkChecklist items={yardWalkItems} />
 
       <TreatmentCalendar treatments={treatmentCalendar} />
       <HarvestSummary

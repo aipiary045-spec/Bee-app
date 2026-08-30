@@ -18,7 +18,9 @@ import {
   formatTypedSuperChange,
   type SuperVisitChange,
 } from "@/lib/supers";
-import type { Enums, TablesInsert } from "@/types/database";
+import { isMissingColumnError } from "@/lib/hive-stack-store";
+import { getTreatmentCatalogItem } from "@/lib/treatments";
+import type { Enums, TablesInsert, TablesUpdate } from "@/types/database";
 
 export type QuickLogExpenseInput = {
   catalogId: string;
@@ -39,6 +41,7 @@ export type QuickLogInput = {
   honeyStores: Enums<"store_level">;
   pollenStores: Enums<"store_level">;
   miteCountPer100: string;
+  miteMethod: Enums<"mite_method">;
   pestsDiseases: Enums<"pest_disease">;
   actionFed: boolean;
   mediumAdded: number;
@@ -46,6 +49,13 @@ export type QuickLogInput = {
   shallowAdded: number;
   shallowRemoved: number;
   actionSplit: boolean;
+  splitType: Enums<"split_type"> | null;
+  splitDestination: string;
+  startTreatment: boolean;
+  treatmentCatalogId: string;
+  treatmentStartDate: string;
+  treatmentEndDate: string;
+  treatmentDosage: string;
   actionTreatment: boolean;
   notes: string;
   logExpenses: boolean;
@@ -88,6 +98,22 @@ export async function createInspectionAction(
       : Number(input.miteCountPer100);
   if (miteCount !== null && (Number.isNaN(miteCount) || miteCount < 0)) {
     return { ok: false, error: "Enter a valid mite count (0 or greater)." };
+  }
+
+  if (input.actionSplit && !input.splitType) {
+    return { ok: false, error: "Choose a split or swarm type." };
+  }
+
+  if (input.startTreatment) {
+    if (!input.treatmentCatalogId) {
+      return { ok: false, error: "Choose a treatment product." };
+    }
+    if (!input.treatmentStartDate || !input.treatmentEndDate) {
+      return { ok: false, error: "Treatment start and pull-by dates are required." };
+    }
+    if (input.treatmentEndDate < input.treatmentStartDate) {
+      return { ok: false, error: "Pull-by date must be on or after the start date." };
+    }
   }
 
   const parsedExpenses: {
@@ -172,39 +198,48 @@ export async function createInspectionAction(
         : "",
     ].filter(Boolean);
 
+    const treatmentStarted = input.startTreatment;
+    const inspectionPayload: TablesInsert<"inspections"> = {
+      hive_id: input.hiveId,
+      date: input.date,
+      inspection_time: input.inspectionTime || null,
+      weather: input.weather || null,
+      temperature_f: temp,
+      queen_sighted: input.queenSighted,
+      queen_spotted: input.queenSighted === "yes",
+      queen_mark_color: input.queenMarkColor,
+      eggs_larvae: input.eggsLarvae,
+      brood_pattern: input.broodPattern,
+      temperament: input.temperament,
+      honey_stores: input.honeyStores,
+      pollen_stores: input.pollenStores,
+      mite_count_per_100: miteCount,
+      mite_method: miteCount !== null ? input.miteMethod : null,
+      pests_diseases: input.pestsDiseases,
+      action_fed: input.actionFed,
+      action_super: supersAdded > 0,
+      action_split: input.actionSplit,
+      split_type: input.actionSplit ? input.splitType : null,
+      split_destination:
+        input.actionSplit && input.splitDestination.trim()
+          ? input.splitDestination.trim()
+          : null,
+      action_treatment: treatmentStarted || input.actionTreatment,
+      supers_added: supersAdded,
+      supers_removed: supersRemoved,
+      super_count_after: superResult.total,
+      medium_added: change.mediumAdded,
+      medium_removed: change.mediumRemoved,
+      shallow_added: change.shallowAdded,
+      shallow_removed: change.shallowRemoved,
+      notes: noteParts.length > 0 ? noteParts.join(" · ") : null,
+      created_by: user.id,
+    };
+
     const { data: inspection, error: inspectionError } =
       await insertInspectionCompat(
         supabase,
-        {
-          hive_id: input.hiveId,
-          date: input.date,
-          inspection_time: input.inspectionTime || null,
-          weather: input.weather || null,
-          temperature_f: temp,
-          queen_sighted: input.queenSighted,
-          queen_spotted: input.queenSighted === "yes",
-          queen_mark_color: input.queenMarkColor,
-          eggs_larvae: input.eggsLarvae,
-          brood_pattern: input.broodPattern,
-          temperament: input.temperament,
-          honey_stores: input.honeyStores,
-          pollen_stores: input.pollenStores,
-          mite_count_per_100: miteCount,
-          pests_diseases: input.pestsDiseases,
-          action_fed: input.actionFed,
-          action_super: supersAdded > 0,
-          action_split: input.actionSplit,
-          action_treatment: input.actionTreatment,
-          supers_added: supersAdded,
-          supers_removed: supersRemoved,
-          super_count_after: superResult.total,
-          medium_added: change.mediumAdded,
-          medium_removed: change.mediumRemoved,
-          shallow_added: change.shallowAdded,
-          shallow_removed: change.shallowRemoved,
-          notes: noteParts.length > 0 ? noteParts.join(" · ") : null,
-          created_by: user.id,
-        },
+        inspectionPayload,
         { columnsAvailable }
       );
 
@@ -225,10 +260,26 @@ export async function createInspectionAction(
       await supabase.from("mite_counts").insert({
         hive_id: input.hiveId,
         inspection_id: inspection.id,
-        method: "alcohol_wash",
+        method: input.miteMethod,
         count: miteCount,
         date: input.date,
       });
+    }
+
+    if (treatmentStarted) {
+      const catalog = getTreatmentCatalogItem(input.treatmentCatalogId);
+      const { error: treatmentError } = await supabase.from("treatments").insert({
+        hive_id: input.hiveId,
+        product_name: catalog?.name ?? input.treatmentCatalogId,
+        start_date: input.treatmentStartDate,
+        end_date: input.treatmentEndDate,
+        dosage: input.treatmentDosage.trim() || catalog?.dosage || null,
+        status: "in_progress",
+        notes: "Started from Quick Log",
+      });
+      if (treatmentError) {
+        return { ok: false, error: treatmentError.message };
+      }
     }
 
     if (input.queenSighted === "yes" || input.queenMarkColor !== "unmarked") {
@@ -291,6 +342,144 @@ export async function createInspectionAction(
     }
     return { ok: false, error: message };
   }
+}
+
+export type UpdateInspectionInput = {
+  inspectionId: string;
+  hiveId: string;
+  date: string;
+  inspectionTime: string;
+  weather: string;
+  temperatureF: string;
+  queenSighted: Enums<"queen_sighted">;
+  broodPattern: Enums<"brood_pattern">;
+  miteCountPer100: string;
+  miteMethod: Enums<"mite_method">;
+  pestsDiseases: Enums<"pest_disease">;
+  actionSplit: boolean;
+  splitType: Enums<"split_type"> | null;
+  splitDestination: string;
+  notes: string;
+};
+
+export type UpdateInspectionResult =
+  | { ok: true; inspectionId: string }
+  | { ok: false; error: string };
+
+export async function updateInspectionAction(
+  input: UpdateInspectionInput
+): Promise<UpdateInspectionResult> {
+  if (!input.inspectionId) {
+    return { ok: false, error: "Visit is required." };
+  }
+  if (!input.date) {
+    return { ok: false, error: "Inspection date is required." };
+  }
+
+  const temp =
+    input.temperatureF.trim() === "" ? null : Number(input.temperatureF);
+  if (temp !== null && Number.isNaN(temp)) {
+    return { ok: false, error: "Enter a valid temperature." };
+  }
+
+  const miteCount =
+    input.miteCountPer100.trim() === ""
+      ? null
+      : Number(input.miteCountPer100);
+  if (miteCount !== null && (Number.isNaN(miteCount) || miteCount < 0)) {
+    return { ok: false, error: "Enter a valid mite count (0 or greater)." };
+  }
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { ok: false, error: "You must be signed in to edit a visit." };
+  }
+
+  const payload: TablesUpdate<"inspections"> = {
+    date: input.date,
+    inspection_time: input.inspectionTime || null,
+    weather: input.weather || null,
+    temperature_f: temp,
+    queen_sighted: input.queenSighted,
+    queen_spotted: input.queenSighted === "yes",
+    brood_pattern: input.broodPattern,
+    mite_count_per_100: miteCount,
+    mite_method: miteCount !== null ? input.miteMethod : null,
+    pests_diseases: input.pestsDiseases,
+    split_type: input.actionSplit ? input.splitType : null,
+    split_destination:
+      input.actionSplit && input.splitDestination.trim()
+        ? input.splitDestination.trim()
+        : null,
+    notes: input.notes.trim() || null,
+  };
+
+  const { error } = await supabase
+    .from("inspections")
+    .update(payload)
+    .eq("id", input.inspectionId);
+
+  if (error) {
+    if (isMissingColumnError(error)) {
+      const { mite_method, split_type, split_destination, ...fallback } =
+        payload;
+      void mite_method;
+      void split_type;
+      void split_destination;
+      const retry = await supabase
+        .from("inspections")
+        .update(fallback)
+        .eq("id", input.inspectionId);
+      if (retry.error) {
+        return { ok: false, error: retry.error.message };
+      }
+    } else {
+      return { ok: false, error: error.message };
+    }
+  }
+
+  if (miteCount !== null) {
+    const { data: existing } = await supabase
+      .from("mite_counts")
+      .select("id")
+      .eq("inspection_id", input.inspectionId)
+      .maybeSingle();
+
+    if (existing) {
+      await supabase
+        .from("mite_counts")
+        .update({
+          method: input.miteMethod,
+          count: miteCount,
+          date: input.date,
+        })
+        .eq("id", existing.id);
+    } else {
+      await supabase.from("mite_counts").insert({
+        hive_id: input.hiveId,
+        inspection_id: input.inspectionId,
+        method: input.miteMethod,
+        count: miteCount,
+        date: input.date,
+      });
+    }
+  } else {
+    await supabase
+      .from("mite_counts")
+      .delete()
+      .eq("inspection_id", input.inspectionId);
+  }
+
+  revalidatePath("/");
+  revalidatePath("/inspect");
+  revalidatePath("/hives");
+  revalidatePath(`/hives/${input.hiveId}`);
+
+  return { ok: true, inspectionId: input.inspectionId };
 }
 
 export type DeleteInspectionResult =
