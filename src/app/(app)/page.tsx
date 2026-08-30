@@ -5,6 +5,8 @@ import { SummaryCards } from "@/components/dashboard/summary-cards";
 import { PriorityAlertsBar } from "@/components/dashboard/priority-alerts";
 import { HarvestSummary } from "@/components/dashboard/harvest-summary";
 import { SeasonalAdvice } from "@/components/dashboard/seasonal-advice";
+import { MiteIntervalEditor } from "@/components/dashboard/mite-interval-editor";
+import { SwarmRiskSummary } from "@/components/dashboard/swarm-risk-summary";
 import { YardWalkChecklist } from "@/components/dashboard/yard-walk-checklist";
 import { TreatmentCalendar } from "@/components/dashboard/treatment-calendar";
 import { YardScene } from "@/components/yard/yard-scene";
@@ -15,6 +17,8 @@ import {
   listHivesForUser,
   listOpenTreatmentsForHives,
   listRecentInspectionsForHives,
+  listLastMiteDatesForHives,
+  listMiteRetestTreatmentsForHives,
   getHarvestSummaryForHives,
 } from "@/lib/hives";
 import {
@@ -23,6 +27,8 @@ import {
   mergeAlerts,
   uniqueHiveCount,
 } from "@/lib/alerts";
+import { buildMiteDueAlerts } from "@/lib/mite-interval";
+import { buildPostTreatmentMiteAlerts } from "@/lib/treatment-followup";
 import { hiveHealthForYard } from "@/lib/hive-health";
 import { buildYardWalkChecklist } from "@/lib/yard-walk-checklist";
 import { fetchLocalWeather, type LocalWeather } from "@/lib/weather";
@@ -66,12 +72,36 @@ export default async function DashboardPage() {
         location: yardLocation,
       });
       const hiveIds = hives.map((hive) => hive.id);
-      const [inspections, treatments] = await Promise.all([
+      const [inspections, treatments, lastMiteDates, miteRetests] =
+        await Promise.all([
         listRecentInspectionsForHives(hiveIds),
         listOpenTreatmentsForHives(hiveIds).catch(() => []),
+        listLastMiteDatesForHives(hiveIds).catch(() => new Map()),
+        listMiteRetestTreatmentsForHives(hiveIds).catch(() => []),
       ]);
+      const intervalDays = apiary?.mite_check_interval_days ?? undefined;
       alerts = mergeAlerts(
-        buildHiveAlerts(hives, inspections),
+        buildHiveAlerts(
+          hives.map((hive) => ({
+            id: hive.id,
+            name: hive.name,
+            status: hive.status,
+            queenIntroducedDate: hive.queen_introduced_date,
+          })),
+          inspections
+        ),
+        buildMiteDueAlerts(hives, lastMiteDates, intervalDays),
+        buildPostTreatmentMiteAlerts(
+          hives.map((hive) => ({ id: hive.id, name: hive.name })),
+          miteRetests.map((row) => ({
+            id: row.id,
+            hiveId: row.hive_id,
+            productName: row.product_name,
+            miteRetestDueDate: row.mite_retest_due_date,
+            completedAt: row.completed_at,
+          })),
+          lastMiteDates
+        ),
         buildTreatmentAlerts(
           hives,
           treatments.map((row) => ({
@@ -110,6 +140,7 @@ export default async function DashboardPage() {
 
   const activeHives = hives.filter((hive) => hive.status === "active").length;
   const attentionCount = uniqueHiveCount(alerts);
+  const swarmRiskCount = alerts.filter((alert) => alert.kind === "swarm_risk").length;
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
@@ -124,6 +155,17 @@ export default async function DashboardPage() {
       </div>
 
       <SeasonalAdvice />
+      <SwarmRiskSummary highRiskCount={swarmRiskCount} />
+      {apiary?.id ? (
+        <MiteIntervalEditor
+          apiaryId={apiary.id}
+          intervalDays={
+            apiary.mite_check_interval_days != null
+              ? Number(apiary.mite_check_interval_days)
+              : null
+          }
+        />
+      ) : null}
 
       <YardWalkChecklist items={yardWalkItems} />
 

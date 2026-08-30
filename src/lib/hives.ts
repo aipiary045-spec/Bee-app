@@ -308,7 +308,9 @@ export async function listRecentInspectionsForHives(
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("inspections")
-    .select("hive_id, date, queen_sighted, mite_count_per_100, pests_diseases")
+    .select(
+      "hive_id, date, queen_sighted, mite_count_per_100, pests_diseases, queen_cells_seen, honey_stores"
+    )
     .in("hive_id", hiveIds)
     .order("date", { ascending: false })
     .order("created_at", { ascending: false });
@@ -324,6 +326,8 @@ export async function listRecentInspectionsForHives(
     miteCountPer100:
       row.mite_count_per_100 == null ? null : Number(row.mite_count_per_100),
     pestsDiseases: row.pests_diseases,
+    queenCellsSeen: row.queen_cells_seen ?? false,
+    honeyStores: row.honey_stores,
   }));
 }
 
@@ -400,6 +404,70 @@ export async function listOpenTreatmentsForHives(
   return data ?? [];
 }
 
+export async function listLastMiteDatesForHives(
+  hiveIds: string[]
+): Promise<Map<string, string>> {
+  const result = new Map<string, string>();
+  if (hiveIds.length === 0) return result;
+
+  const supabase = await createClient();
+  const [washRows, inspectionRows] = await Promise.all([
+    supabase
+      .from("mite_counts")
+      .select("hive_id, date")
+      .in("hive_id", hiveIds)
+      .order("date", { ascending: false }),
+    supabase
+      .from("inspections")
+      .select("hive_id, date, mite_count_per_100")
+      .in("hive_id", hiveIds)
+      .not("mite_count_per_100", "is", null)
+      .order("date", { ascending: false }),
+  ]);
+
+  for (const row of washRows.data ?? []) {
+    if (!result.has(row.hive_id)) result.set(row.hive_id, row.date);
+  }
+  for (const row of inspectionRows.data ?? []) {
+    const existing = result.get(row.hive_id);
+    if (!existing || row.date > existing) result.set(row.hive_id, row.date);
+  }
+
+  return result;
+}
+
+export async function listMiteRetestTreatmentsForHives(
+  hiveIds: string[]
+): Promise<
+  {
+    id: string;
+    hive_id: string;
+    product_name: string;
+    mite_retest_due_date: string;
+    completed_at: string | null;
+  }[]
+> {
+  if (hiveIds.length === 0) return [];
+
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("treatments")
+    .select("id, hive_id, product_name, mite_retest_due_date, completed_at")
+    .in("hive_id", hiveIds)
+    .eq("status", "completed")
+    .not("mite_retest_due_date", "is", null)
+    .order("mite_retest_due_date", { ascending: true });
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  return (data ?? []).filter(
+    (row): row is typeof row & { mite_retest_due_date: string } =>
+      row.mite_retest_due_date != null
+  );
+}
+
 export async function listHoneySalesForHive(hiveId: string): Promise<Revenue[]> {
   const supabase = await createClient();
   const { data, error } = await supabase
@@ -429,6 +497,7 @@ export async function listQueenLogsForHive(
     .from("queen_logs")
     .select("*")
     .eq("hive_id", hiveId)
+    .order("event_date", { ascending: false })
     .order("created_at", { ascending: false })
     .limit(limit);
 

@@ -22,6 +22,8 @@ import {
   type SuperType,
 } from "@/lib/supers";
 import type { Enums } from "@/types/database";
+import { postTreatmentMiteCheckDays } from "@/lib/treatments";
+import { miteRetestDueDate } from "@/lib/treatment-followup";
 
 export type CreateHiveInput = {
   name: string;
@@ -398,9 +400,10 @@ export async function completeTreatmentAction(input: {
 
   try {
     const today = new Date().toISOString().slice(0, 10);
+    const nowIso = new Date().toISOString();
     const { data: existing, error: loadError } = await supabase
       .from("treatments")
-      .select("id, end_date")
+      .select("id, end_date, product_name")
       .eq("id", input.treatmentId)
       .maybeSingle();
 
@@ -408,11 +411,16 @@ export async function completeTreatmentAction(input: {
       return { ok: false, error: loadError?.message ?? "Treatment not found." };
     }
 
+    const retestDays = postTreatmentMiteCheckDays(existing.product_name);
+    const completedDate = existing.end_date ?? today;
+
     const { error } = await supabase
       .from("treatments")
       .update({
         status: "completed",
-        end_date: existing.end_date ?? today,
+        end_date: completedDate,
+        completed_at: nowIso,
+        mite_retest_due_date: miteRetestDueDate(completedDate, retestDays),
       })
       .eq("id", input.treatmentId);
 
@@ -545,4 +553,92 @@ export async function updateHarvestGoalAction(input: {
 
   revalidatePath("/");
   return { ok: true, hiveId: input.apiaryId };
+}
+
+export async function updateMiteCheckIntervalAction(input: {
+  apiaryId: string;
+  intervalDays: string;
+}): Promise<ActionResult> {
+  if (!input.apiaryId) {
+    return { ok: false, error: "Yard is required." };
+  }
+
+  const trimmed = input.intervalDays.trim();
+  const interval = trimmed === "" ? null : Number(trimmed);
+
+  if (interval !== null && (Number.isNaN(interval) || interval < 7)) {
+    return {
+      ok: false,
+      error: "Enter at least 7 days between mite checks, or leave it blank for the default.",
+    };
+  }
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { ok: false, error: "You must be signed in to update mite check settings." };
+  }
+
+  const { error } = await supabase
+    .from("apiaries")
+    .update({ mite_check_interval_days: interval })
+    .eq("id", input.apiaryId);
+
+  if (error) {
+    if (isMissingColumnError(error)) {
+      return {
+        ok: false,
+        error:
+          "Mite check intervals need a database update. Run the latest SQL migration in Supabase.",
+      };
+    }
+    return { ok: false, error: error.message };
+  }
+
+  revalidatePath("/");
+  return { ok: true, hiveId: input.apiaryId };
+}
+
+export async function updateQueenIntroducedAction(input: {
+  hiveId: string;
+  introducedDate: string;
+}): Promise<ActionResult> {
+  if (!input.hiveId) {
+    return { ok: false, error: "Hive is required." };
+  }
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { ok: false, error: "You must be signed in to update queen details." };
+  }
+
+  const { error } = await supabase
+    .from("hives")
+    .update({
+      queen_introduced_date:
+        input.introducedDate.trim() === "" ? null : input.introducedDate,
+    })
+    .eq("id", input.hiveId);
+
+  if (error) {
+    if (isMissingColumnError(error)) {
+      return {
+        ok: false,
+        error:
+          "Queen lifecycle tracking needs a database update. Run the latest SQL migration in Supabase.",
+      };
+    }
+    return { ok: false, error: error.message };
+  }
+
+  revalidatePath("/hives");
+  revalidatePath(`/hives/${input.hiveId}`);
+  return { ok: true, hiveId: input.hiveId };
 }

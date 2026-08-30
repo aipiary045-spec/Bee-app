@@ -21,6 +21,7 @@ import { HiveNotesEditor } from "@/components/hives/hive-notes-editor";
 import { InspectionList } from "@/components/hives/inspection-list";
 import { HealthCharts } from "@/components/hives/health-charts";
 import { QueenTimeline } from "@/components/hives/queen-timeline";
+import { QueenLifecycleCard } from "@/components/hives/queen-lifecycle-card";
 import { AddRevenueDialog } from "@/components/finances/add-revenue-dialog";
 import { NavCard } from "@/components/ui/nav-card";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -105,7 +106,12 @@ export default async function HiveDetailPage({ params }: HiveDetailPageProps) {
 
   const alerts = mergeAlerts(
     buildHiveAlerts(
-      [hive],
+      [{
+        id: hive.id,
+        name: hive.name,
+        status: hive.status,
+        queenIntroducedDate: hive.queen_introduced_date,
+      }],
       inspections.map((row) => ({
         hiveId: row.hive_id,
         date: row.date,
@@ -113,6 +119,8 @@ export default async function HiveDetailPage({ params }: HiveDetailPageProps) {
         miteCountPer100:
           row.mite_count_per_100 == null ? null : Number(row.mite_count_per_100),
         pestsDiseases: row.pests_diseases,
+        queenCellsSeen: row.queen_cells_seen ?? false,
+        honeyStores: row.honey_stores,
       }))
     ),
     buildTreatmentAlerts(
@@ -275,11 +283,15 @@ export default async function HiveDetailPage({ params }: HiveDetailPageProps) {
       </div>
 
       <div className="fade-up-delay-2 mb-8 space-y-4">
+          <QueenLifecycleCard
+            hiveId={hive.id}
+            introducedDate={hive.queen_introduced_date}
+          />
           <QueenTimeline
             hiveId={hive.id}
             entries={queenLogs.map((row) => ({
               id: row.id,
-              date: row.created_at.slice(0, 10),
+              date: row.event_date ?? row.created_at.slice(0, 10),
               status: row.status,
               markColor: row.mark_color,
               notes: row.notes,

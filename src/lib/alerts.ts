@@ -5,8 +5,12 @@ export type AlertSeverity = "danger" | "warning";
 export type AlertKind =
   | "deadout"
   | "mites"
+  | "mite_due"
+  | "mite_retest"
   | "disease"
   | "queen"
+  | "queen_age"
+  | "swarm_risk"
   | "overdue"
   | "never_inspected"
   | "treatment";
@@ -25,6 +29,7 @@ export type AlertHive = {
   id: string;
   name: string;
   status: "active" | "inactive" | "deadout";
+  queenIntroducedDate?: string | null;
 };
 
 export type AlertInspection = {
@@ -33,6 +38,8 @@ export type AlertInspection = {
   queenSighted: "yes" | "no" | "uncertain" | null;
   miteCountPer100: number | null;
   pestsDiseases: string | null;
+  queenCellsSeen?: boolean;
+  honeyStores?: string | null;
 };
 
 export type AlertTreatment = {
@@ -88,6 +95,7 @@ export function buildHiveAlerts(
 ): HiveAlert[] {
   const byHive = groupInspectionsByHive(inspections);
   const alerts: HiveAlert[] = [];
+  const month = today.getMonth();
 
   for (const hive of hives) {
     const recent = byHive.get(hive.id) ?? [];
@@ -180,6 +188,47 @@ export function buildHiveAlerts(
         kind: "queen",
         severity: "warning",
         message: "Queen not spotted in last 2 inspections",
+        href: `/inspect?hive=${hive.id}`,
+      });
+    }
+
+    if (hive.queenIntroducedDate) {
+      const [year, m, d] = hive.queenIntroducedDate.split("-").map(Number);
+      const introduced = new Date(year, m - 1, d);
+      const ageMonths =
+        (today.getFullYear() - introduced.getFullYear()) * 12 +
+        (today.getMonth() - introduced.getMonth());
+      if (ageMonths >= 18) {
+        alerts.push({
+          id: `${hive.id}-queen-age`,
+          hiveId: hive.id,
+          hiveName: hive.name,
+          kind: "queen_age",
+          severity: ageMonths >= 24 ? "danger" : "warning",
+          message: `Queen is ${ageMonths} months old — consider requeening`,
+          href: `/hives/${hive.id}#queen`,
+        });
+      }
+    }
+
+    if (latest.queenCellsSeen) {
+      alerts.push({
+        id: `${hive.id}-swarm`,
+        hiveId: hive.id,
+        hiveName: hive.name,
+        kind: "swarm_risk",
+        severity: month >= 2 && month <= 4 ? "danger" : "warning",
+        message: "Queen cells seen on last visit",
+        href: `/hives/${hive.id}#inspections`,
+      });
+    } else if (month >= 2 && month <= 4 && latest.honeyStores === "full") {
+      alerts.push({
+        id: `${hive.id}-swarm-season`,
+        hiveId: hive.id,
+        hiveName: hive.name,
+        kind: "swarm_risk",
+        severity: "warning",
+        message: "Swarm season — full stores, check for queen cells",
         href: `/inspect?hive=${hive.id}`,
       });
     }
