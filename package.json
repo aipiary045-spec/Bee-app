@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "next lint",
     "test": "node --experimental-strip-types --test src/lib/*.test.ts",
-    "db:types": "supabase gen types typescript --local > src/types/database.ts"
+    "db:types": "supabase gen types typescript --local > src/types/database.ts",
+    "db:migrate": "node scripts/run-migrations.mjs"
   },
   "dependencies": {
     "@radix-ui/react-dialog": "^1.1.6",
