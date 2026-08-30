@@ -471,6 +471,45 @@ export async function updateHiveStatusAction(input: {
   return { ok: true, hiveId: input.hiveId };
 }
 
+export async function updateHiveNameAction(input: {
+  hiveId: string;
+  name: string;
+}): Promise<ActionResult> {
+  const name = input.name.trim();
+  if (!input.hiveId) {
+    return { ok: false, error: "Hive is required." };
+  }
+  if (!name) {
+    return { ok: false, error: "Hive name is required." };
+  }
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { ok: false, error: "You must be signed in to rename a hive." };
+  }
+
+  const { error } = await supabase
+    .from("hives")
+    .update({ name })
+    .eq("id", input.hiveId);
+
+  if (error) {
+    if (error.code === "23505") {
+      return { ok: false, error: "A hive with that name already exists." };
+    }
+    return { ok: false, error: error.message };
+  }
+
+  revalidatePath("/");
+  revalidatePath("/hives");
+  revalidatePath(`/hives/${input.hiveId}`);
+  return { ok: true, hiveId: input.hiveId };
+}
+
 export async function updateHiveNotesAction(input: {
   hiveId: string;
   notes: string;
