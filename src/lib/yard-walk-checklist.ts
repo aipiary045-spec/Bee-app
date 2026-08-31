@@ -82,3 +82,35 @@ export function buildYardWalkChecklist(
     return rank[a.severity] - rank[b.severity];
   });
 }
+
+export type YardWalkGroup = {
+  hiveId: string;
+  hiveName: string;
+  href: string;
+  severity: "danger" | "warning";
+  items: YardWalkItem[];
+};
+
+export function groupYardWalkByHive(items: YardWalkItem[]): YardWalkGroup[] {
+  const groups: YardWalkGroup[] = [];
+  const index = new Map<string, YardWalkGroup>();
+
+  for (const item of items) {
+    let group = index.get(item.hiveId);
+    if (!group) {
+      group = {
+        hiveId: item.hiveId,
+        hiveName: item.hiveName,
+        href: item.href,
+        severity: item.severity,
+        items: [],
+      };
+      index.set(item.hiveId, group);
+      groups.push(group);
+    }
+    group.items.push(item);
+    if (item.severity === "danger") group.severity = "danger";
+  }
+
+  return groups;
+}

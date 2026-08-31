@@ -68,7 +68,6 @@ export default async function HivesPage() {
       <PageHeader
         eyebrow={<YardLede />}
         title="Hives"
-        description="Colonies on the yard you have open."
         actions={<AddHiveDialog />}
       />
 

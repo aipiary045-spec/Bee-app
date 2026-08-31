@@ -43,7 +43,7 @@ export function MiteIntervalEditor({
   }
 
   return (
-    <Card className="fade-up-delay-1 mb-6 border-meadow-400/25 bg-gradient-to-br from-meadow-50/50 to-wax-50">
+    <Card className="fade-up-delay-1 mb-0">
       <CardHeader className="pb-2">
         <CardTitle className="flex items-center justify-between gap-2 text-base">
           <span className="flex items-center gap-2">

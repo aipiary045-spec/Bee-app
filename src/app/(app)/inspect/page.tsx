@@ -70,7 +70,6 @@ export default async function InspectPage({ searchParams }: InspectPageProps) {
       <PageHeader
         eyebrow={<YardLede />}
         title="Quick Log"
-        description="Pick a hive, pull and replace supers, then tap through queen, health, and notes."
       />
 
       {loadError && (

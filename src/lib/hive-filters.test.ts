@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import {
+  PRIMARY_HIVE_FILTERS,
   groupAlertsByHiveId,
   hiveMatchesFilter,
 } from "./hive-filters.ts";
@@ -43,5 +44,15 @@ describe("hiveMatchesFilter", () => {
       hiveMatchesFilter(hive, "steady", groupAlertsByHiveId([alert("1", "mites")]), ""),
       false
     );
+  });
+
+  it("keeps a short primary filter set", () => {
+    assert.deepEqual(PRIMARY_HIVE_FILTERS, [
+      "all",
+      "attention",
+      "steady",
+      "overdue",
+      "mites",
+    ]);
   });
 });

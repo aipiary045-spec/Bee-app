@@ -18,15 +18,12 @@ export function PageHeader({
   return (
     <header
       className={cn(
-        "fade-up relative mb-6 overflow-hidden rounded-3xl surface-panel px-5 py-6 sm:px-7",
+        "fade-up mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3",
         className
       )}
     >
-      <div className="pointer-events-none absolute inset-x-0 top-0 h-px shimmer-line" />
-      <div className="pointer-events-none absolute -right-10 -top-16 h-32 w-32 rounded-full bg-honey-400/20 blur-3xl" />
-
-      <div className="relative flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div className="max-w-2xl">
+      <div className="min-w-0">
+        <div className="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-0.5">
           {eyebrow &&
             (typeof eyebrow === "string" ? (
               <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-honey-700">
@@ -35,19 +32,19 @@ export function PageHeader({
             ) : (
               <div className="min-w-0">{eyebrow}</div>
             ))}
-          <h1 className="font-display mt-1 text-3xl font-bold text-hive-900 sm:text-4xl">
+          <h1 className="font-display text-xl font-semibold text-hive-900 sm:text-2xl">
             {title}
           </h1>
-          {description && (
-            <p className="mt-2 text-sm leading-relaxed text-hive-600 sm:text-base">
-              {description}
-            </p>
-          )}
         </div>
-        {actions && (
-          <div className="flex shrink-0 flex-wrap gap-2">{actions}</div>
-        )}
+        {description ? (
+          <p className="mt-0.5 text-sm text-hive-600">{description}</p>
+        ) : null}
       </div>
+      {actions ? (
+        <div className="flex w-full min-w-0 max-w-full flex-wrap gap-2 sm:w-auto sm:justify-end">
+          {actions}
+        </div>
+      ) : null}
     </header>
   );
 }

@@ -557,6 +557,7 @@ export function QuickLogForm({
             current={currentInventory}
             change={superChange}
             next={nextSupers}
+            showAfterLabel={false}
           />
 
           <div className="order-3 hidden text-sm text-hive-600 lg:block">

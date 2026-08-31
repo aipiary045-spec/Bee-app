@@ -16,8 +16,8 @@ import { HiveStackEditor } from "@/components/hives/hive-stack-editor";
 import { LogHarvestDialog } from "@/components/hives/log-harvest-dialog";
 import { StartTreatmentDialog } from "@/components/hives/start-treatment-dialog";
 import { CompleteTreatmentButton } from "@/components/hives/complete-treatment-button";
-import { HiveStatusPicker } from "@/components/hives/hive-status-picker";
-import { HiveNotesEditor } from "@/components/hives/hive-notes-editor";
+import { ColonyCard } from "@/components/hives/colony-card";
+import { RecordsAccordion } from "@/components/hives/records-accordion";
 import { InspectionList } from "@/components/hives/inspection-list";
 import { HealthCharts } from "@/components/hives/health-charts";
 import { QueenTimeline } from "@/components/hives/queen-timeline";
@@ -154,13 +154,6 @@ export default async function HiveDetailPage({ params }: HiveDetailPageProps) {
     ];
   });
 
-  const statusVariant =
-    hive.status === "active"
-      ? ("success" as const)
-      : hive.status === "deadout"
-        ? ("danger" as const)
-        : ("muted" as const);
-
   return (
     <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
       <Button variant="ghost" size="sm" className="mb-3 -ml-2" asChild>
@@ -184,22 +177,12 @@ export default async function HiveDetailPage({ params }: HiveDetailPageProps) {
         }
       />
 
-      <div className="fade-up-delay-1 mb-6 flex flex-wrap items-center gap-2">
-        <Badge variant={statusVariant}>{hive.status}</Badge>
-        <Badge variant="default">{hive.frame_count} frames</Badge>
-        <Badge variant="default">{formatSuperInventory(inventory)}</Badge>
-      </div>
-
-      <Card className="fade-up-delay-1 mb-6">
-        <CardHeader className="pb-2">
-          <CardTitle className="text-base">Colony status</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <HiveStatusPicker hiveId={hive.id} status={hive.status} />
-        </CardContent>
-      </Card>
-
-      <HiveNotesEditor hiveId={hive.id} notes={hive.notes ?? null} />
+      <ColonyCard
+        hiveId={hive.id}
+        name={hive.name}
+        status={hive.status}
+        notes={hive.notes ?? null}
+      />
 
       <Card className="fade-up-delay-1 mb-6">
         <CardHeader className="pb-2">
@@ -219,32 +202,34 @@ export default async function HiveDetailPage({ params }: HiveDetailPageProps) {
         </div>
       )}
 
-      <div className="fade-up-delay-1 mb-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
+      <div className="fade-up-delay-1 mb-6 grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-5">
         <NavCard
           href={`/inspect?hive=${hive.id}`}
           eyebrow="This visit"
           title="Quick Log"
-          description="Queen, brood, supers, and notes for this box."
+          description="Queen, brood, supers, notes"
           icon={ClipboardList}
           featured
+          compact
         />
         <NavCard
           href="#inspections"
           title="Inspections"
           description={
             inspections.length === 0
-              ? "No visits yet — start with Quick Log."
-              : `${inspections.length} recent visit${inspections.length === 1 ? "" : "s"} on file.`
+              ? "No visits yet"
+              : `${inspections.length} recent visit${inspections.length === 1 ? "" : "s"}`
           }
           icon={Hexagon}
+          compact
         />
         <NavCard
           href="#mites"
           title="Mites"
           description={
             latestMite
-              ? `Latest ${latestMite.count} / 100 · threshold ${MITE_THRESHOLD_PER_100}`
-              : "No mite counts yet — log one on the next visit."
+              ? `Latest ${latestMite.count} / 100`
+              : "No counts yet"
           }
           icon={Bug}
           accent={
@@ -252,14 +237,15 @@ export default async function HiveDetailPage({ params }: HiveDetailPageProps) {
               ? "crimson"
               : "honey"
           }
+          compact
         />
         <NavCard
           href="#treatments"
           title="Treatments"
           description={
             openTreatments.length === 0
-              ? "No open treatments — start one when mites climb."
-              : `${openTreatments.length} open treatment${openTreatments.length === 1 ? "" : "s"}.`
+              ? "None open"
+              : `${openTreatments.length} open`
           }
           icon={FlaskConical}
           accent={
@@ -269,17 +255,17 @@ export default async function HiveDetailPage({ params }: HiveDetailPageProps) {
               ? "crimson"
               : "honey"
           }
+          compact
         />
         <NavCard
           href="#harvest"
           title="Harvest"
           description={
-            yields.length === 0
-              ? "No pulls recorded — log a harvest when you take honey."
-              : `${harvestLbs} lbs on file this record.`
+            yields.length === 0 ? "No pulls yet" : `${harvestLbs} lbs on file`
           }
           icon={Crown}
           accent="meadow"
+          compact
         />
       </div>
 
@@ -300,6 +286,7 @@ export default async function HiveDetailPage({ params }: HiveDetailPageProps) {
             }))}
           />
 
+        <RecordsAccordion>
           <Card id="inspections">
             <CardHeader className="pb-2">
               <CardTitle className="flex items-center justify-between gap-2 text-base">
@@ -523,6 +510,7 @@ export default async function HiveDetailPage({ params }: HiveDetailPageProps) {
               )}
             </CardContent>
           </Card>
+        </RecordsAccordion>
       </div>
     </div>
   );

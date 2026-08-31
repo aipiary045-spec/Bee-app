@@ -20,6 +20,8 @@ interface TreatmentCalendarProps {
 }
 
 export function TreatmentCalendar({ treatments }: TreatmentCalendarProps) {
+  if (treatments.length === 0) return null;
+
   return (
     <Card className="fade-up-delay-2 mb-6">
       <CardHeader className="pb-2">
@@ -29,11 +31,6 @@ export function TreatmentCalendar({ treatments }: TreatmentCalendarProps) {
         </CardTitle>
       </CardHeader>
       <CardContent>
-        {treatments.length === 0 ? (
-          <p className="text-sm text-hive-500">
-            No open treatments in this yard right now.
-          </p>
-        ) : (
           <ul className="divide-y divide-wax-300/60">
             {treatments.map((row) => {
               const overdue = isTreatmentOverdue(row.status, row.endDate);
@@ -82,7 +79,6 @@ export function TreatmentCalendar({ treatments }: TreatmentCalendarProps) {
               );
             })}
           </ul>
-        )}
       </CardContent>
     </Card>
   );

@@ -29,11 +29,13 @@ export function ExportFinancesButton({ activity }: ExportFinancesButtonProps) {
       type="button"
       variant="outline"
       size="sm"
+      className="w-full sm:w-auto"
       onClick={handleExport}
       disabled={activity.length === 0}
     >
       <Download className="h-4 w-4" />
-      Export CSV
+      <span className="sm:hidden">Export</span>
+      <span className="hidden sm:inline">Export CSV</span>
     </Button>
   );
 }

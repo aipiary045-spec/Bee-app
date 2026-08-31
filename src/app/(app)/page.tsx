@@ -1,17 +1,15 @@
 import Link from "next/link";
 import { PageHeader } from "@/components/layout/page-header";
 import { YardLede } from "@/components/yards/yard-lede";
-import { SummaryCards } from "@/components/dashboard/summary-cards";
-import { PriorityAlertsBar } from "@/components/dashboard/priority-alerts";
 import { HarvestSummary } from "@/components/dashboard/harvest-summary";
 import { SeasonalAdvice } from "@/components/dashboard/seasonal-advice";
-import { MiteIntervalEditor } from "@/components/dashboard/mite-interval-editor";
 import { SwarmRiskSummary } from "@/components/dashboard/swarm-risk-summary";
 import { YardWalkChecklist } from "@/components/dashboard/yard-walk-checklist";
 import { TreatmentCalendar } from "@/components/dashboard/treatment-calendar";
 import { YardScene } from "@/components/yard/yard-scene";
 import { BrandLogo } from "@/components/brand/brand-logo";
 import { Button } from "@/components/ui/button";
+import { SeasonPanel } from "@/components/dashboard/season-panel";
 import { createClient } from "@/lib/supabase/server";
 import {
   listHivesForUser,
@@ -22,18 +20,20 @@ import {
   getHarvestSummaryForHives,
   listSplitInspectionsForHives,
   getSeasonSnapshotDataForHives,
+  getMonthlySeasonActivityForHives,
 } from "@/lib/hives";
 import {
   buildHiveAlerts,
   buildTreatmentAlerts,
   mergeAlerts,
-  uniqueHiveCount,
 } from "@/lib/alerts";
 import { buildMiteDueAlerts } from "@/lib/mite-interval";
 import { buildPostTreatmentMiteAlerts } from "@/lib/treatment-followup";
 import { buildSplitFollowupAlerts } from "@/lib/split-followup";
 import { buildSeasonSnapshot } from "@/lib/season-snapshot";
 import { SeasonSnapshotCard } from "@/components/dashboard/season-snapshot";
+import { SeasonMonthlyChart } from "@/components/dashboard/season-monthly-chart";
+import { buildMonthlySeasonPoints } from "@/lib/season-monthly";
 import { hiveHealthForYard } from "@/lib/hive-health";
 import { buildYardWalkChecklist } from "@/lib/yard-walk-checklist";
 import { fetchLocalWeather, type LocalWeather } from "@/lib/weather";
@@ -73,6 +73,8 @@ export default async function DashboardPage() {
     harvestLbs: 0,
     miteReadings: [],
   });
+  let priorSeasonSnapshot: ReturnType<typeof buildSeasonSnapshot> | null = null;
+  let monthlySeasonPoints = buildMonthlySeasonPoints([], []);
 
   if (user) {
     try {
@@ -84,7 +86,8 @@ export default async function DashboardPage() {
         location: yardLocation,
       });
       const hiveIds = hives.map((hive) => hive.id);
-      const [inspections, treatments, lastMiteDates, miteRetests, splitRows, seasonData] =
+      const currentYear = new Date().getFullYear();
+      const [inspections, treatments, lastMiteDates, miteRetests, splitRows, seasonData, priorSeasonData, monthlyActivity] =
         await Promise.all([
         listRecentInspectionsForHives(hiveIds),
         listOpenTreatmentsForHives(hiveIds).catch(() => []),
@@ -93,15 +96,36 @@ export default async function DashboardPage() {
         listSplitInspectionsForHives(
           hives.map((hive) => ({ id: hive.id, name: hive.name }))
         ).catch(() => []),
-        getSeasonSnapshotDataForHives(hiveIds).catch(() => ({
+        getSeasonSnapshotDataForHives(hiveIds, currentYear).catch(() => ({
           inspectionCount: 0,
           treatmentCount: 0,
           splitCount: 0,
           harvestLbs: 0,
           miteReadings: [],
         })),
+        getSeasonSnapshotDataForHives(hiveIds, currentYear - 1).catch(
+          () => ({
+            inspectionCount: 0,
+            treatmentCount: 0,
+            splitCount: 0,
+            harvestLbs: 0,
+            miteReadings: [],
+          })
+        ),
+        getMonthlySeasonActivityForHives(hiveIds, currentYear).catch(() => ({
+          visits: Array.from({ length: 12 }, () => 0),
+          harvestLbs: Array.from({ length: 12 }, () => 0),
+        })),
       ]);
-      seasonSnapshot = buildSeasonSnapshot(seasonData);
+      seasonSnapshot = buildSeasonSnapshot(seasonData, currentYear);
+      priorSeasonSnapshot = buildSeasonSnapshot(
+        priorSeasonData,
+        currentYear - 1
+      );
+      monthlySeasonPoints = buildMonthlySeasonPoints(
+        monthlyActivity.visits,
+        monthlyActivity.harvestLbs
+      );
       const intervalDays = apiary?.mite_check_interval_days ?? undefined;
       const hiveNames = new Map(hives.map((hive) => [hive.id, hive.name]));
       alerts = mergeAlerts(
@@ -171,8 +195,6 @@ export default async function DashboardPage() {
     }
   }
 
-  const activeHives = hives.filter((hive) => hive.status === "active").length;
-  const attentionCount = uniqueHiveCount(alerts);
   const swarmRiskCount = alerts.filter((alert) => alert.kind === "swarm_risk").length;
 
   return (
@@ -180,95 +202,80 @@ export default async function DashboardPage() {
       <PageHeader
         eyebrow={<YardLede />}
         title="Home"
-        description="Walk the stand. Tap a hive to open it, or Log to record a visit."
-      />
-
-      <div className="fade-up-delay-1 mb-6">
-        <PriorityAlertsBar alerts={alerts} />
-      </div>
-
-      <SeasonalAdvice />
-      <SwarmRiskSummary highRiskCount={swarmRiskCount} />
-      <SeasonSnapshotCard snapshot={seasonSnapshot} />
-      {apiary?.id ? (
-        <MiteIntervalEditor
-          apiaryId={apiary.id}
-          intervalDays={
-            apiary.mite_check_interval_days != null
-              ? Number(apiary.mite_check_interval_days)
-              : null
-          }
-        />
-      ) : null}
-
-      <YardWalkChecklist items={yardWalkItems} />
-
-      <TreatmentCalendar treatments={treatmentCalendar} />
-      <HarvestSummary
-        summary={harvestSummary}
-        goalLbs={
-          apiary?.harvest_goal_lbs != null
-            ? Number(apiary.harvest_goal_lbs)
-            : null
-        }
-        apiaryId={apiary?.id ?? ""}
-      />
-
-      <p className="fade-up-delay-1 mb-6 text-sm text-hive-600">
-        {hives.length === 0
-          ? "Add a colony to start the yard."
-          : `${activeHives} active · ${attentionCount} need a look`}
-      </p>
-
-      <section className="fade-up-delay-2 mb-10">
-        <div className="mb-3 flex items-end justify-between gap-3">
-          <div>
-            <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-honey-700">
-              The stand
-            </p>
-            <h2 className="font-display mt-1 text-2xl font-semibold text-hive-900">
-              Yard
-            </h2>
-          </div>
+        actions={
           <Link
             href="/hives"
             className="text-sm font-semibold text-honey-700 transition-colors hover:text-honey-600"
           >
             Manage →
           </Link>
+        }
+      />
+
+      <SeasonalAdvice />
+      <SwarmRiskSummary highRiskCount={swarmRiskCount} />
+
+      <div className="lg:grid lg:grid-cols-2 lg:items-start lg:gap-6">
+        <div>
+          <section className="fade-up-delay-1 mb-6">
+            <YardScene
+              hives={hives}
+              weather={weather}
+              yardLocation={user ? yardLocation : undefined}
+              showWeather
+              hiveHealth={hiveHealth}
+              empty={
+                <div className="text-center">
+                  <div className="mx-auto mb-4 flex justify-center">
+                    <BrandLogo size={64} className="h-14 w-14" />
+                  </div>
+                  <p className="font-display text-lg font-semibold text-hive-900">
+                    Empty stand
+                  </p>
+                  <p className="mx-auto mt-2 max-w-md text-sm text-hive-700">
+                    Add a colony and it will show up here with the supers on it.
+                  </p>
+                  <Button className="mt-5" asChild>
+                    <Link href="/hives">Add a hive</Link>
+                  </Button>
+                </div>
+              }
+            />
+          </section>
+
+          <YardWalkChecklist items={yardWalkItems} />
         </div>
 
-        <YardScene
-          hives={hives}
-          weather={weather}
-          yardLocation={user ? yardLocation : undefined}
-          showWeather
-          hiveHealth={hiveHealth}
-          empty={
-            <div className="text-center">
-              <div className="mx-auto mb-4 flex justify-center">
-                <BrandLogo size={64} className="h-14 w-14" />
-              </div>
-              <p className="font-display text-lg font-semibold text-hive-900">
-                Empty stand
-              </p>
-              <p className="mx-auto mt-2 max-w-md text-sm text-hive-700">
-                Add a colony and it will show up here with the supers on it.
-              </p>
-              <Button className="mt-5" asChild>
-                <Link href="/hives">Add a hive</Link>
-              </Button>
-            </div>
-          }
-        />
-      </section>
+        <div>
+          <SeasonPanel
+            summary={`${seasonSnapshot.year} · ${seasonSnapshot.inspectionCount} visits · ${seasonSnapshot.harvestLbs} lbs`}
+          >
+            <SeasonSnapshotCard
+              snapshot={seasonSnapshot}
+              priorSnapshot={priorSeasonSnapshot}
+              embedded
+            />
+            <SeasonMonthlyChart
+              year={seasonSnapshot.year}
+              points={monthlySeasonPoints}
+              embedded
+            />
+            {apiary?.id ? (
+              <HarvestSummary
+                summary={harvestSummary}
+                goalLbs={
+                  apiary.harvest_goal_lbs != null
+                    ? Number(apiary.harvest_goal_lbs)
+                    : null
+                }
+                apiaryId={apiary.id}
+                compact
+              />
+            ) : null}
+          </SeasonPanel>
 
-      <div className="fade-up-delay-3 mb-6">
-        <SummaryCards
-          activeHives={activeHives}
-          totalHives={hives.length}
-          attentionCount={attentionCount}
-        />
+          <TreatmentCalendar treatments={treatmentCalendar} />
+        </div>
       </div>
     </div>
   );

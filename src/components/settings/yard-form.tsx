@@ -65,9 +65,8 @@ export function YardForm({
           placeholder="Austin, TX"
           className="min-h-12 rounded-xl"
         />
-        <p className="text-sm leading-relaxed text-hive-600">
-          Weather on Home and Quick Log is for this yard&apos;s town, not
-          where you are standing. Use a place keepers would recognize.
+        <p className="text-sm text-hive-600">
+          Weather uses this town, not your current location.
         </p>
       </div>
       {error && <p className="text-sm text-crimson-600">{error}</p>}

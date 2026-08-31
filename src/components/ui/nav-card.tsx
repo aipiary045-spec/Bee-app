@@ -11,6 +11,7 @@ interface NavCardProps {
   eyebrow?: string;
   accent?: "honey" | "meadow" | "crimson";
   featured?: boolean;
+  compact?: boolean;
   className?: string;
 }
 
@@ -37,9 +38,44 @@ export function NavCard({
   eyebrow,
   accent = "honey",
   featured = false,
+  compact = false,
   className,
 }: NavCardProps) {
   const tone = accents[accent];
+
+  if (compact) {
+    return (
+      <Link
+        href={href}
+        className={cn(
+          "lift-card surface-panel group flex items-center gap-3 rounded-2xl px-3 py-3 hover:border-honey-400/50",
+          featured && tone.featured,
+          className
+        )}
+      >
+        <div
+          className={cn(
+            "flex h-9 w-9 shrink-0 items-center justify-center rounded-xl",
+            featured ? "brand-mark text-white" : tone.icon
+          )}
+        >
+          <Icon className="h-4 w-4" />
+        </div>
+        <div className="min-w-0 flex-1">
+          {eyebrow ? (
+            <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-honey-700">
+              {eyebrow}
+            </p>
+          ) : null}
+          <p className="font-display text-base font-semibold text-hive-900 group-hover:text-honey-800">
+            {title}
+          </p>
+          <p className="truncate text-xs text-hive-600">{description}</p>
+        </div>
+        <ChevronRight className="h-4 w-4 shrink-0 text-hive-400" />
+      </Link>
+    );
+  }
 
   return (
     <Link

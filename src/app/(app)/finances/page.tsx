@@ -71,12 +71,21 @@ export default async function FinancesPage() {
       <PageHeader
         eyebrow={<YardLede />}
         title="Finances"
-        description="Sales and costs for the yard you have open."
         actions={
-          <div className="flex flex-wrap gap-2">
-            <ExportFinancesButton activity={summary.activity} />
-            <AddRevenueDialog hives={hives} />
-            <AddExpenseDialog hives={hives} />
+          <div className="grid w-full min-w-0 grid-cols-2 gap-2 sm:flex sm:w-auto">
+            <div className="col-span-2 sm:col-span-1">
+              <ExportFinancesButton activity={summary.activity} />
+            </div>
+            <AddRevenueDialog
+              hives={hives}
+              triggerLabel="Revenue"
+              triggerSize="sm"
+            />
+            <AddExpenseDialog
+              hives={hives}
+              triggerLabel="Expense"
+              triggerSize="sm"
+            />
           </div>
         }
       />
