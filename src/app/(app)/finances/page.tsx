@@ -72,7 +72,7 @@ export default async function FinancesPage() {
         eyebrow={<YardLede />}
         title="Finances"
         actions={
-          <>
+          <div className="grid w-full grid-cols-3 gap-2 sm:flex sm:w-auto">
             <ExportFinancesButton activity={summary.activity} />
             <AddRevenueDialog
               hives={hives}
@@ -84,7 +84,7 @@ export default async function FinancesPage() {
               triggerLabel="Expense"
               triggerSize="sm"
             />
-          </>
+          </div>
         }
       />
 

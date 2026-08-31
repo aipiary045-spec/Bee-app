@@ -56,8 +56,8 @@ export default async function SettingsPage() {
           </CardHeader>
           <CardContent className="space-y-3">
             <div className="flex items-center justify-between gap-3 rounded-lg border border-wax-300/60 bg-wax-50/80 px-4 py-3">
-              <span className="text-sm text-hive-600">Signed in as</span>
-              <span className="text-right font-medium text-hive-900">
+              <span className="shrink-0 text-sm text-hive-600">Signed in as</span>
+              <span className="min-w-0 break-all text-right text-sm font-medium text-hive-900">
                 {userEmail ?? "Not signed in"}
               </span>
             </div>

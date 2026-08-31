@@ -29,6 +29,7 @@ export function ExportFinancesButton({ activity }: ExportFinancesButtonProps) {
       type="button"
       variant="outline"
       size="sm"
+      className="w-full sm:w-auto"
       onClick={handleExport}
       disabled={activity.length === 0}
     >

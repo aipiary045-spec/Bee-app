@@ -145,7 +145,7 @@ export function AddExpenseDialog({
       }}
     >
       <DialogTrigger asChild>
-        <Button size={triggerSize}>
+        <Button size={triggerSize} className={triggerSize === "sm" ? "w-full sm:w-auto" : undefined}>
           <Plus className="h-4 w-4" />
           {triggerLabel}
         </Button>
